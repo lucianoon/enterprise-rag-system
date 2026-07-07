@@ -17,7 +17,7 @@ Enterprise RAG System implements a deterministic, testable RAG pipeline:
 - Deterministic vector retrieval
 - Hybrid score fusion
 - Reranking
-- Citation-aware answer composition
+- Citation-aware answer generation with Claude (deterministic fallback for CI)
 - Recall@K and MRR evaluation
 - API surface for query and evaluation
 
@@ -54,6 +54,7 @@ See [docs/architecture.md](docs/architecture.md).
 - Pydantic
 - BM25-style retrieval
 - Deterministic local embeddings
+- Claude (Anthropic SDK) for grounded answer generation
 - Qdrant-ready vector adapter boundary
 - Docker Compose
 - pytest
@@ -98,6 +99,22 @@ curl -X POST http://localhost:8000/evaluate \
   -d '{"question":"What does the refund policy require?","relevant_doc_ids":["policy_refunds"]}'
 ```
 
+## Answer Generation
+
+Retrieved passages are handed to a pluggable answer generator:
+
+- **`llm`** — Claude (via the Anthropic SDK) synthesizes a grounded answer with
+  bracketed citations over the numbered passages. Set `ANTHROPIC_API_KEY` (or an
+  `ant auth login` profile) and the model with `RAG_LLM_MODEL` (default
+  `claude-opus-4-8`).
+- **`deterministic`** — a template answer from the top chunk. No network access,
+  so demos, tests and CI stay reproducible.
+
+`RAG_LLM_MODE` selects the strategy: `auto` (default — Claude when a key is
+present, otherwise deterministic), `llm`, or `deterministic`. Every response
+reports the active `generation_mode` in its metadata, and a transient API error
+transparently falls back to the deterministic answer so a query never hard-fails.
+
 ## Evaluation
 
 The evaluation layer measures:
@@ -122,13 +139,17 @@ Every query returns:
 
 ## Trade-Offs
 
-The default vector implementation is deterministic and local so the system can run in CI without API keys. The interface is shaped so Qdrant/OpenAI embeddings can be added without changing the API contract.
+Retrieval uses deterministic, local embeddings so the system can run in CI
+without API keys, while answer generation calls Claude when a key is present and
+otherwise falls back to a deterministic template. The interfaces are shaped so
+Qdrant embeddings or a different LLM can be swapped in without changing the API
+contract.
 
 ## Roadmap
 
 - [ ] Qdrant adapter
 - [ ] PostgreSQL document registry
-- [ ] OpenAI or local embedding adapter
+- [ ] Real embedding adapter (Voyage / local model)
 - [ ] Cross-encoder reranker
 - [ ] Langfuse traces
 - [ ] Prometheus metrics
