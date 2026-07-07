@@ -1,0 +1,4 @@
+{"doc_id":"policy_refunds","title":"Refund Policy","text":"Refund requests must include the order ID, customer email and purchase date. Refunds over 500 USD require manager approval and a fraud review before payment is issued."}
+{"doc_id":"policy_security","title":"Security Policy","text":"Employees must not paste customer CPF, SSN, credit card numbers or authentication tokens into AI tools. Sensitive information must be redacted before automated processing."}
+{"doc_id":"policy_sla","title":"Support SLA","text":"Enterprise customers receive first response within 2 business hours for high priority support tickets. Normal priority tickets receive first response within 1 business day."}
+
