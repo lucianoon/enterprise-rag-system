@@ -1,9 +1,10 @@
 """End-to-end RAG pipeline."""
 
 from time import perf_counter
-from typing import Iterable, List
+from typing import Iterable, Optional
 from uuid import uuid4
 
+from enterprise_rag_system.generation import AnswerGenerator, build_answer_generator
 from enterprise_rag_system.models import Chunk, Citation, QueryResponse
 from enterprise_rag_system.retrieval import HybridRetriever, Reranker
 
@@ -11,9 +12,10 @@ from enterprise_rag_system.retrieval import HybridRetriever, Reranker
 class RAGPipeline:
     """Hybrid retrieval and citation-aware answer composition."""
 
-    def __init__(self, chunks: Iterable[Chunk]):
+    def __init__(self, chunks: Iterable[Chunk], answer_generator: Optional[AnswerGenerator] = None):
         self.retriever = HybridRetriever(chunks)
         self.reranker = Reranker()
+        self.answer_generator = answer_generator or build_answer_generator()
 
     def query(self, question: str, top_k: int = 3) -> QueryResponse:
         started = perf_counter()
@@ -23,7 +25,7 @@ class RAGPipeline:
             Citation(doc_id=r.chunk.doc_id, title=r.chunk.title, chunk_id=r.chunk.chunk_id)
             for r in results
         ]
-        answer = self._compose_answer(question, results)
+        answer = self.answer_generator.compose(question, results)
         return QueryResponse(
             answer=answer,
             citations=citations,
@@ -33,15 +35,7 @@ class RAGPipeline:
                 "latency_ms": round((perf_counter() - started) * 1000, 3),
                 "top_k": top_k,
                 "result_count": len(results),
+                "generation_mode": self.answer_generator.mode,
             },
-        )
-
-    def _compose_answer(self, question: str, results: List) -> str:
-        if not results:
-            return "I could not find grounded information in the indexed documents."
-        leading = results[0].chunk
-        return (
-            f"Based on {leading.title}, the answer should be grounded in the cited policy. "
-            f"Most relevant passage: {leading.text}"
         )
 
