@@ -1,91 +1,164 @@
 # Enterprise RAG System
 
-Hybrid retrieval system with citations, reranking, evaluation and observability for enterprise knowledge bases.
+[![CI](https://github.com/lucianoon/enterprise-rag-system/actions/workflows/ci.yml/badge.svg)](https://github.com/lucianoon/enterprise-rag-system/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-This project is a portfolio-grade AI Engineering system: it demonstrates the core pieces needed to move from "chat with docs" demos to reliable retrieval-augmented generation workflows.
+A retrieval-quality-first RAG engine: hybrid search (BM25-style lexical + vector) with
+score fusion, a rerank pass, citation-carrying answers, and a built-in evaluation
+endpoint that reports **Recall@K** and **MRR** for any labeled query. Every response
+exposes its per-stage scores so you can see *why* a chunk was retrieved, not just *that*
+it was.
 
 ## Problem
 
-Enterprise users need answers grounded in internal documents, but naive semantic search often fails on exact terms, IDs, policies and compliance language. Production RAG needs hybrid retrieval, citations, evaluation, latency tracking and transparent trade-offs.
+Most RAG failures are retrieval failures. Pure semantic search misses exact terms that
+dominate enterprise queries — policy names, IDs, acronyms, compliance language — while
+pure keyword search misses paraphrases. And without retrieval metrics, you cannot tell
+whether a bad answer came from the generator or from the ranked list it was given.
+
+This project treats retrieval as the measurable core of the system:
+
+- fuse lexical and vector evidence instead of betting on one signal
+- keep score components transparent end to end
+- make Recall@K / MRR evaluation a first-class API operation, not an afterthought
 
 ## Solution
 
-Enterprise RAG System implements a deterministic, testable RAG pipeline:
+A compact, fully typed pipeline (`src/enterprise_rag_system/`):
 
-- Document ingestion and chunking
-- BM25-style lexical retrieval
-- Deterministic vector retrieval
-- Hybrid score fusion
-- Reranking
-- Citation-aware answer generation with Claude (deterministic fallback for CI)
-- Recall@K and MRR evaluation
-- API surface for query and evaluation
+| Stage | Module | What it actually does |
+|---|---|---|
+| Ingestion | `ingestion.py` | Loads JSONL documents, splits them into fixed-size word-count chunks (default 80 words) |
+| Lexical retrieval | `retrieval.py` | BM25-style scoring: IDF-weighted term matching with log-scaled term frequency |
+| Vector retrieval | `retrieval.py` | Deterministic local hashed bag-of-words embeddings (48 dims, cosine similarity) — runs offline, no model download, no API key |
+| Score fusion | `retrieval.py` | Weighted hybrid score: `0.55 * lexical + 0.45 * vector` |
+| Reranking | `retrieval.py` | Boosts results by query/title token overlap plus an exact-title-phrase bonus |
+| Generation | `generation.py` | Claude synthesizes a grounded answer with bracketed citations; a deterministic template generator is the offline/CI fallback |
+| Citations | `pipeline.py` | Every answer ships with `doc_id` / `title` / `chunk_id` for each supporting chunk |
+| Evaluation | `evaluation.py` | Recall@K and MRR against labeled relevant document IDs |
+| API | `api.py` | FastAPI service: `/health`, `/query`, `/evaluate` |
+
+The vector stage intentionally uses cheap deterministic embeddings: the retrieval
+*interfaces* (chunks in, `SearchResult` with `lexical_score` / `vector_score` /
+`hybrid_score` / `rerank_score` out) are the point, and they stay stable when you swap
+in a real embedding model or vector store.
 
 ## Architecture
 
-```text
-Documents
-  |
-  v
-Ingestion + Chunking
-  |
-  v
-Lexical Index + Vector Index
-  |
-  v
-Hybrid Retriever
-  |
-  v
-Reranker
-  |
-  v
-Answer Composer + Citations
-  |
-  v
-Evaluation + Observability
-```
-
-See [docs/architecture.md](docs/architecture.md).
-
-## Tech Stack
-
-- Python
-- FastAPI
-- Pydantic
-- BM25-style retrieval
-- Deterministic local embeddings
-- Claude (Anthropic SDK) for grounded answer generation
-- Qdrant-ready vector adapter boundary
-- Docker Compose
-- pytest
-
-## Repository Structure
+![Architecture](architecture.png)
 
 ```text
-.
-├── data/sample/
-├── docs/
-├── src/enterprise_rag_system/
-├── tests/
-├── docker/
-├── docker-compose.yml
-├── .env.example
-├── Makefile
-├── architecture.png
-├── CHANGELOG.md
-└── README.md
+JSONL documents
+      |
+      v
+Ingestion -> word-count chunks
+      |
+      +----------------------+
+      |                      |
+      v                      v
+Lexical index (IDF)    Vector index (hashed embeddings)
+      |                      |
+      +----- score fusion ---+
+      |   0.55*lex + 0.45*vec
+      v
+Reranker (title overlap + exact-phrase bonus)
+      |
+      v
+Answer generator (Claude, deterministic fallback) + citations
+      |
+      v
+Evaluator (Recall@K, MRR)  <- labeled queries via /evaluate
 ```
 
-## How To Run
+More detail in [docs/architecture.md](docs/architecture.md).
+
+## Quickstart
+
+Requires Python 3.12+.
 
 ```bash
-cp .env.example .env
-make install
-make test
-make dev
+git clone https://github.com/lucianoon/enterprise-rag-system.git
+cd enterprise-rag-system
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+pytest -q                      # 8 tests, no network, no API key
+uvicorn enterprise_rag_system.api:app --app-dir src --port 8000
 ```
 
-## API Examples
+Or with make: `make install && make test && make dev`. Docker: `docker compose up --build`.
+
+The API boots against the bundled sample corpus (`data/sample/policies.jsonl` — refund,
+security and SLA policies), so you can query it immediately.
+
+### Answer generation modes
+
+Set `RAG_LLM_MODE` (see `.env.example`):
+
+- `auto` (default) — use Claude when `ANTHROPIC_API_KEY` is set, else the deterministic template
+- `llm` — always call Claude (`RAG_LLM_MODEL` overrides the model id)
+- `deterministic` — always use the offline template (what CI runs)
+
+A transient Claude API error falls back to the deterministic answer, so `/query` never
+hard-fails. The active mode is reported as `generation_mode` in response metadata.
+
+## Evaluation: Recall@K and MRR
+
+Retrieval quality is evaluated per labeled query through the API (or
+`RetrievalEvaluator` in code):
+
+```bash
+curl -X POST http://localhost:8000/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+        "question": "What is the SLA for high priority support tickets?",
+        "relevant_doc_ids": ["policy_sla"],
+        "top_k": 3
+      }'
+```
+
+Response (excerpt):
+
+```json
+{
+  "recall_at_k": 1.0,
+  "mrr": 1.0,
+  "retrieved_doc_ids": ["policy_sla", "policy_refunds", "policy_security"],
+  "query": { "answer": "...", "citations": [...], "results": [...] }
+}
+```
+
+How to read the numbers:
+
+- **Recall@K** — fraction of the labeled relevant documents that appear anywhere in the
+  top-K citations. `1.0` means everything relevant was retrieved; low recall means the
+  retriever (not the generator) is the bottleneck.
+- **MRR** — reciprocal rank of the *first* relevant hit. `1.0` = relevant doc ranked
+  first, `0.5` = second, `0.33` = third, `0.0` = missed entirely. High recall with low
+  MRR points at ranking/fusion weights or the reranker, not at candidate generation.
+
+Each `SearchResult` also returns its `lexical_score`, `vector_score`, `hybrid_score`
+and `rerank_score`, so you can trace a bad ranking to the exact stage that caused it.
+
+### Retrieval trade-offs made explicit
+
+- **Fusion weights** (`0.55` lexical / `0.45` vector) favor exact enterprise terminology
+  slightly over paraphrase matching — tune per corpus and re-check MRR.
+- **Candidate pool**: the pipeline retrieves `2 * top_k` candidates before reranking, a
+  recall-vs-latency knob.
+- **Hashed embeddings** trade semantic quality for determinism and zero infrastructure —
+  ideal for CI and for isolating lexical-vs-vector behavior; swap in real embeddings
+  behind the same interface for production semantics.
+- **Reranker** is a cheap heuristic (title overlap + exact phrase), not a cross-encoder;
+  it improves precision on title-shaped queries without adding a model dependency.
+
+## API
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/health` | GET | Liveness check |
+| `/query` | POST | `{question, top_k}` → grounded answer, citations, per-stage scores, latency metadata |
+| `/evaluate` | POST | `{question, relevant_doc_ids, top_k}` → Recall@K, MRR, retrieved IDs, full query response |
 
 ```bash
 curl -X POST http://localhost:8000/query \
@@ -93,66 +166,27 @@ curl -X POST http://localhost:8000/query \
   -d '{"question":"What does the refund policy require?","top_k":3}'
 ```
 
+Response metadata includes `query_id`, `latency_ms`, `top_k`, `result_count` and
+`generation_mode`. All request/response contracts are Pydantic models in
+[`models.py`](src/enterprise_rag_system/models.py).
+
+## Tests
+
 ```bash
-curl -X POST http://localhost:8000/evaluate \
-  -H "Content-Type: application/json" \
-  -d '{"question":"What does the refund policy require?","relevant_doc_ids":["policy_refunds"]}'
+pytest -q
 ```
 
-## Answer Generation
-
-Retrieved passages are handed to a pluggable answer generator:
-
-- **`llm`** — Claude (via the Anthropic SDK) synthesizes a grounded answer with
-  bracketed citations over the numbered passages. Set `ANTHROPIC_API_KEY` (or an
-  `ant auth login` profile) and the model with `RAG_LLM_MODEL` (default
-  `claude-opus-4-8`).
-- **`deterministic`** — a template answer from the top chunk. No network access,
-  so demos, tests and CI stay reproducible.
-
-`RAG_LLM_MODE` selects the strategy: `auto` (default — Claude when a key is
-present, otherwise deterministic), `llm`, or `deterministic`. Every response
-reports the active `generation_mode` in its metadata, and a transient API error
-transparently falls back to the deterministic answer so a query never hard-fails.
-
-## Evaluation
-
-The evaluation layer measures:
-
-- Recall@K
-- MRR
-- Citation coverage
-- Answer groundedness
-- Retrieval latency
-- Empty-result risk
-
-## Observability
-
-Every query returns:
-
-- query id
-- latency
-- retrieved chunks
-- score components
-- citations
-- evaluation metadata when requested
-
-## Trade-Offs
-
-Retrieval uses deterministic, local embeddings so the system can run in CI
-without API keys, while answer generation calls Claude when a key is present and
-otherwise falls back to a deterministic template. The interfaces are shaped so
-Qdrant embeddings or a different LLM can be swapped in without changing the API
-contract.
+Tests cover the API endpoints, the pipeline (citations + Recall/MRR on the sample
+corpus), and generator selection/fallback behavior. They run entirely offline — the
+deterministic embedding and generator paths mean CI needs no secrets, which is exactly
+how [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs them.
 
 ## Roadmap
 
-- [ ] Qdrant adapter
-- [ ] PostgreSQL document registry
-- [ ] Real embedding adapter (Voyage / local model)
-- [ ] Cross-encoder reranker
-- [ ] Langfuse traces
-- [ ] Prometheus metrics
-- [ ] Multi-tenant collections
-- [ ] Incremental indexing
+- Real embedding adapter and vector store (interfaces already isolate this)
+- Cross-encoder reranker
+- Batch evaluation over a query set with aggregate Recall@K / MRR
 
+## License
+
+[MIT](LICENSE) — © 2026 Luciano de Oliveira Nunes.
