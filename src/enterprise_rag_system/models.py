@@ -105,3 +105,25 @@ class BatchEvaluationResponse(BaseModel):
     mean_recall_at_k: float
     mean_mrr: float
     per_query: List[QueryMetrics]
+
+
+class AnswerJudgement(BaseModel):
+    """Faithfulness verdict for one generated answer."""
+
+    faithfulness: float = Field(ge=0.0, le=1.0)
+    unsupported_claims: List[str]
+    judge_mode: str
+
+
+class AnswerEvaluationRequest(BaseModel):
+    """Run a query and judge the generated answer against its own context."""
+
+    question: str = Field(min_length=1)
+    top_k: int = Field(default=3, ge=1, le=10)
+
+
+class AnswerEvaluationResponse(BaseModel):
+    """Answer-quality metrics alongside the full query response."""
+
+    judgement: AnswerJudgement
+    query: QueryResponse

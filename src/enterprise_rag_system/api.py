@@ -7,6 +7,7 @@ from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 
+from enterprise_rag_system.answer_eval import build_answer_judge
 from enterprise_rag_system.evaluation import (
     DEFAULT_EVAL_DATASET,
     RetrievalEvaluator,
@@ -14,6 +15,8 @@ from enterprise_rag_system.evaluation import (
 )
 from enterprise_rag_system.ingestion import chunk_documents, load_jsonl
 from enterprise_rag_system.models import (
+    AnswerEvaluationRequest,
+    AnswerEvaluationResponse,
     BatchEvaluationRequest,
     BatchEvaluationResponse,
     EvaluationRequest,
@@ -54,7 +57,7 @@ def require_api_key(x_api_key: Optional[str] = Header(default=None)) -> None:
 
 app = FastAPI(
     title="Enterprise RAG System",
-    version="0.2.0",
+    version="0.3.0",
     description="Hybrid RAG with citations, reranking and retrieval evaluation.",
 )
 pipeline = build_pipeline()
@@ -87,3 +90,20 @@ def evaluate_batch(request: BatchEvaluationRequest) -> BatchEvaluationResponse:
         raise HTTPException(status_code=404, detail=f"Eval dataset not found: {dataset_path.name}")
     examples = load_eval_dataset(dataset_path)
     return evaluator.evaluate_batch(examples, top_k=request.top_k, dataset_name=dataset_path.stem)
+
+
+@app.post(
+    "/evaluate/answer",
+    response_model=AnswerEvaluationResponse,
+    dependencies=[Depends(require_api_key)],
+)
+def evaluate_answer(request: AnswerEvaluationRequest) -> AnswerEvaluationResponse:
+    """Answer the question, then judge the answer against its own context.
+
+    The judge is selected per-request from ``RAG_JUDGE_MODE`` so deployments
+    can switch between the heuristic and LLM judges without a restart.
+    """
+    query_response = pipeline.query(request.question, top_k=request.top_k)
+    judge = build_answer_judge()
+    judgement = judge.judge(request.question, query_response.answer, query_response.results)
+    return AnswerEvaluationResponse(judgement=judgement, query=query_response)

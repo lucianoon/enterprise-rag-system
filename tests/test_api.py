@@ -59,6 +59,21 @@ def test_api_key_protects_query_endpoints(monkeypatch):
     assert authed.status_code == 200
 
 
+def test_evaluate_answer_endpoint_judges_generated_answer(monkeypatch):
+    monkeypatch.setenv("RAG_JUDGE_MODE", "heuristic")
+    client = TestClient(app)
+    response = client.post(
+        "/evaluate/answer",
+        json={"question": "What is the SLA for high priority tickets?", "top_k": 3},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["judgement"]["judge_mode"] == "heuristic"
+    assert 0.0 <= body["judgement"]["faithfulness"] <= 1.0
+    assert body["query"]["answer"]
+
+
 def test_api_stays_open_when_no_key_configured(monkeypatch):
     monkeypatch.delenv("RAG_API_KEY", raising=False)
     client = TestClient(app)
