@@ -1,0 +1,7 @@
+# Optional backends. The core system runs without these (hashing embedder +
+# in-memory vector store); install them to enable the production backends.
+qdrant-client>=1.10.0
+scikit-learn>=1.4.0
+# Dense semantic embeddings (heavy: pulls torch). Enable when you want
+# RAG_EMBEDDING_BACKEND=sentence-transformer.
+# sentence-transformers>=3.0.0

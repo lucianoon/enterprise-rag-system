@@ -2,7 +2,13 @@ services:
   api:
     build: .
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      RAG_VECTOR_STORE: qdrant
+      QDRANT_URL: http://qdrant:6333
+      COLLECTION_NAME: enterprise_docs
+      RAG_EMBEDDING_BACKEND: tfidf
     ports:
       - "8000:8000"
     depends_on:
@@ -17,4 +23,3 @@ services:
 
 volumes:
   qdrant_storage:
-
