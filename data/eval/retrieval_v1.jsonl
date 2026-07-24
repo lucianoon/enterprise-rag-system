@@ -1,0 +1,10 @@
+{"query_id":"q01","question":"How do I request a refund for my order?","relevant_doc_ids":["policy_refunds"]}
+{"query_id":"q02","question":"Do refunds over 500 USD need manager approval?","relevant_doc_ids":["policy_refunds"]}
+{"query_id":"q03","question":"Can I paste a customer credit card number into an AI tool?","relevant_doc_ids":["policy_security"]}
+{"query_id":"q04","question":"What must be redacted before automated processing?","relevant_doc_ids":["policy_security"]}
+{"query_id":"q05","question":"How fast is the first response for high priority tickets?","relevant_doc_ids":["policy_sla"]}
+{"query_id":"q06","question":"What SLA do enterprise customers get for support?","relevant_doc_ids":["policy_sla"]}
+{"query_id":"q07","question":"What information must a refund request include?","relevant_doc_ids":["policy_refunds"]}
+{"query_id":"q08","question":"Are authentication tokens allowed in AI tools?","relevant_doc_ids":["policy_security"]}
+{"query_id":"q09","question":"What is the response time for normal priority support tickets?","relevant_doc_ids":["policy_sla"]}
+{"query_id":"q10","question":"Which refund requests require a fraud review before payment?","relevant_doc_ids":["policy_refunds"]}

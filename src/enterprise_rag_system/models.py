@@ -70,3 +70,38 @@ class EvaluationResponse(BaseModel):
     mrr: float
     retrieved_doc_ids: List[str]
     query: QueryResponse
+
+
+class EvalExample(BaseModel):
+    """One labeled query from a versioned evaluation dataset."""
+
+    query_id: str
+    question: str = Field(min_length=1)
+    relevant_doc_ids: List[str] = Field(min_length=1)
+
+
+class QueryMetrics(BaseModel):
+    """Per-query metrics inside a batch evaluation."""
+
+    query_id: str
+    question: str
+    recall_at_k: float
+    mrr: float
+    retrieved_doc_ids: List[str]
+
+
+class BatchEvaluationRequest(BaseModel):
+    """Batch evaluation over the bundled labeled dataset."""
+
+    top_k: int = Field(default=3, ge=1, le=10)
+
+
+class BatchEvaluationResponse(BaseModel):
+    """Aggregate retrieval quality over a labeled dataset."""
+
+    dataset: str
+    example_count: int
+    top_k: int
+    mean_recall_at_k: float
+    mean_mrr: float
+    per_query: List[QueryMetrics]

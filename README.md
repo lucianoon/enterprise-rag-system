@@ -30,18 +30,19 @@ A compact, fully typed pipeline (`src/enterprise_rag_system/`):
 |---|---|---|
 | Ingestion | `ingestion.py` | Loads JSONL documents, splits them into fixed-size word-count chunks (default 80 words) |
 | Lexical retrieval | `retrieval.py` | BM25-style scoring: IDF-weighted term matching with log-scaled term frequency |
-| Vector retrieval | `retrieval.py` | Deterministic local hashed bag-of-words embeddings (48 dims, cosine similarity) — runs offline, no model download, no API key |
+| Embeddings | `embeddings.py` | Pluggable backends: deterministic hashing (offline/CI default), TF-IDF (scikit-learn) or dense semantic vectors (sentence-transformers) |
+| Vector store | `vector_store.py` | Pluggable backends: exact in-memory cosine search or a real Qdrant index (the one `docker compose` starts) |
 | Score fusion | `retrieval.py` | Weighted hybrid score: `0.55 * lexical + 0.45 * vector` |
 | Reranking | `retrieval.py` | Boosts results by query/title token overlap plus an exact-title-phrase bonus |
 | Generation | `generation.py` | Claude synthesizes a grounded answer with bracketed citations; a deterministic template generator is the offline/CI fallback |
 | Citations | `pipeline.py` | Every answer ships with `doc_id` / `title` / `chunk_id` for each supporting chunk |
-| Evaluation | `evaluation.py` | Recall@K and MRR against labeled relevant document IDs |
-| API | `api.py` | FastAPI service: `/health`, `/query`, `/evaluate` |
+| Evaluation | `evaluation.py` | Recall@K and MRR per labeled query, plus batch evaluation over a versioned dataset with aggregate metrics |
+| API | `api.py` | FastAPI service: `/health`, `/query`, `/evaluate`, `/evaluate/batch`, optional API-key auth |
 
-The vector stage intentionally uses cheap deterministic embeddings: the retrieval
-*interfaces* (chunks in, `SearchResult` with `lexical_score` / `vector_score` /
-`hybrid_score` / `rerank_score` out) are the point, and they stay stable when you swap
-in a real embedding model or vector store.
+The retrieval *interfaces* (chunks in, `SearchResult` with `lexical_score` /
+`vector_score` / `hybrid_score` / `rerank_score` out) are the point: the same pipeline
+runs against the zero-dependency offline backends or against Qdrant + real embeddings,
+selected purely by environment variables.
 
 ## Architecture
 
@@ -56,7 +57,8 @@ Ingestion -> word-count chunks
       +----------------------+
       |                      |
       v                      v
-Lexical index (IDF)    Vector index (hashed embeddings)
+Lexical index (IDF)    Embedder -> Vector store
+                       (hashing|tfidf|st)  (memory|qdrant)
       |                      |
       +----- score fusion ---+
       |   0.55*lex + 0.45*vec
@@ -80,13 +82,16 @@ Requires Python 3.12+.
 git clone https://github.com/lucianoon/enterprise-rag-system.git
 cd enterprise-rag-system
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt            # core: runs fully offline
+pip install -r requirements-extras.txt     # optional: qdrant-client + scikit-learn
 
-pytest -q                      # 8 tests, no network, no API key
+pytest -q                      # 29 tests, no network, no API key
 uvicorn enterprise_rag_system.api:app --app-dir src --port 8000
 ```
 
-Or with make: `make install && make test && make dev`. Docker: `docker compose up --build`.
+Or with make: `make install && make test && make dev`. Docker:
+`docker compose up --build` starts the API wired to a real Qdrant instance
+(`RAG_VECTOR_STORE=qdrant`, `RAG_EMBEDDING_BACKEND=tfidf`).
 
 The API boots against the bundled sample corpus (`data/sample/policies.jsonl` — refund,
 security and SLA policies), so you can query it immediately.
@@ -100,7 +105,20 @@ Set `RAG_LLM_MODE` (see `.env.example`):
 - `deterministic` — always use the offline template (what CI runs)
 
 A transient Claude API error falls back to the deterministic answer, so `/query` never
-hard-fails. The active mode is reported as `generation_mode` in response metadata.
+hard-fails (the failure is logged with a full traceback). The active mode is reported
+as `generation_mode` in response metadata.
+
+### Retrieval backends
+
+Both retrieval stages are selected by environment variables (see `.env.example`):
+
+- `RAG_EMBEDDING_BACKEND` — `hashing` (default: deterministic, zero dependencies,
+  stable across processes), `tfidf` (scikit-learn, fitted on the indexed corpus),
+  `sentence-transformer` (dense semantic vectors, heavy) or `auto` (best available).
+- `RAG_VECTOR_STORE` — `memory` (default: exact in-process cosine search) or `qdrant`
+  (uses `QDRANT_URL` and `COLLECTION_NAME`; `docker compose` wires this up).
+- `RAG_API_KEY` — when set, `/query` and `/evaluate*` require the same value in the
+  `X-API-Key` header. Unset means open access for local development.
 
 ## Evaluation: Recall@K and MRR
 
@@ -140,15 +158,33 @@ How to read the numbers:
 Each `SearchResult` also returns its `lexical_score`, `vector_score`, `hybrid_score`
 and `rerank_score`, so you can trace a bad ranking to the exact stage that caused it.
 
+### Batch evaluation over a versioned dataset
+
+A labeled dataset ships with the repo (`data/eval/retrieval_v1.jsonl` — 10 queries
+against the sample corpus). Run it through the API or the CLI:
+
+```bash
+curl -X POST http://localhost:8000/evaluate/batch \
+  -H "Content-Type: application/json" -d '{"top_k": 3}'
+
+python -m enterprise_rag_system.evaluation --top-k 1     # or: make eval
+```
+
+The report contains `mean_recall_at_k`, `mean_mrr` and per-query metrics, so a change
+to fusion weights, chunking or the reranker shows up as a measurable diff instead of a
+vibe. Point `RAG_EVAL_DATASET` at your own JSONL
+(`{"query_id", "question", "relevant_doc_ids"}` per line) to evaluate a real corpus.
+
 ### Retrieval trade-offs made explicit
 
 - **Fusion weights** (`0.55` lexical / `0.45` vector) favor exact enterprise terminology
   slightly over paraphrase matching — tune per corpus and re-check MRR.
 - **Candidate pool**: the pipeline retrieves `2 * top_k` candidates before reranking, a
   recall-vs-latency knob.
-- **Hashed embeddings** trade semantic quality for determinism and zero infrastructure —
-  ideal for CI and for isolating lexical-vs-vector behavior; swap in real embeddings
-  behind the same interface for production semantics.
+- **Default hashed embeddings** trade semantic quality for determinism and zero
+  infrastructure — ideal for CI and for isolating lexical-vs-vector behavior; the
+  `tfidf` and `sentence-transformer` backends provide production semantics behind the
+  same interface.
 - **Reranker** is a cheap heuristic (title overlap + exact phrase), not a cross-encoder;
   it improves precision on title-shaped queries without adding a model dependency.
 
@@ -156,9 +192,13 @@ and `rerank_score`, so you can trace a bad ranking to the exact stage that cause
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/health` | GET | Liveness check |
+| `/health` | GET | Liveness check (always open) |
 | `/query` | POST | `{question, top_k}` → grounded answer, citations, per-stage scores, latency metadata |
 | `/evaluate` | POST | `{question, relevant_doc_ids, top_k}` → Recall@K, MRR, retrieved IDs, full query response |
+| `/evaluate/batch` | POST | `{top_k}` → aggregate Recall@K / MRR over the versioned eval dataset |
+
+When `RAG_API_KEY` is set, all endpoints except `/health` require the `X-API-Key`
+header.
 
 ```bash
 curl -X POST http://localhost:8000/query \
@@ -176,16 +216,17 @@ Response metadata includes `query_id`, `latency_ms`, `top_k`, `result_count` and
 pytest -q
 ```
 
-Tests cover the API endpoints, the pipeline (citations + Recall/MRR on the sample
-corpus), and generator selection/fallback behavior. They run entirely offline — the
+Tests cover the API endpoints (including auth and validation errors), retrieval units,
+every embedding and vector store backend (Qdrant runs in `:memory:` mode), batch
+evaluation, and generator selection/fallback behavior. They run entirely offline — the
 deterministic embedding and generator paths mean CI needs no secrets, which is exactly
 how [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs them.
 
 ## Roadmap
 
-- Real embedding adapter and vector store (interfaces already isolate this)
 - Cross-encoder reranker
-- Batch evaluation over a query set with aggregate Recall@K / MRR
+- Answer-quality evaluation (faithfulness/groundedness) on top of retrieval metrics
+- Incremental indexing instead of full reindex on startup
 
 ## License
 
