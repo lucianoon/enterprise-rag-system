@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0
+
+- Answer faithfulness evaluation (`answer_eval.py`): judges whether the
+  generated answer is grounded in its retrieved passages.
+- Two judges behind one interface, selected by `RAG_JUDGE_MODE`: a
+  deterministic per-sentence lexical containment heuristic (default, CI-safe)
+  and Claude as an LLM judge (`RAG_JUDGE_MODEL`), with logged fallback to the
+  heuristic on API errors.
+- `POST /evaluate/answer` endpoint returning faithfulness, unsupported claims
+  and the full query response.
+
 ## 0.2.0
 
 - Pluggable embedding backends (`embeddings.py`): deterministic hashing
