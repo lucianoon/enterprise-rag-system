@@ -1,11 +1,23 @@
-"""Hybrid retrieval primitives."""
+"""Hybrid retrieval: lexical scoring fused with vector search.
+
+Lexical scoring (BM25-style IDF + log-TF) runs in-process. Vector scoring is
+delegated to a pluggable :class:`~enterprise_rag_system.embeddings.Embedder`
+and :class:`~enterprise_rag_system.vector_store.VectorStore`, so the same
+retriever runs against the offline in-memory backends or a real Qdrant
+instance without code changes.
+"""
 
 from collections import Counter
-from math import log, sqrt
+import logging
+from math import log
 import re
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 
+from enterprise_rag_system.embeddings import Embedder, build_embedder
 from enterprise_rag_system.models import Chunk, SearchResult
+from enterprise_rag_system.vector_store import VectorStore, build_vector_store
+
+logger = logging.getLogger(__name__)
 
 
 def tokenize(text: str) -> List[str]:
@@ -13,37 +25,46 @@ def tokenize(text: str) -> List[str]:
     return re.findall(r"[a-z0-9]+", text.lower())
 
 
-def embed(text: str, dims: int = 48) -> List[float]:
-    """Deterministic local embedding for offline demos and CI."""
-    vector = [0.0] * dims
-    for token in tokenize(text):
-        bucket = hash(token) % dims
-        vector[bucket] += 1.0
-    norm = sqrt(sum(v * v for v in vector)) or 1.0
-    return [v / norm for v in vector]
-
-
-def cosine(a: List[float], b: List[float]) -> float:
-    """Cosine similarity for normalized vectors."""
-    return sum(x * y for x, y in zip(a, b))
-
-
 class HybridRetriever:
     """Combines lexical and vector retrieval."""
 
-    def __init__(self, chunks: Iterable[Chunk]):
+    def __init__(
+        self,
+        chunks: Iterable[Chunk],
+        embedder: Optional[Embedder] = None,
+        vector_store: Optional[VectorStore] = None,
+    ):
         self.chunks = list(chunks)
         self.chunk_tokens = {c.chunk_id: tokenize(f"{c.title} {c.text}") for c in self.chunks}
-        self.chunk_vectors = {c.chunk_id: embed(f"{c.title} {c.text}") for c in self.chunks}
         self.idf = self._build_idf()
+
+        self.embedder = embedder or build_embedder()
+        self.vector_store = vector_store or build_vector_store()
+        texts = [f"{c.title} {c.text}" for c in self.chunks]
+        self.embedder.fit(texts)
+        if self.chunks:
+            vectors = self.embedder.embed_texts(texts)
+            self.vector_store.index([c.chunk_id for c in self.chunks], vectors)
+        logger.info(
+            "Indexed %d chunks (embedder=%s, vector_store=%s).",
+            len(self.chunks),
+            self.embedder.name,
+            self.vector_store.name,
+        )
 
     def search(self, question: str, top_k: int = 3) -> List[SearchResult]:
         query_tokens = tokenize(question)
-        query_vector = embed(question)
+        # Every chunk gets a hybrid score, so ask the store for the full
+        # ranking. Fine at document-collection scale; for very large corpora
+        # this becomes a candidate pool instead.
+        vector_scores: Dict[str, float] = {}
+        if self.chunks:
+            query_vector = self.embedder.embed_query(question)
+            vector_scores = dict(self.vector_store.search(query_vector, top_k=len(self.chunks)))
         scored = []
         for chunk in self.chunks:
             lexical = self._lexical_score(query_tokens, self.chunk_tokens[chunk.chunk_id])
-            vector = cosine(query_vector, self.chunk_vectors[chunk.chunk_id])
+            vector = vector_scores.get(chunk.chunk_id, 0.0)
             hybrid = (0.55 * lexical) + (0.45 * vector)
             scored.append(
                 SearchResult(
@@ -89,4 +110,3 @@ class Reranker:
             exact_bonus = 0.25 if result.chunk.title.lower() in query else 0.0
             result.rerank_score = round(result.hybrid_score + title_overlap + exact_bonus, 4)
         return sorted(results, key=lambda item: item.rerank_score, reverse=True)
-
