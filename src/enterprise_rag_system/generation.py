@@ -13,10 +13,13 @@ to the deterministic path unless a Claude API key is available.
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import List, Protocol
 
 from enterprise_rag_system.models import SearchResult
+
+logger = logging.getLogger(__name__)
 
 
 SYSTEM_PROMPT = (
@@ -100,7 +103,12 @@ class LLMAnswerGenerator:
                 messages=[{"role": "user", "content": user_prompt}],
             )
         except Exception:
-            # Never let a transient API error break the query path.
+            # Never let a transient API error break the query path — but the
+            # failure must be visible to operators, not swallowed silently.
+            logger.exception(
+                "Claude request failed (model=%s); falling back to deterministic answer.",
+                self.model,
+            )
             return self._fallback.compose(question, results)
         return "".join(
             block.text for block in message.content if block.type == "text"
