@@ -175,6 +175,27 @@ to fusion weights, chunking or the reranker shows up as a measurable diff instea
 vibe. Point `RAG_EVAL_DATASET` at your own JSONL
 (`{"query_id", "question", "relevant_doc_ids"}` per line) to evaluate a real corpus.
 
+### Answer faithfulness
+
+Retrieval metrics stop at the ranked list; `/evaluate/answer` judges what the
+*generator* did with it — the fraction of answer claims supported by the retrieved
+passages, plus the unsupported claims verbatim:
+
+```bash
+curl -X POST http://localhost:8000/evaluate/answer \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What must a refund request include?", "top_k": 3}'
+```
+
+Two judges share one interface, selected by `RAG_JUDGE_MODE` (`answer_eval.py`):
+
+- `heuristic` (default) — per-sentence lexical containment against the context.
+  Deterministic and offline: a cheap proxy for groundedness that CI can gate on, not
+  a semantic entailment check.
+- `llm` — Claude scores faithfulness and lists unsupported claims
+  (`RAG_JUDGE_MODEL` overrides the model). Falls back to the heuristic judge on API
+  errors, reported as `judge_mode: "heuristic-fallback"`.
+
 ### Retrieval trade-offs made explicit
 
 - **Fusion weights** (`0.55` lexical / `0.45` vector) favor exact enterprise terminology
@@ -196,6 +217,7 @@ vibe. Point `RAG_EVAL_DATASET` at your own JSONL
 | `/query` | POST | `{question, top_k}` → grounded answer, citations, per-stage scores, latency metadata |
 | `/evaluate` | POST | `{question, relevant_doc_ids, top_k}` → Recall@K, MRR, retrieved IDs, full query response |
 | `/evaluate/batch` | POST | `{top_k}` → aggregate Recall@K / MRR over the versioned eval dataset |
+| `/evaluate/answer` | POST | `{question, top_k}` → answers the question, then judges the answer's faithfulness against its own retrieved context |
 
 When `RAG_API_KEY` is set, all endpoints except `/health` require the `X-API-Key`
 header.
@@ -225,7 +247,7 @@ how [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs them.
 ## Roadmap
 
 - Cross-encoder reranker
-- Answer-quality evaluation (faithfulness/groundedness) on top of retrieval metrics
+- Batch answer-quality evaluation (aggregate faithfulness over the eval dataset)
 - Incremental indexing instead of full reindex on startup
 
 ## License
