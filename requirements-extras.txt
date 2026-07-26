@@ -1,10 +1,10 @@
 # Optional backends. The core system runs without these (hashing embedder +
 # in-memory vector store); install them to enable the production backends.
-qdrant-client>=1.10.0
-scikit-learn>=1.4.0
+qdrant-client>=1.18.0
+scikit-learn>=1.9.0
 # Dense semantic embeddings (heavy: pulls torch). Enable when you want
 # RAG_EMBEDDING_BACKEND=sentence-transformer.
 # sentence-transformers>=3.0.0
 # Backend OpenAI-compatible (OpenAI, OpenRouter, Groq, Together, vLLM,
 # Ollama, LM Studio). Desnecessário para o backend Anthropic nativo.
-openai>=1.40.0
+openai>=1.109.1
