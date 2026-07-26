@@ -1,136 +1,147 @@
 # Enterprise RAG System
 
+*[English version](README.en.md)*
+
 [![CI](https://github.com/lucianoon/enterprise-rag-system/actions/workflows/ci.yml/badge.svg)](https://github.com/lucianoon/enterprise-rag-system/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A retrieval-quality-first RAG engine: hybrid search (BM25-style lexical + vector) with
-score fusion, a heuristic rerank pass (title and exact-phrase overlap — not a
-cross-encoder), citation-carrying answers, and a built-in evaluation endpoint that
-reports **Recall@K** and **MRR** for any labeled query. Every response exposes its
-per-stage scores so you can see *why* a chunk was retrieved, not just *that* it was.
+Um motor de RAG que trata a qualidade da recuperação como o problema principal:
+busca híbrida (lexical no estilo BM25 + vetorial) com fusão de scores, um passe
+de reranking heurístico (sobreposição de título e frase exata — não é
+cross-encoder), respostas com citações e um endpoint de avaliação embutido que
+reporta **Recall@K** e **MRR** para qualquer consulta rotulada. Toda resposta
+expõe os scores de cada estágio, então dá para ver *por que* um trecho foi
+recuperado, não apenas *que* ele foi.
 
-> **Not the same project as [RAG Agentic System](https://github.com/lucianoon/rag-agentic-system).**
-> This engine retrieves **once** and answers; the design goal is a ranked list whose
-> quality you can measure. The other one wraps retrieval in a **multi-step Claude
-> tool-use loop** where the model decides when to search again. Different problems:
-> this repo optimizes ranking quality, that one optimizes multi-step reasoning
-> over a corpus.
+> **Não é o mesmo projeto que o [RAG Agentic System](https://github.com/lucianoon/rag-agentic-system).**
+> Este motor recupera **uma vez** e responde; o objetivo de projeto é uma lista
+> ranqueada cuja qualidade você consegue medir. O outro embrulha a recuperação
+> em um **loop de tool use com Claude**, em que o modelo decide quando buscar de
+> novo. Problemas diferentes: este repo otimiza qualidade de ranqueamento,
+> aquele otimiza raciocínio em múltiplos passos sobre um corpus.
 
-## Problem
+## Problema
 
-Most RAG failures are retrieval failures. Pure semantic search misses exact terms that
-dominate enterprise queries — policy names, IDs, acronyms, compliance language — while
-pure keyword search misses paraphrases. And without retrieval metrics, you cannot tell
-whether a bad answer came from the generator or from the ranked list it was given.
+A maior parte das falhas de RAG é falha de recuperação. Busca puramente
+semântica perde termos exatos que dominam consultas corporativas — nomes de
+política, IDs, siglas, linguagem de compliance —, enquanto busca puramente por
+palavra-chave perde paráfrases. E sem métricas de recuperação, não dá para saber
+se uma resposta ruim veio do gerador ou da lista ranqueada que ele recebeu.
 
-This project treats retrieval as the measurable core of the system:
+Este projeto trata a recuperação como o núcleo mensurável do sistema:
 
-- fuse lexical and vector evidence instead of betting on one signal
-- keep score components transparent end to end
-- make Recall@K / MRR evaluation a first-class API operation, not an afterthought
+- fundir evidência lexical e vetorial em vez de apostar em um único sinal
+- manter os componentes de score transparentes de ponta a ponta
+- fazer da avaliação Recall@K / MRR uma operação de primeira classe da API, não
+  um acessório
 
-## Solution
+## Solução
 
-A compact, fully typed pipeline (`src/enterprise_rag_system/`):
+Um pipeline compacto e totalmente tipado (`src/enterprise_rag_system/`):
 
-| Stage | Module | What it actually does |
+| Estágio | Módulo | O que faz de fato |
 |---|---|---|
-| Ingestion | `ingestion.py` | Loads JSONL documents, splits them into fixed-size word-count chunks (default 80 words) |
-| Lexical retrieval | `retrieval.py` | BM25-style scoring: IDF-weighted term matching with log-scaled term frequency |
-| Embeddings | `embeddings.py` | Pluggable backends: deterministic hashing (offline/CI default), TF-IDF (scikit-learn) or dense semantic vectors (sentence-transformers) |
-| Vector store | `vector_store.py` | Pluggable backends: exact in-memory cosine search or a real Qdrant index (the one `docker compose` starts) |
-| Score fusion | `retrieval.py` | Weighted hybrid score: `0.55 * lexical + 0.45 * vector` |
-| Reranking | `retrieval.py` | Boosts results by query/title token overlap plus an exact-title-phrase bonus |
-| Generation | `generation.py` | Claude synthesizes a grounded answer with bracketed citations; a deterministic template generator is the offline/CI fallback |
-| Citations | `pipeline.py` | Every answer ships with `doc_id` / `title` / `chunk_id` for each supporting chunk |
-| Evaluation | `evaluation.py` | Recall@K and MRR per labeled query, plus batch evaluation over a versioned dataset with aggregate metrics |
-| API | `api.py` | FastAPI service: `/health`, `/query`, `/evaluate`, `/evaluate/batch`, optional API-key auth |
+| Ingestão | `ingestion.py` | Carrega documentos JSONL e os divide em chunks de tamanho fixo por contagem de palavras (padrão: 80 palavras) |
+| Recuperação lexical | `retrieval.py` | Score no estilo BM25: casamento de termos ponderado por IDF com frequência em escala logarítmica |
+| Embeddings | `embeddings.py` | Backends plugáveis: hashing determinístico (padrão offline/CI), TF-IDF (scikit-learn) ou vetores semânticos densos (sentence-transformers) |
+| Vector store | `vector_store.py` | Backends plugáveis: busca por cosseno exata em memória ou um índice Qdrant real (o que o `docker compose` sobe) |
+| Fusão de scores | `retrieval.py` | Score híbrido ponderado: `0.55 * lexical + 0.45 * vetorial` |
+| Reranking | `retrieval.py` | Reforça resultados pela sobreposição de tokens entre consulta e título, mais um bônus de frase exata no título |
+| Geração | `generation.py` | Claude sintetiza uma resposta fundamentada com citações entre colchetes; um gerador determinístico por template é o fallback offline/CI |
+| Citações | `pipeline.py` | Toda resposta traz `doc_id` / `title` / `chunk_id` de cada trecho de apoio |
+| Avaliação | `evaluation.py` | Recall@K e MRR por consulta rotulada, mais avaliação em lote sobre um dataset versionado com métricas agregadas |
+| API | `api.py` | Serviço FastAPI: `/health`, `/query`, `/evaluate`, `/evaluate/batch`, auth opcional por API key |
 
-The retrieval *interfaces* (chunks in, `SearchResult` with `lexical_score` /
-`vector_score` / `hybrid_score` / `rerank_score` out) are the point: the same pipeline
-runs against the zero-dependency offline backends or against Qdrant + real embeddings,
-selected purely by environment variables.
+As *interfaces* de recuperação (chunks entram, sai um `SearchResult` com
+`lexical_score` / `vector_score` / `hybrid_score` / `rerank_score`) são o ponto
+central: o mesmo pipeline roda contra os backends offline sem dependências ou
+contra Qdrant + embeddings reais, escolhidos puramente por variáveis de
+ambiente.
 
-## Architecture
+## Arquitetura
 
-![Architecture](architecture.png)
+![Arquitetura](architecture.png)
 
 ```text
-JSONL documents
+Documentos JSONL
       |
       v
-Ingestion -> word-count chunks
+Ingestão -> chunks por contagem de palavras
       |
       +----------------------+
       |                      |
       v                      v
-Lexical index (IDF)    Embedder -> Vector store
+Índice lexical (IDF)   Embedder -> Vector store
                        (hashing|tfidf|st)  (memory|qdrant)
       |                      |
-      +----- score fusion ---+
-      |   0.55*lex + 0.45*vec
+      +----- fusão de scores +
+      |   0.55*lex + 0.45*vet
       v
-Reranker (title overlap + exact-phrase bonus)
+Reranker (sobreposição de título + bônus de frase exata)
       |
       v
-Answer generator (Claude, deterministic fallback) + citations
+Gerador de resposta (Claude, fallback determinístico) + citações
       |
       v
-Evaluator (Recall@K, MRR)  <- labeled queries via /evaluate
+Avaliador (Recall@K, MRR)  <- consultas rotuladas via /evaluate
 ```
 
-More detail in [docs/architecture.md](docs/architecture.md).
+Mais detalhes em [docs/architecture.md](docs/architecture.md) (em inglês).
 
-## Quickstart
+## Início rápido
 
-Requires Python 3.12+.
+Requer Python 3.12+.
 
 ```bash
 git clone https://github.com/lucianoon/enterprise-rag-system.git
 cd enterprise-rag-system
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt            # core: runs fully offline
-pip install -r requirements-extras.txt     # optional: qdrant-client + scikit-learn
+pip install -r requirements.txt            # núcleo: roda totalmente offline
+pip install -r requirements-extras.txt     # opcional: qdrant-client + scikit-learn
 
-pytest -q                      # 29 tests, no network, no API key
+pytest -q                      # 36 testes, sem rede, sem chave de API
 uvicorn enterprise_rag_system.api:app --app-dir src --port 8000
 ```
 
-Or with make: `make install && make test && make dev`. Docker:
-`docker compose up --build` starts the API wired to a real Qdrant instance
+Ou com make: `make install && make test && make dev`. Com Docker:
+`docker compose up --build` sobe a API ligada a uma instância real do Qdrant
 (`RAG_VECTOR_STORE=qdrant`, `RAG_EMBEDDING_BACKEND=tfidf`).
 
-The API boots against the bundled sample corpus (`data/sample/policies.jsonl` — refund,
-security and SLA policies), so you can query it immediately.
+A API sobe já com o corpus de exemplo embutido (`data/sample/policies.jsonl` —
+políticas de reembolso, segurança e SLA), então dá para consultar de imediato.
 
-### Answer generation modes
+### Modos de geração de resposta
 
-Set `RAG_LLM_MODE` (see `.env.example`):
+Defina `RAG_LLM_MODE` (veja `.env.example`):
 
-- `auto` (default) — use Claude when `ANTHROPIC_API_KEY` is set, else the deterministic template
-- `llm` — always call Claude (`RAG_LLM_MODEL` overrides the model id)
-- `deterministic` — always use the offline template (what CI runs)
+- `auto` (padrão) — usa Claude quando `ANTHROPIC_API_KEY` está definida, senão o
+  template determinístico
+- `llm` — sempre chama Claude (`RAG_LLM_MODEL` sobrescreve o id do modelo)
+- `deterministic` — sempre usa o template offline (é o que a CI roda)
 
-A transient Claude API error falls back to the deterministic answer, so `/query` never
-hard-fails (the failure is logged with a full traceback). The active mode is reported
-as `generation_mode` in response metadata.
+Um erro transitório da API do Claude cai no fallback determinístico, então
+`/query` nunca falha de forma dura (a falha é logada com traceback completo). O
+modo ativo é reportado como `generation_mode` nos metadados da resposta.
 
-### Retrieval backends
+### Backends de recuperação
 
-Both retrieval stages are selected by environment variables (see `.env.example`):
+Os dois estágios de recuperação são escolhidos por variáveis de ambiente (veja
+`.env.example`):
 
-- `RAG_EMBEDDING_BACKEND` — `hashing` (default: deterministic, zero dependencies,
-  stable across processes), `tfidf` (scikit-learn, fitted on the indexed corpus),
-  `sentence-transformer` (dense semantic vectors, heavy) or `auto` (best available).
-- `RAG_VECTOR_STORE` — `memory` (default: exact in-process cosine search) or `qdrant`
-  (uses `QDRANT_URL` and `COLLECTION_NAME`; `docker compose` wires this up).
-- `RAG_API_KEY` — when set, `/query` and `/evaluate*` require the same value in the
-  `X-API-Key` header. Unset means open access for local development.
+- `RAG_EMBEDDING_BACKEND` — `hashing` (padrão: determinístico, zero
+  dependências, estável entre processos), `tfidf` (scikit-learn, ajustado no
+  corpus indexado), `sentence-transformer` (vetores semânticos densos, pesado)
+  ou `auto` (o melhor disponível).
+- `RAG_VECTOR_STORE` — `memory` (padrão: busca exata por cosseno em processo) ou
+  `qdrant` (usa `QDRANT_URL` e `COLLECTION_NAME`; o `docker compose` já liga
+  isso).
+- `RAG_API_KEY` — quando definida, `/query` e `/evaluate*` exigem o mesmo valor
+  no cabeçalho `X-API-Key`. Sem ela, acesso aberto para desenvolvimento local.
 
-## Evaluation: Recall@K and MRR
+## Avaliação: Recall@K e MRR
 
-Retrieval quality is evaluated per labeled query through the API (or
-`RetrievalEvaluator` in code):
+A qualidade da recuperação é avaliada por consulta rotulada através da API (ou
+pelo `RetrievalEvaluator` em código):
 
 ```bash
 curl -X POST http://localhost:8000/evaluate \
@@ -142,7 +153,7 @@ curl -X POST http://localhost:8000/evaluate \
       }'
 ```
 
-Response (excerpt):
+Resposta (trecho):
 
 ```json
 {
@@ -153,40 +164,48 @@ Response (excerpt):
 }
 ```
 
-How to read the numbers:
+Como ler os números:
 
-- **Recall@K** — fraction of the labeled relevant documents that appear anywhere in the
-  top-K citations. `1.0` means everything relevant was retrieved; low recall means the
-  retriever (not the generator) is the bottleneck.
-- **MRR** — reciprocal rank of the *first* relevant hit. `1.0` = relevant doc ranked
-  first, `0.5` = second, `0.33` = third, `0.0` = missed entirely. High recall with low
-  MRR points at ranking/fusion weights or the reranker, not at candidate generation.
+- **Recall@K** — fração dos documentos rotulados como relevantes que aparecem em
+  qualquer posição das top-K citações. `1.0` significa que tudo que era
+  relevante foi recuperado; recall baixo significa que o gargalo é o retriever,
+  não o gerador.
+- **MRR** — rank recíproco do *primeiro* acerto relevante. `1.0` = documento
+  relevante em primeiro lugar, `0.5` = segundo, `0.33` = terceiro, `0.0` =
+  não apareceu. Recall alto com MRR baixo aponta para os pesos de
+  fusão/ranqueamento ou para o reranker, não para a geração de candidatos.
 
-Each `SearchResult` also returns its `lexical_score`, `vector_score`, `hybrid_score`
-and `rerank_score`, so you can trace a bad ranking to the exact stage that caused it.
+Cada `SearchResult` também devolve seu `lexical_score`, `vector_score`,
+`hybrid_score` e `rerank_score`, então dá para rastrear um ranqueamento ruim até
+o estágio exato que o causou.
 
-### Batch evaluation over a versioned dataset
+> O corpus de exemplo e o dataset de avaliação estão em inglês, então as
+> consultas dos exemplos acima também estão. Aponte `RAG_EVAL_DATASET` para o
+> seu próprio JSONL para avaliar um corpus em português.
 
-A labeled dataset ships with the repo (`data/eval/retrieval_v1.jsonl` — 10 queries
-against the sample corpus). Run it through the API or the CLI:
+### Avaliação em lote sobre um dataset versionado
+
+Um dataset rotulado acompanha o repositório (`data/eval/retrieval_v1.jsonl` — 10
+consultas contra o corpus de exemplo). Rode pela API ou pela CLI:
 
 ```bash
 curl -X POST http://localhost:8000/evaluate/batch \
   -H "Content-Type: application/json" -d '{"top_k": 3}'
 
-python -m enterprise_rag_system.evaluation --top-k 1     # or: make eval
+python -m enterprise_rag_system.evaluation --top-k 1     # ou: make eval
 ```
 
-The report contains `mean_recall_at_k`, `mean_mrr` and per-query metrics, so a change
-to fusion weights, chunking or the reranker shows up as a measurable diff instead of a
-vibe. Point `RAG_EVAL_DATASET` at your own JSONL
-(`{"query_id", "question", "relevant_doc_ids"}` per line) to evaluate a real corpus.
+O relatório traz `mean_recall_at_k`, `mean_mrr` e métricas por consulta, então
+uma mudança nos pesos de fusão, no chunking ou no reranker aparece como um diff
+mensurável em vez de uma impressão. Aponte `RAG_EVAL_DATASET` para o seu próprio
+JSONL (`{"query_id", "question", "relevant_doc_ids"}` por linha) para avaliar um
+corpus real.
 
-### Answer faithfulness
+### Fidelidade da resposta
 
-Retrieval metrics stop at the ranked list; `/evaluate/answer` judges what the
-*generator* did with it — the fraction of answer claims supported by the retrieved
-passages, plus the unsupported claims verbatim:
+As métricas de recuperação param na lista ranqueada; `/evaluate/answer` julga o
+que o *gerador* fez com ela — a fração de afirmações da resposta que estão
+apoiadas nas passagens recuperadas, mais as afirmações sem apoio na íntegra:
 
 ```bash
 curl -X POST http://localhost:8000/evaluate/answer \
@@ -194,40 +213,44 @@ curl -X POST http://localhost:8000/evaluate/answer \
   -d '{"question": "What must a refund request include?", "top_k": 3}'
 ```
 
-Two judges share one interface, selected by `RAG_JUDGE_MODE` (`answer_eval.py`):
+Dois juízes compartilham a mesma interface, escolhidos por `RAG_JUDGE_MODE`
+(`answer_eval.py`):
 
-- `heuristic` (default) — per-sentence lexical containment against the context.
-  Deterministic and offline: a cheap proxy for groundedness that CI can gate on, not
-  a semantic entailment check.
-- `llm` — Claude scores faithfulness and lists unsupported claims
-  (`RAG_JUDGE_MODEL` overrides the model). Falls back to the heuristic judge on API
-  errors, reported as `judge_mode: "heuristic-fallback"`.
+- `heuristic` (padrão) — contenção lexical sentença a sentença contra o
+  contexto. Determinístico e offline: um proxy barato de groundedness que a CI
+  consegue usar como gate, não uma verificação de implicação semântica.
+- `llm` — Claude pontua a fidelidade e lista as afirmações sem apoio
+  (`RAG_JUDGE_MODEL` sobrescreve o modelo). Cai no juiz heurístico em caso de
+  erro de API, reportado como `judge_mode: "heuristic-fallback"`.
 
-### Retrieval trade-offs made explicit
+### Trade-offs de recuperação, explicitados
 
-- **Fusion weights** (`0.55` lexical / `0.45` vector) favor exact enterprise terminology
-  slightly over paraphrase matching — tune per corpus and re-check MRR.
-- **Candidate pool**: the pipeline retrieves `2 * top_k` candidates before reranking, a
-  recall-vs-latency knob.
-- **Default hashed embeddings** trade semantic quality for determinism and zero
-  infrastructure — ideal for CI and for isolating lexical-vs-vector behavior; the
-  `tfidf` and `sentence-transformer` backends provide production semantics behind the
-  same interface.
-- **Reranker** is a cheap heuristic (title overlap + exact phrase), not a cross-encoder;
-  it improves precision on title-shaped queries without adding a model dependency.
+- **Pesos de fusão** (`0.55` lexical / `0.45` vetorial) favorecem levemente a
+  terminologia corporativa exata sobre o casamento por paráfrase — ajuste por
+  corpus e reconfira o MRR.
+- **Pool de candidatos**: o pipeline recupera `2 * top_k` candidatos antes do
+  reranking; é um botão de recall vs. latência.
+- **Embeddings hasheados por padrão** trocam qualidade semântica por
+  determinismo e zero infraestrutura — ideal para CI e para isolar o
+  comportamento lexical vs. vetorial; os backends `tfidf` e
+  `sentence-transformer` oferecem semântica de produção atrás da mesma
+  interface.
+- **O reranker** é uma heurística barata (sobreposição de título + frase exata),
+  não um cross-encoder; melhora a precisão em consultas com cara de título sem
+  adicionar dependência de modelo.
 
 ## API
 
-| Endpoint | Method | Description |
+| Endpoint | Método | Descrição |
 |---|---|---|
-| `/health` | GET | Liveness check (always open) |
-| `/query` | POST | `{question, top_k}` → grounded answer, citations, per-stage scores, latency metadata |
-| `/evaluate` | POST | `{question, relevant_doc_ids, top_k}` → Recall@K, MRR, retrieved IDs, full query response |
-| `/evaluate/batch` | POST | `{top_k}` → aggregate Recall@K / MRR over the versioned eval dataset |
-| `/evaluate/answer` | POST | `{question, top_k}` → answers the question, then judges the answer's faithfulness against its own retrieved context |
+| `/health` | GET | Verificação de liveness (sempre aberto) |
+| `/query` | POST | `{question, top_k}` → resposta fundamentada, citações, scores por estágio, metadados de latência |
+| `/evaluate` | POST | `{question, relevant_doc_ids, top_k}` → Recall@K, MRR, IDs recuperados, resposta completa da consulta |
+| `/evaluate/batch` | POST | `{top_k}` → Recall@K / MRR agregados sobre o dataset de avaliação versionado |
+| `/evaluate/answer` | POST | `{question, top_k}` → responde a pergunta e então julga a fidelidade da resposta contra o próprio contexto recuperado |
 
-When `RAG_API_KEY` is set, all endpoints except `/health` require the `X-API-Key`
-header.
+Quando `RAG_API_KEY` está definida, todos os endpoints exceto `/health` exigem o
+cabeçalho `X-API-Key`.
 
 ```bash
 curl -X POST http://localhost:8000/query \
@@ -235,28 +258,32 @@ curl -X POST http://localhost:8000/query \
   -d '{"question":"What does the refund policy require?","top_k":3}'
 ```
 
-Response metadata includes `query_id`, `latency_ms`, `top_k`, `result_count` and
-`generation_mode`. All request/response contracts are Pydantic models in
+Os metadados da resposta incluem `query_id`, `latency_ms`, `top_k`,
+`result_count` e `generation_mode`. Todos os contratos de request/response são
+modelos Pydantic em
 [`models.py`](src/enterprise_rag_system/models.py).
 
-## Tests
+## Testes
 
 ```bash
 pytest -q
 ```
 
-Tests cover the API endpoints (including auth and validation errors), retrieval units,
-every embedding and vector store backend (Qdrant runs in `:memory:` mode), batch
-evaluation, and generator selection/fallback behavior. They run entirely offline — the
-deterministic embedding and generator paths mean CI needs no secrets, which is exactly
-how [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs them.
+Os testes cobrem os endpoints da API (incluindo auth e erros de validação),
+unidades de recuperação, todos os backends de embedding e de vector store (o
+Qdrant roda em modo `:memory:`), avaliação em lote e o comportamento de seleção
+e fallback do gerador. Rodam inteiramente offline — os caminhos determinísticos
+de embedding e de geração significam que a CI não precisa de segredos, que é
+exatamente como o [`.github/workflows/ci.yml`](.github/workflows/ci.yml) os
+executa.
 
 ## Roadmap
 
-- Cross-encoder reranker
-- Batch answer-quality evaluation (aggregate faithfulness over the eval dataset)
-- Incremental indexing instead of full reindex on startup
+- Reranker com cross-encoder
+- Avaliação de qualidade de resposta em lote (fidelidade agregada sobre o
+  dataset de avaliação)
+- Indexação incremental em vez de reindexação completa na inicialização
 
-## License
+## Licença
 
 [MIT](LICENSE) — © 2026 Luciano de Oliveira Nunes.
