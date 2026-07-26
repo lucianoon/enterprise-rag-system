@@ -13,6 +13,17 @@ reporta **Recall@K** e **MRR** para qualquer consulta rotulada. Toda resposta
 expõe os scores de cada estágio, então dá para ver *por que* um trecho foi
 recuperado, não apenas *que* ele foi.
 
+## Evidências rápidas
+
+| Evidência | O que demonstra |
+|---|---|
+| 55 funções de teste offline | API, auth, recuperação, backends e avaliação |
+| Dataset rotulado e versionado | Recall@K e MRR reproduzíveis |
+| Scores por estágio | Diagnóstico de falhas de recuperação |
+| Hashing/TF-IDF/sentence-transformers | CI determinística e backend semântico real |
+| Memória/Qdrant | Mesma interface do teste local à infraestrutura externa |
+| Juiz heurístico ou LLM | Avaliação de fidelidade com fallback explícito |
+
 > **Não é o mesmo projeto que o [RAG Agentic System](https://github.com/lucianoon/rag-agentic-system).**
 > Este motor recupera **uma vez** e responde; o objetivo de projeto é uma lista
 > ranqueada cuja qualidade você consegue medir. O outro embrulha a recuperação
