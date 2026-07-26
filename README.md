@@ -4,10 +4,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A retrieval-quality-first RAG engine: hybrid search (BM25-style lexical + vector) with
-score fusion, a rerank pass, citation-carrying answers, and a built-in evaluation
-endpoint that reports **Recall@K** and **MRR** for any labeled query. Every response
-exposes its per-stage scores so you can see *why* a chunk was retrieved, not just *that*
-it was.
+score fusion, a heuristic rerank pass (title and exact-phrase overlap — not a
+cross-encoder), citation-carrying answers, and a built-in evaluation endpoint that
+reports **Recall@K** and **MRR** for any labeled query. Every response exposes its
+per-stage scores so you can see *why* a chunk was retrieved, not just *that* it was.
+
+> **Not the same project as [RAG Agentic System](https://github.com/lucianoon/rag-agentic-system).**
+> This engine retrieves **once** and answers; the design goal is a ranked list whose
+> quality you can measure. The other one wraps retrieval in a **multi-step Claude
+> tool-use loop** where the model decides when to search again. Different problems:
+> this repo optimizes ranking quality, that one optimizes multi-step reasoning
+> over a corpus.
 
 ## Problem
 
