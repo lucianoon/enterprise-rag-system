@@ -34,7 +34,9 @@ JUDGE_SYSTEM_PROMPT = (
     "passages support. List each unsupported claim verbatim."
 )
 
-DEFAULT_JUDGE_MODEL = "claude-opus-4-8"
+from enterprise_rag_system import llm_client
+
+DEFAULT_JUDGE_MODEL = llm_client.DEFAULT_ANTHROPIC_MODEL
 
 # Common words that should not count as evidence of grounding.
 _STOPWORDS = frozenset(
@@ -109,12 +111,9 @@ class LLMAnswerJudge:
 
     mode = "llm"
 
-    def __init__(self, model: str = DEFAULT_JUDGE_MODEL, max_tokens: int = 1024):
-        import anthropic  # imported lazily so the package stays optional
-
+    def __init__(self, model: str | None = None, max_tokens: int = 1024):
         self.model = model
         self.max_tokens = max_tokens
-        self._client = anthropic.Anthropic()
         self._fallback = HeuristicAnswerJudge()
 
     def judge(self, question: str, answer: str, results: List[SearchResult]) -> AnswerJudgement:
@@ -128,17 +127,14 @@ class LLMAnswerJudge:
             f"Answer to evaluate:\n{answer}"
         )
         try:
-            message = self._client.messages.create(
-                model=self.model,
-                max_tokens=self.max_tokens,
-                system=JUDGE_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_prompt}],
+            raw = llm_client.complete(
+                JUDGE_SYSTEM_PROMPT, user_prompt, model=self.model, max_tokens=self.max_tokens
             )
-            raw = "".join(block.text for block in message.content if block.type == "text")
             return self._parse(raw)
         except Exception:
             logger.exception(
-                "LLM judge failed (model=%s); falling back to heuristic judge.", self.model
+                "LLM judge failed (model=%s); falling back to heuristic judge.",
+                llm_client.describe(self.model),
             )
             fallback = self._fallback.judge(question, answer, results)
             return fallback.model_copy(update={"judge_mode": "heuristic-fallback"})
@@ -156,13 +152,8 @@ class LLMAnswerJudge:
 
 
 def _llm_available() -> bool:
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return False
-    try:
-        import anthropic  # noqa: F401
-    except ImportError:
-        return False
-    return True
+    """True when a backend resolves and its SDK is importable."""
+    return llm_client.is_available()
 
 
 def build_answer_judge() -> AnswerJudge:
@@ -170,11 +161,11 @@ def build_answer_judge() -> AnswerJudge:
 
     ``RAG_JUDGE_MODE``:
         - ``heuristic`` (default) — deterministic lexical containment, CI-safe.
-        - ``llm`` — always use Claude (``RAG_JUDGE_MODEL`` overrides the id).
-        - ``auto`` — Claude when available, else heuristic.
+        - ``llm`` — always call the model (``RAG_JUDGE_MODEL`` overrides the id).
+        - ``auto`` — call the model when available, else heuristic.
     """
     mode = os.getenv("RAG_JUDGE_MODE", "heuristic").lower()
-    model = os.getenv("RAG_JUDGE_MODEL", DEFAULT_JUDGE_MODEL)
+    model = os.getenv("RAG_JUDGE_MODEL") or None
 
     if mode == "heuristic":
         return HeuristicAnswerJudge()

@@ -30,7 +30,9 @@ SYSTEM_PROMPT = (
     "guessing. Keep the answer concise and grounded."
 )
 
-DEFAULT_MODEL = "claude-opus-4-8"
+from enterprise_rag_system import llm_client
+
+DEFAULT_MODEL = llm_client.DEFAULT_ANTHROPIC_MODEL
 
 
 class AnswerGenerator(Protocol):
@@ -77,12 +79,9 @@ class LLMAnswerGenerator:
 
     mode = "llm"
 
-    def __init__(self, model: str = DEFAULT_MODEL, max_tokens: int = 1024):
-        import anthropic  # imported lazily so the package stays optional
-
+    def __init__(self, model: str | None = None, max_tokens: int = 1024):
         self.model = model
         self.max_tokens = max_tokens
-        self._client = anthropic.Anthropic()
         self._fallback = DeterministicAnswerGenerator()
 
     def compose(self, question: str, results: List[SearchResult]) -> str:
@@ -96,34 +95,22 @@ class LLMAnswerGenerator:
             "citations."
         )
         try:
-            message = self._client.messages.create(
-                model=self.model,
-                max_tokens=self.max_tokens,
-                system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_prompt}],
+            return llm_client.complete(
+                SYSTEM_PROMPT, user_prompt, model=self.model, max_tokens=self.max_tokens
             )
         except Exception:
             # Never let a transient API error break the query path — but the
             # failure must be visible to operators, not swallowed silently.
             logger.exception(
-                "Claude request failed (model=%s); falling back to deterministic answer.",
-                self.model,
+                "LLM request failed (model=%s); falling back to deterministic answer.",
+                llm_client.describe(self.model),
             )
             return self._fallback.compose(question, results)
-        return "".join(
-            block.text for block in message.content if block.type == "text"
-        ).strip()
 
 
 def _llm_available() -> bool:
-    """True when the Anthropic SDK is importable and a key is configured."""
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        return False
-    try:
-        import anthropic  # noqa: F401
-    except ImportError:
-        return False
-    return True
+    """True when a backend resolves and its SDK is importable."""
+    return llm_client.is_available()
 
 
 def build_answer_generator() -> AnswerGenerator:
@@ -131,13 +118,14 @@ def build_answer_generator() -> AnswerGenerator:
 
     ``RAG_LLM_MODE``:
         - ``deterministic`` — always use the template (default in CI).
-        - ``llm`` — always use Claude (raises if the SDK/key is missing).
-        - ``auto`` (default) — use Claude when available, else the template.
+        - ``llm`` — always call the model (raises if the SDK/key is missing).
+        - ``auto`` (default) — call the model when available, else the template.
 
-    ``RAG_LLM_MODEL`` overrides the Claude model id (default ``claude-opus-4-8``).
+    Which model, and which provider, is resolved by :mod:`llm_client` from
+    ``RAG_LLM_BACKEND`` / ``RAG_LLM_MODEL`` / ``RAG_LLM_BASE_URL``.
     """
     mode = os.getenv("RAG_LLM_MODE", "auto").lower()
-    model = os.getenv("RAG_LLM_MODEL", DEFAULT_MODEL)
+    model = os.getenv("RAG_LLM_MODEL") or None
 
     if mode == "deterministic":
         return DeterministicAnswerGenerator()

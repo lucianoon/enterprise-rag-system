@@ -99,7 +99,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt            # núcleo: roda totalmente offline
 pip install -r requirements-extras.txt     # opcional: qdrant-client + scikit-learn
 
-pytest -q                      # 36 testes, sem rede, sem chave de API
+pytest -q                      # 55 testes, sem rede, sem chave de API
 uvicorn enterprise_rag_system.api:app --app-dir src --port 8000
 ```
 
@@ -114,14 +114,43 @@ políticas de reembolso, segurança e SLA), então dá para consultar de imediat
 
 Defina `RAG_LLM_MODE` (veja `.env.example`):
 
-- `auto` (padrão) — usa Claude quando `ANTHROPIC_API_KEY` está definida, senão o
+- `auto` (padrão) — usa o modelo quando há backend configurado, senão o
   template determinístico
-- `llm` — sempre chama Claude (`RAG_LLM_MODEL` sobrescreve o id do modelo)
+- `llm` — sempre chama o modelo (veja [Trocando de modelo ou de provedor](#trocando-de-modelo-ou-de-provedor))
 - `deterministic` — sempre usa o template offline (é o que a CI roda)
 
-Um erro transitório da API do Claude cai no fallback determinístico, então
+Um erro transitório da API cai no fallback determinístico, então
 `/query` nunca falha de forma dura (a falha é logada com traceback completo). O
 modo ativo é reportado como `generation_mode` nos metadados da resposta.
+
+### Trocando de modelo ou de provedor
+
+O acesso ao LLM passa por uma porta única (`llm_client.py`) com dois backends
+atrás da mesma interface — o gerador de resposta e o juiz de fidelidade usam os
+dois igualmente:
+
+| Variável | Valores |
+|---|---|
+| `RAG_LLM_BACKEND` | `auto` (padrão), `anthropic`, `openai` |
+| `RAG_LLM_MODEL` | id do modelo; default `claude-opus-5` ou `gpt-4.1-mini` |
+| `RAG_LLM_BASE_URL` | endpoint OpenAI-compatible (também aceita `OPENAI_BASE_URL`) |
+| `RAG_LLM_API_KEY` | credencial; cai para `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` |
+
+No modo `auto`: chave da Anthropic ⇒ `anthropic`; senão base URL ou chave OpenAI
+⇒ `openai`; sem nada, o pipeline usa o gerador determinístico.
+
+```bash
+# OpenRouter, Groq, Together, DeepInfra, Fireworks…
+export RAG_LLM_BASE_URL=https://openrouter.ai/api/v1
+export RAG_LLM_API_KEY=sk-or-v1-...
+export RAG_LLM_MODEL=meta-llama/llama-3.3-70b-instruct
+
+# Ollama local — sem credencial nenhuma
+export RAG_LLM_BASE_URL=http://localhost:11434/v1
+export RAG_LLM_MODEL=llama3.1
+```
+
+O backend OpenAI-compatible vem em `requirements-extras.txt`.
 
 ### Backends de recuperação
 
