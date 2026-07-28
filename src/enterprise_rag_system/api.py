@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.responses import RedirectResponse
 
 from enterprise_rag_system.answer_eval import build_answer_judge
 from enterprise_rag_system.evaluation import (
@@ -62,6 +63,11 @@ app = FastAPI(
 )
 pipeline = build_pipeline()
 evaluator = RetrievalEvaluator(pipeline)
+
+
+@app.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/health")
