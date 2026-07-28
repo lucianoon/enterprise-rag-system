@@ -6,6 +6,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lucianoon/enterprise-rag-system)
 
+**[Live demo](https://enterprise-rag-demo.onrender.com/docs)** — interactive
+API with the sample corpus loaded; try `POST /query` and `POST /evaluate/batch`
+straight from the browser (free tier: the first request may take ~1 min to
+wake the service).
+
 A retrieval-quality-first RAG engine: hybrid search (BM25-style lexical + vector) with
 score fusion, a heuristic rerank pass (title and exact-phrase overlap — not a
 cross-encoder), citation-carrying answers, and a built-in evaluation endpoint that

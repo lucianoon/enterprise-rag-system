@@ -6,6 +6,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lucianoon/enterprise-rag-system)
 
+**[Demo ao vivo](https://enterprise-rag-demo.onrender.com/docs)** — API
+interativa com o corpus de exemplo carregado; experimente o `POST /query` e o
+`POST /evaluate/batch` direto do navegador (free tier: o primeiro acesso pode
+levar ~1 min para acordar).
+
 Um motor de RAG que trata a qualidade da recuperação como o problema principal:
 busca híbrida (lexical no estilo BM25 + vetorial) com fusão de scores, um passe
 de reranking heurístico (sobreposição de título e frase exata — não é
