@@ -13,4 +13,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "enterprise_rag_system.api:app", "--host", "0.0.0.0", "--port", "8000"]
+# PaaS como o Render injetam PORT; localmente o default continua 8000.
+CMD ["sh", "-c", "uvicorn enterprise_rag_system.api:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: enterprise-rag-demo
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # A demo roda 100% offline: template determinístico, sem chaves.
+      - key: RAG_LLM_MODE
+        value: deterministic

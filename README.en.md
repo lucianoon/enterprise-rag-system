@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/lucianoon/enterprise-rag-system/actions/workflows/ci.yml/badge.svg)](https://github.com/lucianoon/enterprise-rag-system/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lucianoon/enterprise-rag-system)
 
 A retrieval-quality-first RAG engine: hybrid search (BM25-style lexical + vector) with
 score fusion, a heuristic rerank pass (title and exact-phrase overlap — not a

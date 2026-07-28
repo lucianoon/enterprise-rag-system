@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/lucianoon/enterprise-rag-system/actions/workflows/ci.yml/badge.svg)](https://github.com/lucianoon/enterprise-rag-system/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lucianoon/enterprise-rag-system)
 
 Um motor de RAG que trata a qualidade da recuperação como o problema principal:
 busca híbrida (lexical no estilo BM25 + vetorial) com fusão de scores, um passe
