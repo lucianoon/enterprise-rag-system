@@ -1,0 +1,15 @@
+name: Keep demo awake
+
+# O free tier do Render hiberna após 15 min ociosos; um ping a cada 10 min
+# mantém a demo acordada dentro das 750h/mês do plano gratuito.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /health
+        run: curl --fail --silent --show-error --max-time 90 https://enterprise-rag-demo.onrender.com/health
