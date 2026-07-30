@@ -1,6 +1,6 @@
 """Typed contracts for retrieval, answer generation and evaluation."""
 
-from typing import Dict, List, Union
+
 from pydantic import BaseModel, Field
 
 
@@ -50,16 +50,16 @@ class QueryResponse(BaseModel):
     """Grounded answer and retrieval metadata."""
 
     answer: str
-    citations: List[Citation]
-    results: List[SearchResult]
-    metadata: Dict[str, Union[float, int, str]]
+    citations: list[Citation]
+    results: list[SearchResult]
+    metadata: dict[str, float | int | str]
 
 
 class EvaluationRequest(BaseModel):
     """Evaluation request with known relevant documents."""
 
     question: str = Field(min_length=1)
-    relevant_doc_ids: List[str] = Field(min_length=1)
+    relevant_doc_ids: list[str] = Field(min_length=1)
     top_k: int = Field(default=3, ge=1, le=10)
 
 
@@ -68,7 +68,7 @@ class EvaluationResponse(BaseModel):
 
     recall_at_k: float
     mrr: float
-    retrieved_doc_ids: List[str]
+    retrieved_doc_ids: list[str]
     query: QueryResponse
 
 
@@ -77,7 +77,7 @@ class EvalExample(BaseModel):
 
     query_id: str
     question: str = Field(min_length=1)
-    relevant_doc_ids: List[str] = Field(min_length=1)
+    relevant_doc_ids: list[str] = Field(min_length=1)
 
 
 class QueryMetrics(BaseModel):
@@ -87,7 +87,7 @@ class QueryMetrics(BaseModel):
     question: str
     recall_at_k: float
     mrr: float
-    retrieved_doc_ids: List[str]
+    retrieved_doc_ids: list[str]
 
 
 class BatchEvaluationRequest(BaseModel):
@@ -104,14 +104,14 @@ class BatchEvaluationResponse(BaseModel):
     top_k: int
     mean_recall_at_k: float
     mean_mrr: float
-    per_query: List[QueryMetrics]
+    per_query: list[QueryMetrics]
 
 
 class AnswerJudgement(BaseModel):
     """Faithfulness verdict for one generated answer."""
 
     faithfulness: float = Field(ge=0.0, le=1.0)
-    unsupported_claims: List[str]
+    unsupported_claims: list[str]
     judge_mode: str
 
 

@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+docs
+tests
+*.md
+# pyproject declara readme = "README.md"; o build do pacote precisa dele.
+!README.md

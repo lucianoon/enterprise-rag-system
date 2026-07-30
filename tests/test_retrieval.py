@@ -5,7 +5,6 @@ from enterprise_rag_system.models import Chunk
 from enterprise_rag_system.retrieval import HybridRetriever, Reranker, tokenize
 from enterprise_rag_system.vector_store import InMemoryVectorStore
 
-
 CHUNKS = [
     Chunk(
         chunk_id="policy_refunds:0",

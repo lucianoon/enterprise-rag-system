@@ -3,7 +3,6 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import RedirectResponse
@@ -44,7 +43,7 @@ def build_pipeline() -> RAGPipeline:
     return RAGPipeline(chunks)
 
 
-def require_api_key(x_api_key: Optional[str] = Header(default=None)) -> None:
+def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
     """Reject requests without the configured API key.
 
     Auth is enabled by setting ``RAG_API_KEY``; when it is unset the API stays

@@ -59,6 +59,6 @@ def test_tfidf_embedder_ranks_related_document_first():
     doc_vectors = embedder.embed_texts(corpus)
     query = embedder.embed_query("refund order purchase")
 
-    scores = [sum(q * d for q, d in zip(query, doc)) for doc in doc_vectors]
+    scores = [sum(q * d for q, d in zip(query, doc, strict=True)) for doc in doc_vectors]
 
     assert scores.index(max(scores)) == 0

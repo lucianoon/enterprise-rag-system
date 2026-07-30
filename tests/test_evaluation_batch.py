@@ -14,7 +14,6 @@ from enterprise_rag_system.ingestion import chunk_documents, load_jsonl
 from enterprise_rag_system.pipeline import RAGPipeline
 from enterprise_rag_system.vector_store import InMemoryVectorStore
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Reproducible builds: `pyproject.toml` + `uv.lock` replace `requirements.txt`
+  and `requirements-extras.txt`, so local, CI and the Docker image resolve the
+  exact same versions. Optional backends moved to the `extras` group.
+- CI gates on `ruff` and `mypy` in addition to `pytest`, and builds the Docker
+  image so the deploy path is covered too.
+- Fixes surfaced by the new gates: `zip()` calls made length-strict in the
+  vector stores, `Counter` annotated in the lexical index, module-level imports
+  moved to the top of `generation.py` and `answer_eval.py`, and typing
+  modernized to PEP 585/604.
+
 ## 0.3.0
 
 - Answer faithfulness evaluation (`answer_eval.py`): judges whether the

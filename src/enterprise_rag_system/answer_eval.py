@@ -19,8 +19,9 @@ import json
 import logging
 import os
 import re
-from typing import List, Protocol
+from typing import Protocol
 
+from enterprise_rag_system import llm_client
 from enterprise_rag_system.models import AnswerJudgement, SearchResult
 
 logger = logging.getLogger(__name__)
@@ -34,14 +35,16 @@ JUDGE_SYSTEM_PROMPT = (
     "passages support. List each unsupported claim verbatim."
 )
 
-from enterprise_rag_system import llm_client
-
 DEFAULT_JUDGE_MODEL = llm_client.DEFAULT_ANTHROPIC_MODEL
 
 # Common words that should not count as evidence of grounding.
 _STOPWORDS = frozenset(
-    "a an and are as at be based by for from has have if in into is it its of "
-    "on or should that the their this to was were will with must not".split()
+    [
+        "a", "an", "and", "are", "as", "at", "be", "based", "by", "for",
+        "from", "has", "have", "if", "in", "into", "is", "it", "its", "of",
+        "on", "or", "should", "that", "the", "their", "this", "to", "was",
+        "were", "will", "with", "must", "not",
+    ]
 )
 
 
@@ -50,7 +53,7 @@ class AnswerJudge(Protocol):
 
     mode: str
 
-    def judge(self, question: str, answer: str, results: List[SearchResult]) -> AnswerJudgement:
+    def judge(self, question: str, answer: str, results: list[SearchResult]) -> AnswerJudgement:
         ...
 
 
@@ -58,7 +61,7 @@ def _content_tokens(text: str) -> set[str]:
     return {t for t in re.findall(r"[a-z0-9]+", text.lower()) if t not in _STOPWORDS}
 
 
-def _sentences(text: str) -> List[str]:
+def _sentences(text: str) -> list[str]:
     parts = re.split(r"(?<=[.!?])\s+", text.strip())
     return [p.strip() for p in parts if p.strip()]
 
@@ -78,14 +81,16 @@ class HeuristicAnswerJudge:
     def __init__(self, threshold: float = 0.5):
         self.threshold = threshold
 
-    def judge(self, question: str, answer: str, results: List[SearchResult]) -> AnswerJudgement:
+    def judge(self, question: str, answer: str, results: list[SearchResult]) -> AnswerJudgement:
         context_tokens: set[str] = set()
         for result in results:
             context_tokens |= _content_tokens(f"{result.chunk.title} {result.chunk.text}")
 
         sentences = _sentences(answer)
         if not sentences or not context_tokens:
-            return AnswerJudgement(faithfulness=0.0, unsupported_claims=sentences, judge_mode=self.mode)
+            return AnswerJudgement(
+                faithfulness=0.0, unsupported_claims=sentences, judge_mode=self.mode
+            )
 
         unsupported = []
         supported_count = 0
@@ -116,7 +121,7 @@ class LLMAnswerJudge:
         self.max_tokens = max_tokens
         self._fallback = HeuristicAnswerJudge()
 
-    def judge(self, question: str, answer: str, results: List[SearchResult]) -> AnswerJudgement:
+    def judge(self, question: str, answer: str, results: list[SearchResult]) -> AnswerJudgement:
         context = "\n\n".join(
             f"[{index}] {r.chunk.title} ({r.chunk.doc_id})\n{r.chunk.text}"
             for index, r in enumerate(results, start=1)

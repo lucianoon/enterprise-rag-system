@@ -6,7 +6,6 @@ from enterprise_rag_system.evaluation import RetrievalEvaluator
 from enterprise_rag_system.ingestion import chunk_documents, load_jsonl
 from enterprise_rag_system.pipeline import RAGPipeline
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
