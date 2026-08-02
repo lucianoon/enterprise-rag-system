@@ -33,7 +33,7 @@ jobs:
           uv run --with coverage==7.15.2 coverage run \
             --branch --source=enterprise_rag_system -m pytest -q
           uv run --with coverage==7.15.2 coverage report \
-            --show-missing --skip-covered
+            --show-missing --skip-covered --fail-under=80
           uv run --with coverage==7.15.2 coverage json \
             -o coverage.json
 
