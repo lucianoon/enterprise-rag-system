@@ -17,6 +17,12 @@ cross-encoder), citation-carrying answers, and a built-in evaluation endpoint th
 reports **Recall@K** and **MRR** for any labeled query. Every response exposes its
 per-stage scores so you can see *why* a chunk was retrieved, not just *that* it was.
 
+**Measured public baseline:** on the `retrieval_v1` demo dataset (10 queries),
+the hashing + in-memory configuration reached **Recall@1 = 1.000** and
+**MRR = 1.000** on August 2, 2026. The corpus contains only three documents;
+read the [results and limitations](docs/BENCHMARK_RESULTS.md) before interpreting
+or comparing these numbers.
+
 > **Not the same project as [RAG Agentic System](https://github.com/lucianoon/rag-agentic-system).**
 > This engine retrieves **once** and answers; the design goal is a ranked list whose
 > quality you can measure. The other one wraps retrieval in a **multi-step Claude

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Publish the measured public retrieval baseline (Recall@1 and MRR) with environment, commands, provenance, and explicit limitations of the three-document demo corpus.
+
 - Add a reproducible benchmark protocol, contribution guide, structured issue forms, and a pull request checklist that requires CI gates and retrieval-regression evidence.
 
 - Reproducible builds: `pyproject.toml` + `uv.lock` replace `requirements.txt`
