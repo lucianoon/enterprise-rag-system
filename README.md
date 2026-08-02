@@ -24,6 +24,7 @@ recuperado, não apenas *que* ele foi.
 | Evidência | O que demonstra |
 |---|---|
 | 55 funções de teste offline | API, auth, recuperação, backends e avaliação |
+| 81% de branch coverage, gate ≥ 80% | Cobertura medida e regressão bloqueada pela CI |
 | Dataset rotulado e versionado | Recall@K e MRR reproduzíveis |
 | Scores por estágio | Diagnóstico de falhas de recuperação |
 | Hashing/TF-IDF/sentence-transformers | CI determinística e backend semântico real |
