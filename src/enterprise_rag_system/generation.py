@@ -15,8 +15,9 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import List, Protocol
+from typing import Protocol
 
+from enterprise_rag_system import llm_client
 from enterprise_rag_system.models import SearchResult
 
 logger = logging.getLogger(__name__)
@@ -30,8 +31,6 @@ SYSTEM_PROMPT = (
     "guessing. Keep the answer concise and grounded."
 )
 
-from enterprise_rag_system import llm_client
-
 DEFAULT_MODEL = llm_client.DEFAULT_ANTHROPIC_MODEL
 
 
@@ -40,11 +39,11 @@ class AnswerGenerator(Protocol):
 
     mode: str
 
-    def compose(self, question: str, results: List[SearchResult]) -> str:
+    def compose(self, question: str, results: list[SearchResult]) -> str:
         ...
 
 
-def _format_context(results: List[SearchResult]) -> str:
+def _format_context(results: list[SearchResult]) -> str:
     """Render ranked chunks as a numbered, citable context block."""
     lines = []
     for index, result in enumerate(results, start=1):
@@ -58,7 +57,7 @@ class DeterministicAnswerGenerator:
 
     mode = "deterministic"
 
-    def compose(self, question: str, results: List[SearchResult]) -> str:
+    def compose(self, question: str, results: list[SearchResult]) -> str:
         if not results:
             return "I could not find grounded information in the indexed documents."
         leading = results[0].chunk
@@ -84,7 +83,7 @@ class LLMAnswerGenerator:
         self.max_tokens = max_tokens
         self._fallback = DeterministicAnswerGenerator()
 
-    def compose(self, question: str, results: List[SearchResult]) -> str:
+    def compose(self, question: str, results: list[SearchResult]) -> str:
         if not results:
             return "I could not find grounded information in the indexed documents."
         context = _format_context(results)

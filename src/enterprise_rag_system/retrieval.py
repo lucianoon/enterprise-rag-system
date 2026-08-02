@@ -7,11 +7,11 @@ retriever runs against the offline in-memory backends or a real Qdrant
 instance without code changes.
 """
 
-from collections import Counter
 import logging
-from math import log
 import re
-from typing import Dict, Iterable, List, Optional
+from collections import Counter
+from collections.abc import Iterable
+from math import log
 
 from enterprise_rag_system.embeddings import Embedder, build_embedder
 from enterprise_rag_system.models import Chunk, SearchResult
@@ -20,7 +20,7 @@ from enterprise_rag_system.vector_store import VectorStore, build_vector_store
 logger = logging.getLogger(__name__)
 
 
-def tokenize(text: str) -> List[str]:
+def tokenize(text: str) -> list[str]:
     """Normalize text into searchable tokens."""
     return re.findall(r"[a-z0-9]+", text.lower())
 
@@ -31,8 +31,8 @@ class HybridRetriever:
     def __init__(
         self,
         chunks: Iterable[Chunk],
-        embedder: Optional[Embedder] = None,
-        vector_store: Optional[VectorStore] = None,
+        embedder: Embedder | None = None,
+        vector_store: VectorStore | None = None,
     ):
         self.chunks = list(chunks)
         self.chunk_tokens = {c.chunk_id: tokenize(f"{c.title} {c.text}") for c in self.chunks}
@@ -52,12 +52,12 @@ class HybridRetriever:
             self.vector_store.name,
         )
 
-    def search(self, question: str, top_k: int = 3) -> List[SearchResult]:
+    def search(self, question: str, top_k: int = 3) -> list[SearchResult]:
         query_tokens = tokenize(question)
         # Every chunk gets a hybrid score, so ask the store for the full
         # ranking. Fine at document-collection scale; for very large corpora
         # this becomes a candidate pool instead.
-        vector_scores: Dict[str, float] = {}
+        vector_scores: dict[str, float] = {}
         if self.chunks:
             query_vector = self.embedder.embed_query(question)
             vector_scores = dict(self.vector_store.search(query_vector, top_k=len(self.chunks)))
@@ -77,9 +77,9 @@ class HybridRetriever:
         scored.sort(key=lambda item: item.hybrid_score, reverse=True)
         return scored[:top_k]
 
-    def _build_idf(self) -> Dict[str, float]:
+    def _build_idf(self) -> dict[str, float]:
         doc_count = len(self.chunks) or 1
-        frequencies = Counter()
+        frequencies: Counter[str] = Counter()
         for tokens in self.chunk_tokens.values():
             frequencies.update(set(tokens))
         return {
@@ -87,7 +87,7 @@ class HybridRetriever:
             for token, freq in frequencies.items()
         }
 
-    def _lexical_score(self, query_tokens: List[str], chunk_tokens: List[str]) -> float:
+    def _lexical_score(self, query_tokens: list[str], chunk_tokens: list[str]) -> float:
         if not query_tokens or not chunk_tokens:
             return 0.0
         chunk_counts = Counter(chunk_tokens)
@@ -101,7 +101,7 @@ class HybridRetriever:
 class Reranker:
     """Lightweight reranker for exact phrase and title matches."""
 
-    def rerank(self, question: str, results: List[SearchResult]) -> List[SearchResult]:
+    def rerank(self, question: str, results: list[SearchResult]) -> list[SearchResult]:
         query = question.lower()
         query_tokens = set(tokenize(question))
         for result in results:

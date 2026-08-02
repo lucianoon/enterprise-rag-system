@@ -14,11 +14,13 @@ from __future__ import annotations
 import logging
 import os
 import uuid
-from typing import List, Protocol, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_COLLECTION = "enterprise_docs"
+DEFAULT_URL = "http://localhost:6333"
 
 
 class VectorStore(Protocol):
@@ -30,7 +32,7 @@ class VectorStore(Protocol):
         """Replace the index contents with the given vectors."""
         ...
 
-    def search(self, vector: Sequence[float], top_k: int) -> List[Tuple[str, float]]:
+    def search(self, vector: Sequence[float], top_k: int) -> list[tuple[str, float]]:
         """Return ``(chunk_id, cosine_score)`` pairs, best first."""
         ...
 
@@ -41,18 +43,18 @@ class InMemoryVectorStore:
     name = "memory"
 
     def __init__(self) -> None:
-        self._vectors: dict[str, List[float]] = {}
+        self._vectors: dict[str, list[float]] = {}
 
     def index(self, chunk_ids: Sequence[str], vectors: Sequence[Sequence[float]]) -> None:
         self._vectors = {
             chunk_id: [float(v) for v in vector]
-            for chunk_id, vector in zip(chunk_ids, vectors)
+            for chunk_id, vector in zip(chunk_ids, vectors, strict=True)
         }
 
-    def search(self, vector: Sequence[float], top_k: int) -> List[Tuple[str, float]]:
+    def search(self, vector: Sequence[float], top_k: int) -> list[tuple[str, float]]:
         query = [float(v) for v in vector]
         scored = [
-            (chunk_id, sum(q * d for q, d in zip(query, stored)))
+            (chunk_id, sum(q * d for q, d in zip(query, stored, strict=True)))
             for chunk_id, stored in self._vectors.items()
         ]
         scored.sort(key=lambda item: item[1], reverse=True)
@@ -75,11 +77,13 @@ class QdrantVectorStore:
         except ImportError as exc:
             raise RuntimeError(
                 "qdrant-client is required for the qdrant vector store. "
-                "Install it with `pip install -r requirements-extras.txt`."
+                "Install it with `uv sync --extra extras`."
             ) from exc
 
-        self.url = url or os.getenv("QDRANT_URL", "http://localhost:6333")
-        self.collection = collection or os.getenv("COLLECTION_NAME", DEFAULT_COLLECTION)
+        self.url: str = url or os.environ.get("QDRANT_URL") or DEFAULT_URL
+        self.collection: str = (
+            collection or os.environ.get("COLLECTION_NAME") or DEFAULT_COLLECTION
+        )
         if self.url == ":memory:":
             self._client = QdrantClient(":memory:")
         else:
@@ -104,12 +108,12 @@ class QdrantVectorStore:
                 vector=[float(v) for v in vector],
                 payload={"chunk_id": chunk_id},
             )
-            for chunk_id, vector in zip(chunk_ids, vectors)
+            for chunk_id, vector in zip(chunk_ids, vectors, strict=True)
         ]
         self._client.upsert(collection_name=self.collection, points=points)
         logger.info("Indexed %d vectors (%d dims) into %s.", len(points), dims, self.collection)
 
-    def search(self, vector: Sequence[float], top_k: int) -> List[Tuple[str, float]]:
+    def search(self, vector: Sequence[float], top_k: int) -> list[tuple[str, float]]:
         response = self._client.query_points(
             collection_name=self.collection,
             query=[float(v) for v in vector],

@@ -20,8 +20,9 @@ import hashlib
 import logging
 import os
 import re
+from collections.abc import Sequence
 from math import sqrt
-from typing import List, Protocol, Sequence
+from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -37,19 +38,19 @@ class Embedder(Protocol):
         """Prepare the backend on the indexed corpus (no-op when unneeded)."""
         ...
 
-    def embed_texts(self, texts: Sequence[str]) -> List[List[float]]:
+    def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
         ...
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(self, text: str) -> list[float]:
         ...
 
 
-def _normalize(vector: List[float]) -> List[float]:
+def _normalize(vector: list[float]) -> list[float]:
     norm = sqrt(sum(v * v for v in vector)) or 1.0
     return [v / norm for v in vector]
 
 
-def _tokenize(text: str) -> List[str]:
+def _tokenize(text: str) -> list[str]:
     return re.findall(r"[a-z0-9]+", text.lower())
 
 
@@ -73,13 +74,13 @@ class HashingEmbedder:
         digest = hashlib.md5(token.encode("utf-8")).digest()
         return int.from_bytes(digest[:8], "big") % self.dims
 
-    def embed_texts(self, texts: Sequence[str]) -> List[List[float]]:
+    def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
         return [self._embed_one(text) for text in texts]
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(self, text: str) -> list[float]:
         return self._embed_one(text)
 
-    def _embed_one(self, text: str) -> List[float]:
+    def _embed_one(self, text: str) -> list[float]:
         vector = [0.0] * self.dims
         for token in _tokenize(text):
             vector[self._bucket(token)] += 1.0
@@ -97,7 +98,7 @@ class TfidfEmbedder:
         except ImportError as exc:  # pragma: no cover - exercised via build_embedder
             raise RuntimeError(
                 "scikit-learn is required for the tfidf embedding backend. "
-                "Install it with `pip install -r requirements-extras.txt`."
+                "Install it with `uv sync --extra extras`."
             ) from exc
         self._vectorizer = TfidfVectorizer(
             lowercase=True,
@@ -121,7 +122,7 @@ class TfidfEmbedder:
         self._fitted = True
         logger.info("Fitted TF-IDF vectorizer: %d features.", self.dims)
 
-    def embed_texts(self, texts: Sequence[str]) -> List[List[float]]:
+    def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
         if not self._fitted:
             self.fit(texts)
         if not self._fitted:
@@ -129,7 +130,7 @@ class TfidfEmbedder:
         matrix = self._vectorizer.transform(list(texts)).toarray()
         return [_normalize([float(v) for v in row]) for row in matrix]
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(self, text: str) -> list[float]:
         return self.embed_texts([text])[0]
 
 
@@ -152,7 +153,7 @@ class SentenceTransformerEmbedder:
     def fit(self, corpus: Sequence[str]) -> None:
         return None
 
-    def embed_texts(self, texts: Sequence[str]) -> List[List[float]]:
+    def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
         vectors = self._model.encode(
             list(texts),
             normalize_embeddings=True,
@@ -161,7 +162,7 @@ class SentenceTransformerEmbedder:
         )
         return [[float(v) for v in row] for row in vectors]
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(self, text: str) -> list[float]:
         return self.embed_texts([text])[0]
 
 

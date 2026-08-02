@@ -36,7 +36,9 @@ class RetrievalEvaluator:
     def __init__(self, pipeline: RAGPipeline):
         self.pipeline = pipeline
 
-    def evaluate(self, question: str, relevant_doc_ids: list[str], top_k: int = 3) -> EvaluationResponse:
+    def evaluate(
+        self, question: str, relevant_doc_ids: list[str], top_k: int = 3
+    ) -> EvaluationResponse:
         query = self.pipeline.query(question, top_k=top_k)
         retrieved = [citation.doc_id for citation in query.citations]
         relevant = set(relevant_doc_ids)

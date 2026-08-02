@@ -1,13 +1,13 @@
 """Document loading and chunking."""
 
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, List
 
 from enterprise_rag_system.models import Chunk, Document
 
 
-def load_jsonl(path: Path) -> List[Document]:
+def load_jsonl(path: Path) -> list[Document]:
     """Load documents from JSONL."""
     docs = []
     with path.open("r", encoding="utf-8") as fh:
@@ -17,7 +17,7 @@ def load_jsonl(path: Path) -> List[Document]:
     return docs
 
 
-def chunk_documents(documents: Iterable[Document], max_words: int = 80) -> List[Chunk]:
+def chunk_documents(documents: Iterable[Document], max_words: int = 80) -> list[Chunk]:
     """Split documents into word-count chunks."""
     chunks = []
     for doc in documents:

@@ -96,13 +96,16 @@ Requires Python 3.12+.
 ```bash
 git clone https://github.com/lucianoon/enterprise-rag-system.git
 cd enterprise-rag-system
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt            # core: runs fully offline
-pip install -r requirements-extras.txt     # optional: qdrant-client + scikit-learn
+uv sync --extra dev              # core: runs fully offline
+uv sync --extra dev --extra extras   # optional: qdrant-client + scikit-learn
 
-pytest -q                      # 55 tests, no network, no API key
-uvicorn enterprise_rag_system.api:app --app-dir src --port 8000
+uv run pytest -q                 # 55 tests, no network, no API key
+uv run ruff check . && uv run mypy   # the same gates CI enforces
+uv run uvicorn enterprise_rag_system.api:app --port 8000
 ```
+
+Versions come from `uv.lock`, so your machine, CI and the Docker image all
+resolve the exact same dependencies.
 
 Or with make: `make install && make test && make dev`. Docker:
 `docker compose up --build` starts the API wired to a real Qdrant instance
@@ -150,7 +153,7 @@ export RAG_LLM_BASE_URL=http://localhost:11434/v1
 export RAG_LLM_MODEL=llama3.1
 ```
 
-The OpenAI-compatible backend ships in `requirements-extras.txt`.
+The OpenAI-compatible backend ships in the `extras` optional group.
 
 ### Retrieval backends
 

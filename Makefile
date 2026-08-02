@@ -1,29 +1,28 @@
-PYTHON ?= python3
-VENV ?= .venv
-PIP := $(VENV)/bin/pip
-PY := $(VENV)/bin/python
-
-export PYTHONPATH := src
-
-.PHONY: install test eval dev docker-up docker-down
+.PHONY: install test lint typecheck check eval dev docker-up docker-down
 
 install:
-	$(PYTHON) -m venv $(VENV)
-	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements.txt -r requirements-extras.txt
+	uv sync --extra dev --extra extras
 
 test:
-	$(PY) -m pytest -q
+	uv run pytest -q
+
+lint:
+	uv run ruff check .
+
+typecheck:
+	uv run mypy
+
+# Os mesmos gates que o CI aplica.
+check: lint typecheck test
 
 eval:
-	$(PY) -m enterprise_rag_system.evaluation
+	uv run python -m enterprise_rag_system.evaluation
 
 dev:
-	$(VENV)/bin/uvicorn enterprise_rag_system.api:app --reload --host 0.0.0.0 --port 8000
+	uv run uvicorn enterprise_rag_system.api:app --reload --host 0.0.0.0 --port 8000
 
 docker-up:
 	docker compose up --build
 
 docker-down:
 	docker compose down --volumes
-

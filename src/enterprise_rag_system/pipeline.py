@@ -1,8 +1,8 @@
 """End-to-end RAG pipeline."""
 
 import logging
+from collections.abc import Iterable
 from time import perf_counter
-from typing import Iterable, Optional
 from uuid import uuid4
 
 from enterprise_rag_system.embeddings import Embedder
@@ -20,9 +20,9 @@ class RAGPipeline:
     def __init__(
         self,
         chunks: Iterable[Chunk],
-        answer_generator: Optional[AnswerGenerator] = None,
-        embedder: Optional[Embedder] = None,
-        vector_store: Optional[VectorStore] = None,
+        answer_generator: AnswerGenerator | None = None,
+        embedder: Embedder | None = None,
+        vector_store: VectorStore | None = None,
     ):
         self.retriever = HybridRetriever(chunks, embedder=embedder, vector_store=vector_store)
         self.reranker = Reranker()
