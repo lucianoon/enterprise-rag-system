@@ -1,0 +1,59 @@
+name: Relatar um bug
+description: Comportamento incorreto ou regressão reproduzível
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Obrigado por ajudar a melhorar o Enterprise RAG System.
+  - type: textarea
+    id: problem
+    attributes:
+      label: O que aconteceu?
+      description: Descreva o comportamento observado e o esperado.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Como reproduzir
+      description: Inclua comandos, payloads e um exemplo mínimo sem dados privados.
+      placeholder: |
+        1. Configure ...
+        2. Execute ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Backend
+      options:
+        - Offline (hashing + memory)
+        - TF-IDF
+        - Sentence Transformer
+        - Qdrant
+        - Anthropic
+        - OpenAI-compatible
+        - Outro
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versão ou commit
+      placeholder: v0.3.0 ou SHA
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Ambiente
+      description: Sistema operacional, Python e variáveis relevantes sem segredos.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      render: shell

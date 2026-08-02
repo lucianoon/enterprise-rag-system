@@ -1,0 +1,30 @@
+name: Propor uma melhoria
+description: Sugira uma capacidade ou melhoria mensurável
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema
+      description: Que limitação concreta esta proposta resolve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: Descreva o comportamento desejado e os componentes afetados.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Como validar
+      description: Indique testes, métricas ou benchmark que demonstrariam sucesso.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas

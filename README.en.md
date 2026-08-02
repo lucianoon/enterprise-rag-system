@@ -291,6 +291,18 @@ evaluation, and generator selection/fallback behavior. They run entirely offline
 deterministic embedding and generator paths mean CI needs no secrets, which is exactly
 how [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs them.
 
+## Quality and contributing
+
+Changes to retrieval, chunking, score fusion, or reranking should include a
+reproducible comparison. The [benchmark protocol](docs/BENCHMARKING.md) defines
+the dataset, commands, metrics, and report format without publishing results
+that were not actually measured.
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md); issue
+templates collect environment and reproduction details, while the pull request
+template requires the same CI gates and regression evidence for retrieval
+changes.
+
 ## Roadmap
 
 - Cross-encoder reranker
