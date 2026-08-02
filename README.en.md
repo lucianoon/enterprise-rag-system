@@ -11,6 +11,11 @@ API with the sample corpus loaded; try `POST /query` and `POST /evaluate/batch`
 straight from the browser (free tier: the first request may take ~1 min to
 wake the service).
 
+**Measured test evidence:** the CI reports **81% branch coverage** across 633
+statements and 128 branches, with a **minimum 80% gate** that blocks material
+regressions. The machine-readable `coverage.json` is retained as a workflow
+artifact for 14 days.
+
 A retrieval-quality-first RAG engine: hybrid search (BM25-style lexical + vector) with
 score fusion, a heuristic rerank pass (title and exact-phrase overlap — not a
 cross-encoder), citation-carrying answers, and a built-in evaluation endpoint that
