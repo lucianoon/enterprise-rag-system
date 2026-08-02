@@ -28,8 +28,22 @@ jobs:
       - name: Type check
         run: uv run mypy
 
-      - name: Run tests
-        run: uv run pytest -q
+      - name: Run tests with branch coverage
+        run: |
+          uv run --with coverage==7.15.2 coverage run \
+            --branch --source=enterprise_rag_system -m pytest -q
+          uv run --with coverage==7.15.2 coverage report \
+            --show-missing --skip-covered
+          uv run --with coverage==7.15.2 coverage json \
+            -o coverage.json
+
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: coverage.json
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Build image
         run: docker build --tag enterprise-rag-system:ci .
