@@ -326,6 +326,17 @@ de embedding e de geração significam que a CI não precisa de segredos, que é
 exatamente como o [`.github/workflows/ci.yml`](.github/workflows/ci.yml) os
 executa.
 
+## Qualidade e contribuição
+
+Mudanças no retriever, chunking, fusão de scores ou reranking devem trazer um
+comparativo reproduzível. O [protocolo de benchmark](docs/BENCHMARKING.md)
+define dataset, comandos, métricas e o formato de relatório — sem publicar
+números que não tenham sido executados.
+
+Contribuições são bem-vindas. Consulte [CONTRIBUTING.md](CONTRIBUTING.md); os
+templates de issue coletam ambiente e reprodução, e o template de pull request
+exige os mesmos gates da CI e evidência de regressão para mudanças de recuperação.
+
 ## Roadmap
 
 - Reranker com cross-encoder
