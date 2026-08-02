@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Measure branch coverage in CI, retain the machine-readable JSON artifact for 14 days, and enforce an evidence-based 80% minimum after observing an 81% baseline.
+
 - Publish the measured public retrieval baseline (Recall@1 and MRR) with environment, commands, provenance, and explicit limitations of the three-document demo corpus.
 
 - Add a reproducible benchmark protocol, contribution guide, structured issue forms, and a pull request checklist that requires CI gates and retrieval-regression evidence.
