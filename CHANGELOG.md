@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a reproducible benchmark protocol, contribution guide, structured issue forms, and a pull request checklist that requires CI gates and retrieval-regression evidence.
+
 - Reproducible builds: `pyproject.toml` + `uv.lock` replace `requirements.txt`
   and `requirements-extras.txt`, so local, CI and the Docker image resolve the
   exact same versions. Optional backends moved to the `extras` group.
