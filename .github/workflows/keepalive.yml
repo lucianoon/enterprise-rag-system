@@ -1,10 +1,15 @@
 name: Keep demo awake
 
 # O free tier do Render hiberna após 15 min ociosos; um ping a cada 10 min
-# mantém a demo acordada dentro das 750h/mês do plano gratuito.
+# mantém a demo acordada durante a janela agendada abaixo (a margem importa:
+# um intervalo de 15 min empataria com o tempo de hibernação).
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    # Dias úteis, 11:00-22:59 UTC (08:00-19:59 BRT) — a janela em que alguém
+    # de fato abre a demo. Antes rodava 24/7: ~4.300 execuções/mês por repo,
+    # o que enterrava as runs de CI na aba Actions e mantinha o serviço do
+    # Render acordado 24h por dia contra a cota de horas do plano gratuito.
+    - cron: "*/10 11-22 * * 1-5"
   workflow_dispatch:
 
 jobs:
