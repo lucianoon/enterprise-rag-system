@@ -138,6 +138,8 @@ Ou com make: `make install && make test && make dev`. Com Docker:
 A API sobe já com o corpus de exemplo embutido (`data/sample/policies.jsonl` —
 políticas de reembolso, segurança e SLA), então dá para consultar de imediato.
 
+## Configuração
+
 ### Modos de geração de resposta
 
 Defina `RAG_LLM_MODE` (veja `.env.example`):

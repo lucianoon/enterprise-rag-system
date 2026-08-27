@@ -36,6 +36,18 @@ the hashing + in-memory configuration reached **Recall@1 = 1.000** and
 read the [results and limitations](docs/BENCHMARK_RESULTS.md) before interpreting
 or comparing these numbers.
 
+## Quick evidence
+
+| Evidence | What it demonstrates |
+|---|---|
+| 55 offline test functions | API, auth, retrieval, backends and evaluation |
+| 81% branch coverage, gate ≥ 80% | Measured coverage, with regressions blocked in CI |
+| Labeled, versioned dataset | Reproducible Recall@K and MRR |
+| Per-stage scores | Diagnosing retrieval failures |
+| Hashing/TF-IDF/sentence-transformers | Deterministic CI plus a real semantic backend |
+| In-memory/Qdrant | Same interface from local tests to external infrastructure |
+| Heuristic or LLM judge | Faithfulness evaluation with an explicit fallback |
+
 ## Problem
 
 Most RAG failures are retrieval failures. Pure semantic search misses exact terms that
@@ -125,6 +137,8 @@ Or with make: `make install && make test && make dev`. Docker:
 
 The API boots against the bundled sample corpus (`data/sample/policies.jsonl` — refund,
 security and SLA policies), so you can query it immediately.
+
+## Configuration
 
 ### Answer generation modes
 
