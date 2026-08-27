@@ -20,6 +20,13 @@ reporta **Recall@K** e **MRR** para qualquer consulta rotulada. Toda resposta
 expõe os scores de cada estágio, então dá para ver *por que* um trecho foi
 recuperado, não apenas *que* ele foi.
 
+> **Não é o mesmo projeto que o [RAG Agentic System](https://github.com/lucianoon/rag-agentic-system).**
+> Este motor recupera **uma vez** e responde; o objetivo de projeto é uma lista
+> ranqueada cuja qualidade você consegue medir. O outro embrulha a recuperação
+> em um **loop de tool use com Claude**, em que o modelo decide quando buscar de
+> novo. Problemas diferentes: este repo otimiza qualidade de ranqueamento,
+> aquele otimiza raciocínio em múltiplos passos sobre um corpus.
+
 ## Evidências rápidas
 
 | Evidência | O que demonstra |
@@ -37,13 +44,6 @@ consultas), a configuração hashing + memória obteve **Recall@1 = 1,000** e
 **MRR = 1,000** em 2 de agosto de 2026. O corpus tem somente três documentos;
 leia os [resultados e limitações](docs/BENCHMARK_RESULTS.md) antes de interpretar
 ou comparar esses números.
-
-> **Não é o mesmo projeto que o [RAG Agentic System](https://github.com/lucianoon/rag-agentic-system).**
-> Este motor recupera **uma vez** e responde; o objetivo de projeto é uma lista
-> ranqueada cuja qualidade você consegue medir. O outro embrulha a recuperação
-> em um **loop de tool use com Claude**, em que o modelo decide quando buscar de
-> novo. Problemas diferentes: este repo otimiza qualidade de ranqueamento,
-> aquele otimiza raciocínio em múltiplos passos sobre um corpus.
 
 ## Problema
 
