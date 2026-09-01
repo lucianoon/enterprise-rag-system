@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 
@@ -38,7 +38,7 @@ jobs:
             -o coverage.json
 
       - name: Upload coverage data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-data
           path: coverage.json
@@ -47,3 +47,23 @@ jobs:
 
       - name: Build image
         run: docker build --tag enterprise-rag-system:ci .
+
+      # Construir não basta: o smoke sobe o container como ele roda no Render,
+      # confirma que /health responde e que o processo não é root.
+      - name: Smoke test image
+        run: |
+          docker run --detach --name rag -p 8000:8000 -e RAG_LLM_MODE=deterministic enterprise-rag-system:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8000/health; then
+              echo; echo "API respondeu na tentativa $i"
+              docker exec rag id -u | grep -qv '^0$' || { echo "container roda como root"; exit 1; }
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs rag
+          exit 1
+
+      - name: Stop container
+        if: always()
+        run: docker rm -f rag || true
