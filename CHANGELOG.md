@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Docker image runs as an unprivileged user and declares a `HEALTHCHECK` against
+  `/health`; CI now starts the built image and probes it instead of only
+  building it. Dependabot watches `uv` dependencies (monthly, minor/patch
+  grouped) in addition to GitHub Actions. `setup-uv` and `upload-artifact`
+  bumped to v7.
+
 - Measure branch coverage in CI, retain the machine-readable JSON artifact for 14 days, and enforce an evidence-based 80% minimum after observing an 81% baseline.
 
 - Publish the measured public retrieval baseline (Recall@1 and MRR) with environment, commands, provenance, and explicit limitations of the three-document demo corpus.
