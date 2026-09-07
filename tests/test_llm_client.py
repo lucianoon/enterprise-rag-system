@@ -22,6 +22,48 @@ class TestResolveBackend:
         monkeypatch.setenv("RAG_LLM_BASE_URL", "http://localhost:11434/v1")
         assert llm_client.resolve_backend() == "openai"
 
+    @pytest.mark.parametrize("url_variable", ["RAG_LLM_BASE_URL", "OPENAI_BASE_URL"])
+    def test_base_url_and_generic_key_select_openai(self, monkeypatch, url_variable):
+        monkeypatch.setenv(url_variable, "https://openrouter.ai/api/v1")
+        monkeypatch.setenv("RAG_LLM_API_KEY", "test-router-key")
+        monkeypatch.setenv("RAG_LLM_MODEL", "meta-llama/llama-3.3-70b-instruct")
+
+        config = llm_client.resolve()
+
+        assert config.backend == "openai"
+        assert config.base_url == "https://openrouter.ai/api/v1"
+        assert config.api_key == "test-router-key"
+        assert config.model == "meta-llama/llama-3.3-70b-instruct"
+
+    def test_base_url_wins_over_ambient_anthropic_key(self, monkeypatch):
+        monkeypatch.setenv("RAG_LLM_BASE_URL", "http://localhost:11434/v1")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
+
+        config = llm_client.resolve()
+
+        assert config.backend == "openai"
+        assert config.api_key == llm_client.LOCAL_PLACEHOLDER_KEY
+
+    def test_explicit_anthropic_backend_overrides_base_url(self, monkeypatch):
+        monkeypatch.setenv("RAG_LLM_BACKEND", "anthropic")
+        monkeypatch.setenv("RAG_LLM_BASE_URL", "http://localhost:11434/v1")
+
+        assert llm_client.resolve().backend == "anthropic"
+
+    def test_generic_key_alone_keeps_anthropic_default(self, monkeypatch):
+        monkeypatch.setenv("RAG_LLM_API_KEY", "test-generic-key")
+
+        assert llm_client.resolve().backend == "anthropic"
+
+    def test_openai_key_identifies_provider_for_generic_credential(self, monkeypatch):
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
+        monkeypatch.setenv("RAG_LLM_API_KEY", "test-override-key")
+
+        config = llm_client.resolve()
+
+        assert config.backend == "openai"
+        assert config.api_key == "test-override-key"
+
     def test_explicit_backend_overrides_auto(self, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant")
         monkeypatch.setenv("RAG_LLM_BACKEND", "openai")

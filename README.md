@@ -123,7 +123,7 @@ cd enterprise-rag-system
 uv sync --extra dev              # núcleo: roda totalmente offline
 uv sync --extra dev --extra extras   # opcional: qdrant-client + scikit-learn
 
-uv run pytest -q                 # 55 testes, sem rede, sem chave de API
+uv run pytest -q                 # testes sem rede, sem chave de API
 uv run ruff check . && uv run mypy   # mesmos gates que o CI aplica
 uv run uvicorn enterprise_rag_system.api:app --port 8000
 ```
@@ -149,9 +149,17 @@ Defina `RAG_LLM_MODE` (veja `.env.example`):
 - `llm` — sempre chama o modelo (veja [Trocando de modelo ou de provedor](#trocando-de-modelo-ou-de-provedor))
 - `deterministic` — sempre usa o template offline (é o que a CI roda)
 
-Um erro transitório da API cai no fallback determinístico, então
-`/query` nunca falha de forma dura (a falha é logada com traceback completo). O
-modo ativo é reportado como `generation_mode` nos metadados da resposta.
+Falhas do LLM, respostas vazias, recusas e respostas filtradas ativam o fallback
+determinístico, com registro da falha no log. O campo `generation_mode` descreve
+o caminho efetivamente usado naquela resposta: `llm` para texto gerado pelo
+modelo, `deterministic-fallback` após falha do LLM e `deterministic` para o
+template offline ou para a resposta sem contexto. Esse estado é por requisição,
+inclusive quando consultas são executadas simultaneamente.
+
+A interface Python `compose(question, results)` continua retornando texto.
+Geradores que variam de modo por requisição podem implementar
+`compose_with_metadata(question, results)`, retornando `GeneratedAnswer(text, mode)`.
+Geradores personalizados existentes, com `compose` e `mode`, continuam aceitos.
 
 ### Trocando de modelo ou de provedor
 
@@ -166,8 +174,14 @@ dois igualmente:
 | `RAG_LLM_BASE_URL` | endpoint OpenAI-compatible (também aceita `OPENAI_BASE_URL`) |
 | `RAG_LLM_API_KEY` | credencial; cai para `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` |
 
-No modo `auto`: chave da Anthropic ⇒ `anthropic`; senão base URL ou chave OpenAI
-⇒ `openai`; sem nada, o pipeline usa o gerador determinístico.
+No modo `auto`, uma base URL seleciona `openai`, mesmo se uma chave Anthropic
+também estiver exportada. Sem URL, a chave Anthropic tem preferência sobre a
+chave OpenAI. A chave genérica `RAG_LLM_API_KEY` substitui a credencial do
+provedor selecionado; quando configurada sozinha, mantém o padrão `anthropic`
+por compatibilidade. Sem configuração, o pipeline usa o gerador determinístico.
+`RAG_LLM_BACKEND=anthropic` ou `openai` sempre tem prioridade sobre a seleção
+automática; use o valor explícito para manter Anthropic quando houver uma URL
+compatível com OpenAI no ambiente.
 
 ```bash
 # OpenRouter, Groq, Together, DeepInfra, Fireworks…

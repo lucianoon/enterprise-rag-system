@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Repair the duplicate `truststore` package entry that prevented `uv sync --locked`
+  and CI from installing dependencies; retain all locked package versions.
+- Resolve OpenAI-compatible URLs before ambient provider credentials in `auto`
+  mode, so the documented OpenRouter URL + generic key configuration reaches
+  the correct endpoint. Explicit `RAG_LLM_BACKEND` still wins; set it to
+  `anthropic` to retain that provider when a base URL is also configured.
+- Reject empty, refused and filtered LLM responses instead of returning a
+  successful empty answer. Both providers reject empty text; the existing
+  deterministic fallback remains available and is covered through the HTTP API.
+- Report the effective generation mode per request, including
+  `deterministic-fallback`, in response metadata and query logs. Preserve the
+  text-only `compose` interface and existing custom generators. Add regressions
+  for provider selection, response validation and concurrent generation.
+
 - Docker image runs as an unprivileged user and declares a `HEALTHCHECK` against
   `/health`; CI now starts the built image and probes it instead of only
   building it. Dependabot watches `uv` dependencies (monthly, minor/patch
