@@ -102,3 +102,41 @@ def test_invalid_retrieval_configuration_fails_at_build(monkeypatch):
     monkeypatch.setenv('RAG_RETRIEVAL_MODE', 'typo')
     with pytest.raises(ValueError, match='RAG_RETRIEVAL_MODE'):
         build_pipeline()
+
+
+def test_custom_document_corpus_is_used_by_query(tmp_path, monkeypatch):
+    import json
+
+    from enterprise_rag_system import api
+
+    source = tmp_path / 'company.jsonl'
+    source.write_text(json.dumps({
+        'doc_id': 'company_refunds', 'title': 'Reembolso de viagem',
+        'text': 'Reembolsos devem ser solicitados pelo portal da empresa.',
+    }))
+    monkeypatch.setenv('RAG_DOCUMENTS_PATH', str(source))
+    monkeypatch.setenv('RAG_RETRIEVAL_MODE', 'bm25')
+    monkeypatch.setattr(api, 'pipeline', api.build_pipeline())
+    result = TestClient(app).post('/query', json={'question': 'reembolso viagem'})
+    assert result.status_code == 200
+    assert {c['doc_id'] for c in result.json()['citations']} == {'company_refunds'}
+
+
+def test_invalid_configured_corpus_never_falls_back_or_initializes_backends(tmp_path, monkeypatch):
+    import pytest
+
+    from enterprise_rag_system import api
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('Invalid corpus must be rejected before backend initialization')
+
+    monkeypatch.setattr(api, 'RAGPipeline', forbidden)
+    for value in ['', str(tmp_path / 'missing.jsonl')]:
+        monkeypatch.setenv('RAG_DOCUMENTS_PATH', value)
+        with pytest.raises((ValueError, FileNotFoundError)):
+            api.build_pipeline()
+    invalid = tmp_path / 'invalid.jsonl'
+    invalid.write_text('')
+    monkeypatch.setenv('RAG_DOCUMENTS_PATH', str(invalid))
+    with pytest.raises(ValueError, match='Corpus'):
+        api.build_pipeline()

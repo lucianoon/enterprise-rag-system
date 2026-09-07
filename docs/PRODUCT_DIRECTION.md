@@ -57,6 +57,12 @@ embeddings multilíngues, validação independente e decisão sobre o padrão.
   registrar documentos ou credenciais sensíveis por padrão.
 - Documentar backup, restauração, migração de índices e limites de requisição.
 
+A indexação Qdrant agora preserva gerações anteriores e só ativa uma nova
+após confirmação dos lotes e da contagem. A API aceita um corpus JSONL
+configurado. A [decisão e seus limites](SAFE_INGESTION_STRATEGY.md) estão
+documentados: ainda faltam registro durável, retenção, reutilização no restart
+e separação do job de ingestão da inicialização da API.
+
 ### 5. Demonstrar valor em um piloto
 
 - Selecionar usuários e tarefas reais antes de escolher um concorrente de comparação.

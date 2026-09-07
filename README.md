@@ -236,6 +236,21 @@ Os dois estágios de recuperação são escolhidos por variáveis de ambiente (v
 - `RAG_API_KEY` — quando definida, `/query` e `/evaluate*` exigem o mesmo valor
   no cabeçalho `X-API-Key`. Sem ela, acesso aberto para desenvolvimento local.
 
+### Corpus próprio e indexação preservada
+
+Defina `RAG_DOCUMENTS_PATH` para um JSONL com `doc_id`, `title` e `text` por linha.
+IDs precisam ser únicos e os campos não podem estar vazios. Um arquivo inválido
+interrompe a inicialização antes da construção dos índices; sem a variável, a
+API continua usando o exemplo. Configure também `RAG_EVAL_DATASET` com rótulos
+do seu corpus para usar a avaliação em lote.
+
+Qdrant agora cria uma geração física nova por indexação e só a usa depois de
+confirmar os lotes e a contagem. Coleções existentes são preservadas.
+`COLLECTION_NAME` é o prefixo dessas gerações, não um alias compartilhado.
+**Gerações antigas consomem espaço e ainda exigem gestão operacional**; esta
+mudança não adiciona ingestão incremental, multiempresa ou reutilização no restart.
+Veja a [estratégia pesquisada, operação e limites](docs/SAFE_INGESTION_STRATEGY.md).
+
 ## Avaliação: Recall@K e MRR
 
 A qualidade da recuperação é avaliada por consulta rotulada através da API (ou

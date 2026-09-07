@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Replace destructive Qdrant reindexing with immutable physical generations.
+  Validate the complete input before creating data, wait for every batch, check
+  the exact point count, then pin the store instance to the completed generation.
+  Retain old and failed generations; do not delete existing collections.
+- Validate vector dimensions, finite values and unique IDs for both stores;
+  failed replacements preserve the previous view. Empty replacement clears only
+  the instance view, leaving retained Qdrant generations untouched.
+- Load an operator-specified JSONL corpus through `RAG_DOCUMENTS_PATH`. Reject
+  empty/duplicate/blank corpus records before initializing retrieval backends.
+- Exercise generation isolation and read-during-build behavior against a
+  disposable Qdrant server in CI, as well as the local backend.
+
 - Add opt-in BM25 retrieval with Unicode accent folding, term-frequency
   saturation, document-length normalization and cached posting lists. Add
   reciprocal rank fusion (RRF) as an experimental alternative.

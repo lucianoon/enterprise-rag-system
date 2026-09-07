@@ -39,8 +39,11 @@ SAMPLE_DOCS = ROOT / "data" / "sample" / "policies.jsonl"
 
 
 def build_pipeline() -> RAGPipeline:
-    """Build an in-memory pipeline from sample docs."""
-    docs = load_jsonl(SAMPLE_DOCS)
+    """Build from the configured corpus, or sample documents when unset."""
+    source = os.getenv("RAG_DOCUMENTS_PATH")
+    if source is not None and not source.strip():
+        raise ValueError("RAG_DOCUMENTS_PATH must name a non-empty JSONL corpus")
+    docs = load_jsonl(Path(source) if source is not None else SAMPLE_DOCS)
     chunks = chunk_documents(docs)
     mode = os.getenv("RAG_RETRIEVAL_MODE", "hybrid").strip().lower()
     if mode not in get_args(RetrievalMode):

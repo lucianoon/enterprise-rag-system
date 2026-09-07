@@ -8,9 +8,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      qdrant:
+        image: qdrant/qdrant:v1.12.4
+        ports:
+          - 6333:6333
     env:
       # Force the deterministic answer generator: CI runs without API keys.
       RAG_LLM_MODE: deterministic
+      RAG_QDRANT_TEST_URL: http://localhost:6333
     steps:
       - uses: actions/checkout@v7
 
@@ -26,6 +32,11 @@ jobs:
 
       - name: Type check
         run: uv run mypy
+
+      - name: Wait for disposable Qdrant
+        run: >-
+          curl --fail --silent --show-error --retry 15 --retry-connrefused
+          --retry-delay 1 --max-time 3 --retry-max-time 45 http://localhost:6333/healthz
 
       - name: Run tests with branch coverage
         run: |

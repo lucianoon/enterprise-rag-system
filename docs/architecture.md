@@ -30,3 +30,18 @@ The current implementation is intentionally local and deterministic. Production 
 - Vector search should be swappable.
 - Evaluation should run in CI.
 
+
+## Index generations and startup
+
+The API loads `RAG_DOCUMENTS_PATH` or the bundled sample JSONL and validates
+nonempty unique records before backend initialization. Qdrant indexes each
+replacement into a fresh physical collection; completed writes and exact point
+count must succeed before the adapter switches its local active generation.
+Existing collections remain untouched. Readers pin to their generation because
+chunk text and lexical state remain process-local.
+
+This is not hot reload: construct a new pipeline with its own adapter when
+loading a different corpus. Startup still rebuilds the index, and generations
+are retained without automatic cleanup or a durable reader registry. These
+limits and the reasoning against a shared mutable alias are documented in
+[the ingestion strategy](SAFE_INGESTION_STRATEGY.md).

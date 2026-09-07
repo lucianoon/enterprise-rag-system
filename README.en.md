@@ -230,6 +230,20 @@ Both retrieval stages are selected by environment variables (see `.env.example`)
 - `RAG_API_KEY` — when set, `/query` and `/evaluate*` require the same value in the
   `X-API-Key` header. Unset means open access for local development.
 
+### Custom corpus and retained index generations
+
+Set `RAG_DOCUMENTS_PATH` to a JSONL file with `doc_id`, `title`, and `text` per line.
+IDs must be unique and fields nonblank. Invalid input fails startup before index
+construction; leaving the variable unset retains the demo corpus. Configure
+`RAG_EVAL_DATASET` with labels for your corpus when using batch evaluation.
+
+Qdrant builds a new physical generation and activates it only after completed
+batch writes and exact count validation. Existing collections are retained.
+`COLLECTION_NAME` is a namespace prefix rather than a shared active alias.
+**Retained generations require storage monitoring and operator-managed cleanup.**
+This does not add incremental ingestion, tenant isolation or restart reuse.
+See the [research, operational contract and limitations](docs/SAFE_INGESTION_STRATEGY.md).
+
 ## Evaluation: Recall@K and MRR
 
 Retrieval quality is evaluated per labeled query through the API (or
