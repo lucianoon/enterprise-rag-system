@@ -1,6 +1,16 @@
 # Architecture
 
-## Query Flow
+## Persistent pilot mode
+
+`RAG_PRODUCT_DB` selects `product_api` instead of the legacy pipeline below.
+The SQLite registry authenticates a token and reads a tenant/document ACL
+snapshot in one transaction. Only authorized content reaches chunking, BM25
+and optional generation. Writes atomically append document versions, update
+heads and corpus revision, and record audit metadata. No Qdrant collection is
+created on startup. The browser stores tokens in memory and renders content
+as text. See [contracts and operational limits](PRODUCT_PILOT.md).
+
+## Legacy engine query flow
 
 1. Documents are loaded from a source and split into chunks.
 2. The lexical index scores chunks by token overlap and inverse document frequency.
@@ -16,11 +26,11 @@ The current implementation is intentionally local and deterministic. Production 
 
 - Qdrant collection manager
 - managed embedding provider
-- document registry database
+- integration of vector generations with the persistent document registry
 - async ingestion jobs
 - OpenTelemetry traces
 - feedback capture
-- tenant isolation
+- SSO and operational hardening beyond the pilot ACL model
 
 ## Design Principles
 

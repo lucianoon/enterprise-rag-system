@@ -15,7 +15,7 @@ def wait_ready():
             with urllib.request.urlopen(URL + "/ready", timeout=2) as response:
                 if response.status == 200:
                     return
-        except (urllib.error.URLError, TimeoutError):
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
             time.sleep(0.5)
     raise RuntimeError("Product container did not become ready")
 
