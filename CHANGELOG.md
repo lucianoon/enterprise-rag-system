@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Add a retrieval-only benchmark matrix (lexical, vector, hybrid, hybrid with
+  reranking), with Recall, precision, MRR, binary nDCG, median/p95 latency and
+  per-query rankings. A synthetic Portuguese corpus contains 30 documents and
+  80 queries across dev/test splits, including unanswerable and multi-source cases.
+- Freeze the initial hashing test baseline and gate retrieval regressions in CI;
+  retain machine-readable reports for 14 days. Validate data hashes, labels and
+  comparison settings so changed datasets cannot silently pass as improvements.
+- Expose `RAGPipeline.retrieve()` for evaluation without answer generation.
+  Default query ranking and the original demo corpus remain the same.
+
 - Repair the duplicate `truststore` package entry that prevented `uv sync --locked`
   and CI from installing dependencies; retain all locked package versions.
 - Resolve OpenAI-compatible URLs before ambient provider credentials in `auto`

@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   test:
@@ -43,6 +42,22 @@ jobs:
           name: coverage-data
           path: coverage.json
           if-no-files-found: error
+          retention-days: 14
+
+      - name: Check retrieval quality against the frozen baseline
+        run: |
+          uv run python -m enterprise_rag_system.benchmark \
+            --split test \
+            --baseline data/benchmarks/corporate_pt_v1/baseline-hashing-test.json \
+            --output benchmark-report.json
+
+      - name: Upload retrieval benchmark
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: retrieval-benchmark
+          path: benchmark-report.json
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Build image

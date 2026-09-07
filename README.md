@@ -31,9 +31,10 @@ recuperado, não apenas *que* ele foi.
 
 | Evidência | O que demonstra |
 |---|---|
-| 55 funções de teste offline | API, auth, recuperação, backends e avaliação |
-| 81% de branch coverage, gate ≥ 80% | Cobertura medida e regressão bloqueada pela CI |
-| Dataset rotulado e versionado | Recall@K e MRR reproduzíveis |
+| Testes offline na CI | API, auth, recuperação, backends, concorrência e avaliação |
+| Cobertura de linhas e branches, gate ≥ 80% | Verificação automatizada de cobertura |
+| 30 documentos e 80 perguntas sintéticas em português | Baseline de recuperação com splits de desenvolvimento/teste |
+| Matriz lexical/vetorial/híbrida e gate de qualidade | Recall, MRR, nDCG, precisão e latência reproduzíveis |
 | Scores por estágio | Diagnóstico de falhas de recuperação |
 | Hashing/TF-IDF/sentence-transformers | CI determinística e backend semântico real |
 | Memória/Qdrant | Mesma interface do teste local à infraestrutura externa |
@@ -44,6 +45,19 @@ consultas), a configuração hashing + memória obteve **Recall@1 = 1,000** e
 **MRR = 1,000** em 2 de agosto de 2026. O corpus tem somente três documentos;
 leia os [resultados e limitações](docs/BENCHMARK_RESULTS.md) antes de interpretar
 ou comparar esses números.
+
+**Benchmark de regressão em português:** `corporate_pt_v1` amplia a avaliação
+com paráfrases, exceções, múltiplas fontes e perguntas sem resposta. Compare
+quatro configurações sem chamar um LLM:
+
+```bash
+uv run python -m enterprise_rag_system.benchmark --split dev --output benchmark-report.json
+```
+
+Veja o [protocolo](docs/BENCHMARKING.md), os
+[resultados medidos](docs/CORPORATE_BENCHMARK_RESULTS.md) e a
+[direção do produto](docs/PRODUCT_DIRECTION.md). O corpus é fictício, com autoria
+assistida por IA; seus resultados não demonstram superioridade em dados reais.
 
 ## Problema
 

@@ -68,3 +68,105 @@ Registre também:
 
 Os símbolos “—” são placeholders. Não publique números sem executar o
 benchmark no ambiente descrito.
+
+## Benchmark corporativo em português
+
+`corporate_pt_v1` contém 30 documentos fictícios e 80 consultas. Leia a
+[ficha dos dados](../data/benchmarks/corporate_pt_v1/README.md): a autoria foi
+assistida por IA, os rótulos não são independentes e o conjunto é um teste de
+regressão, não uma avaliação externa de mercado.
+
+```bash
+# Desenvolvimento: inspecionar erros e formular hipóteses.
+uv run python -m enterprise_rag_system.benchmark --split dev \
+  --output benchmark-report.json
+
+# A mesma matriz, com TF-IDF no componente vetorial (requer extra extras).
+uv run python -m enterprise_rag_system.benchmark --split dev --backend tfidf \
+  --output benchmark-report.json
+
+# Teste congelado: falha se qualquer métrica de recuperação regredir.
+uv run python -m enterprise_rag_system.benchmark --split test \
+  --baseline data/benchmarks/corporate_pt_v1/baseline-hashing-test.json \
+  --output benchmark-report.json
+```
+
+O comando constrói um índice em memória e compara:
+
+| Estratégia | Componentes ativos |
+|---|---|
+| `lexical` | Score lexical existente: IDF e frequência logarítmica; não é BM25 completo |
+| `vector` | Similaridade vetorial usando hashing ou TF-IDF |
+| `hybrid` | Fusão atual: 0,55 lexical + 0,45 vetorial |
+| `hybrid-rerank` | Fusão atual seguida pelo reranker heurístico da API |
+
+`RAGPipeline.retrieve()` executa o mesmo caminho de evidências usado por
+`query()`, com modos opcionais para ablação. A consulta da API mantém os
+defaults anteriores. O benchmark injeta explicitamente embedder, armazenamento
+em memória e gerador determinístico, mas não chama o gerador. Variáveis de
+ambiente apontando para provedores, Qdrant ou modelos externos não acionam esses
+serviços durante o benchmark.
+
+Cada K é executado separadamente. O pool continua sendo `2 * K`, seguido pelo
+corte em K; por isso a classificação em K=1 pode diferir da primeira posição de
+uma execução em K=5 quando o reranking está ativo.
+
+### Definição das métricas
+
+As médias usam apenas consultas com documentos relevantes conhecidos:
+
+- Recall@K: documentos relevantes distintos encontrados / total de relevantes.
+- Precisão@K: documentos relevantes distintos encontrados / K.
+- MRR@K: inverso da posição do primeiro documento relevante; zero se ausente.
+- nDCG@K: ganho binário descontado por `log2(rank + 1)`, dividido pelo ranking ideal.
+
+**K conta chunks retornados**, como na API. Repetições de um documento ocupam
+posições, mas não recebem ganho adicional. O relatório mantém essas repetições
+para diagnosticar desperdício de contexto. O ranking ideal usa até
+`min(K, número de documentos relevantes)` fontes distintas. Essa convenção deve
+ser considerada antes de comparar com ferramentas que deduplicam documentos
+antes de aplicar K. As definições têm testes com resultados calculados à mão.
+
+Perguntas sem resposta têm `metrics: null` e ficam fora das médias. A taxa
+`unanswerable_return_rate` informa quantas receberam qualquer candidato, não
+quantas tiveram resposta inventada. Nenhuma alegação sobre alucinação ou
+fidelidade pode ser extraída desse número sem avaliar a geração separadamente.
+
+### Latência e proveniência
+
+O padrão realiza um aquecimento por consulta/configuração e cinco medições
+subsequentes. O relatório agrega as medições de todas as consultas, inclusive
+as sem resposta. A mediana e o p95 usam milissegundos; o p95 é o elemento
+`ceil(0.95 * N)` na série ordenada. Não incluem LLM, rede, carga concorrente ou
+construção do índice. O custo de construção aparece em `index_ms`; como o índice
+é compartilhado entre ablações, esse campo não representa o custo de uma
+implementação lexical isolada.
+
+O JSON registra hashes SHA-256 do corpus e das queries, hash do código-fonte,
+versões do Python e das bibliotecas de embeddings, arquitetura, dimensões,
+split, contagens e resultados por consulta. Use `--repeats`, `--top-k`,
+`--max-words`, `--corpus` e `--queries` para experimentos explícitos. As consultas
+personalizadas precisam dos campos `query_id`, `question`, `relevant_doc_ids`,
+`split` (`dev` ou `test`) e `category`. IDs duplicados, perguntas vazias ou
+duplicadas entre splits e rótulos para documentos inexistentes são rejeitados.
+
+### Gate de regressão
+
+A CI compara hashing contra a referência congelada, com tolerância padrão zero
+para as quatro métricas de cada estratégia/K. A latência não bloqueia o merge,
+pois runners distintos não fornecem um ambiente controlado de desempenho.
+O relatório atual é preservado por 14 dias, inclusive quando há regressão.
+
+O comando retorna 0 quando passa, 1 quando encontra regressão e 2 para dados,
+parâmetros ou referências incompatíveis. A comparação rejeita diferenças nos
+hashes de dados, split, backend, chunking configurado, população de consultas
+e matriz de estratégias/K. Alterar dados exige uma referência nova, revisada.
+
+`--max-regression` aceita uma tolerância absoluta explícita para experimentos,
+mas a CI não a utiliza. Não enfraqueça o gate nem sobrescreva a referência só
+para tornar uma mudança verde. Uma troca intencional de qualidade entre métricas
+exige resultados completos e justificativa no PR.
+
+O relatório de resultados em
+[CORPORATE_BENCHMARK_RESULTS.md](CORPORATE_BENCHMARK_RESULTS.md) registra a
+baseline inicial, incluindo as configurações que tiveram desempenho pior.

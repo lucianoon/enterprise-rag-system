@@ -34,3 +34,15 @@ def test_evaluator_computes_recall_and_mrr():
     assert result.recall_at_k == 1.0
     assert result.mrr > 0
 
+
+def test_retrieve_matches_query_evidence_without_invoking_generator(monkeypatch):
+    pipeline = _pipeline()
+    expected = pipeline.query("refund policy", top_k=2).results
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Retrieval must not invoke generation")
+
+    monkeypatch.setattr(pipeline.answer_generator, "compose", forbidden)
+
+    assert pipeline.retrieve("refund policy", top_k=2) == expected
+

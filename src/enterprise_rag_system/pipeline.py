@@ -11,8 +11,8 @@ from enterprise_rag_system.generation import (
     build_answer_generator,
     generate_answer,
 )
-from enterprise_rag_system.models import Chunk, Citation, QueryResponse
-from enterprise_rag_system.retrieval import HybridRetriever, Reranker
+from enterprise_rag_system.models import Chunk, Citation, QueryResponse, SearchResult
+from enterprise_rag_system.retrieval import HybridRetriever, Reranker, RetrievalMode
 from enterprise_rag_system.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
@@ -32,10 +32,18 @@ class RAGPipeline:
         self.reranker = Reranker()
         self.answer_generator = answer_generator or build_answer_generator()
 
+    def retrieve(
+        self, question: str, top_k: int = 3, *,
+        mode: RetrievalMode = "hybrid", rerank: bool = True,
+    ) -> list[SearchResult]:
+        """Retrieve evidence without invoking the answer generator."""
+        initial = self.retriever.search(question, top_k=top_k * 2, mode=mode)
+        ranked = self.reranker.rerank(question, initial) if rerank else initial
+        return ranked[:top_k]
+
     def query(self, question: str, top_k: int = 3) -> QueryResponse:
         started = perf_counter()
-        initial = self.retriever.search(question, top_k=max(top_k * 2, top_k))
-        results = self.reranker.rerank(question, initial)[:top_k]
+        results = self.retrieve(question, top_k=top_k)
         citations = [
             Citation(doc_id=r.chunk.doc_id, title=r.chunk.title, chunk_id=r.chunk.chunk_id)
             for r in results
@@ -61,4 +69,3 @@ class RAGPipeline:
                 "generation_mode": generated.mode,
             },
         )
-
