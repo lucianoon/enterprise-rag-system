@@ -123,7 +123,7 @@ cd enterprise-rag-system
 uv sync --extra dev              # core: runs fully offline
 uv sync --extra dev --extra extras   # optional: qdrant-client + scikit-learn
 
-uv run pytest -q                 # 55 tests, no network, no API key
+uv run pytest -q                 # offline tests, no API key
 uv run ruff check . && uv run mypy   # the same gates CI enforces
 uv run uvicorn enterprise_rag_system.api:app --port 8000
 ```
@@ -148,9 +148,17 @@ Set `RAG_LLM_MODE` (see `.env.example`):
 - `llm` — always call the model (see [Swapping model or provider](#swapping-model-or-provider))
 - `deterministic` — always use the offline template (what CI runs)
 
-A transient API error falls back to the deterministic answer, so `/query` never
-hard-fails (the failure is logged with a full traceback). The active mode is reported
-as `generation_mode` in response metadata.
+LLM failures, empty responses, refusals and filtered responses trigger the
+deterministic fallback and are logged. `generation_mode` reports the path
+actually used for that response: `llm` for model-generated text,
+`deterministic-fallback` after an LLM failure, and `deterministic` for the
+offline template or a response without context. This state belongs to each
+request, including when queries run concurrently.
+
+The Python interface `compose(question, results)` still returns text.
+Generators whose mode varies per request can implement
+`compose_with_metadata(question, results)`, returning `GeneratedAnswer(text, mode)`.
+Existing custom generators with `compose` and `mode` remain supported.
 
 ### Swapping model or provider
 
@@ -164,9 +172,14 @@ one interface — the answer generator and the faithfulness judge both use it:
 | `RAG_LLM_BASE_URL` | OpenAI-compatible endpoint (also accepts `OPENAI_BASE_URL`) |
 | `RAG_LLM_API_KEY` | credential; falls back to `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` |
 
-In `auto` mode: an Anthropic key ⇒ `anthropic`; otherwise a base URL or an
-OpenAI key ⇒ `openai`; with neither, the pipeline uses the deterministic
-generator.
+In `auto` mode, a base URL selects `openai`, even when an Anthropic key is also
+exported. Without a URL, an Anthropic key takes precedence over an OpenAI key.
+The generic `RAG_LLM_API_KEY` overrides the selected provider's credential;
+when configured alone, it retains the `anthropic` default for compatibility.
+With no configuration, the pipeline uses the deterministic generator.
+`RAG_LLM_BACKEND=anthropic` or `openai` always overrides automatic selection;
+set it explicitly to keep Anthropic when an OpenAI-compatible URL is present
+in the environment.
 
 ```bash
 # OpenRouter, Groq, Together, DeepInfra, Fireworks…

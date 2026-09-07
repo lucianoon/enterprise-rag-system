@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Protocol
+from dataclasses import dataclass
+from typing import Protocol, runtime_checkable
 
 from enterprise_rag_system import llm_client
 from enterprise_rag_system.models import SearchResult
@@ -34,6 +35,14 @@ SYSTEM_PROMPT = (
 DEFAULT_MODEL = llm_client.DEFAULT_ANTHROPIC_MODEL
 
 
+@dataclass(frozen=True)
+class GeneratedAnswer:
+    """Text and effective generation mode for one request."""
+
+    text: str
+    mode: str
+
+
 class AnswerGenerator(Protocol):
     """Composes a final answer from ranked search results."""
 
@@ -41,6 +50,23 @@ class AnswerGenerator(Protocol):
 
     def compose(self, question: str, results: list[SearchResult]) -> str:
         ...
+
+
+@runtime_checkable
+class AnswerGeneratorWithMetadata(AnswerGenerator, Protocol):
+    """Optional capability for generators whose mode can vary per request."""
+
+    def compose_with_metadata(self, question: str, results: list[SearchResult]) -> GeneratedAnswer:
+        ...
+
+
+def generate_answer(
+    generator: AnswerGenerator, question: str, results: list[SearchResult]
+) -> GeneratedAnswer:
+    """Read per-request metadata while supporting existing text-only generators."""
+    if isinstance(generator, AnswerGeneratorWithMetadata):
+        return generator.compose_with_metadata(question, results)
+    return GeneratedAnswer(text=generator.compose(question, results), mode=generator.mode)
 
 
 def _format_context(results: list[SearchResult]) -> str:
@@ -84,8 +110,14 @@ class LLMAnswerGenerator:
         self._fallback = DeterministicAnswerGenerator()
 
     def compose(self, question: str, results: list[SearchResult]) -> str:
+        """Keep the text-only interface available to existing callers."""
+        return self.compose_with_metadata(question, results).text
+
+    def compose_with_metadata(self, question: str, results: list[SearchResult]) -> GeneratedAnswer:
         if not results:
-            return "I could not find grounded information in the indexed documents."
+            return GeneratedAnswer(
+                text=self._fallback.compose(question, results), mode=self._fallback.mode
+            )
         context = _format_context(results)
         user_prompt = (
             f"Question: {question}\n\n"
@@ -94,9 +126,10 @@ class LLMAnswerGenerator:
             "citations."
         )
         try:
-            return llm_client.complete(
+            text = llm_client.complete(
                 SYSTEM_PROMPT, user_prompt, model=self.model, max_tokens=self.max_tokens
             )
+            return GeneratedAnswer(text=text, mode=self.mode)
         except Exception:
             # Never let a transient API error break the query path — but the
             # failure must be visible to operators, not swallowed silently.
@@ -104,7 +137,9 @@ class LLMAnswerGenerator:
                 "LLM request failed (model=%s); falling back to deterministic answer.",
                 llm_client.describe(self.model),
             )
-            return self._fallback.compose(question, results)
+            return GeneratedAnswer(
+                text=self._fallback.compose(question, results), mode="deterministic-fallback"
+            )
 
 
 def _llm_available() -> bool:

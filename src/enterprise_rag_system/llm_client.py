@@ -19,9 +19,9 @@ code change:
                              ``ANTHROPIC_API_KEY`` per backend
 ===========================  ==============================================
 
-In ``auto`` mode: an Anthropic key wins; otherwise a base URL or an OpenAI key
-selects ``openai``; with neither, nothing is available and callers fall back to
-their deterministic path.
+In ``auto`` mode: a base URL selects ``openai``; otherwise an Anthropic key
+wins over an OpenAI key. A generic key alone keeps the Anthropic default for
+compatibility. With no configuration, callers use their deterministic path.
 
 Local servers (Ollama, LM Studio, vLLM) usually need no credential. When a base
 URL is set and no key is, a placeholder is sent — the OpenAI client requires a
@@ -71,10 +71,16 @@ def resolve_backend() -> str | None:
         raise ValueError(
             f"Invalid RAG_LLM_BACKEND: {requested!r}. Use 'auto', 'anthropic' or 'openai'."
         )
-    if _env("RAG_LLM_API_KEY", "ANTHROPIC_API_KEY"):
-        return "anthropic"
-    if _base_url() or _env("OPENAI_API_KEY"):
+    # An explicit compatible endpoint determines the provider, even when
+    # unrelated native credentials remain exported in the environment.
+    if _base_url():
         return "openai"
+    if _env("ANTHROPIC_API_KEY"):
+        return "anthropic"
+    if _env("OPENAI_API_KEY"):
+        return "openai"
+    if _env("RAG_LLM_API_KEY"):
+        return "anthropic"
     return None
 
 
@@ -129,7 +135,7 @@ def describe(model: str | None = None) -> str:
 
 
 def complete(system: str, prompt: str, *, model: str | None = None, max_tokens: int = 1024) -> str:
-    """Run one completion against the configured backend and return its text."""
+    """Return non-empty completion text, or raise for unusable responses."""
     config = resolve(model)
     if config.backend == "anthropic":
         import anthropic
@@ -150,7 +156,10 @@ def complete(system: str, prompt: str, *, model: str | None = None, max_tokens: 
         # as a valid (empty) answer instead of falling back.
         if message.stop_reason == "refusal":
             raise RuntimeError("The model refused the request on content policy grounds.")
-        return "".join(b.text for b in message.content if b.type == "text").strip()
+        text = "".join(b.text for b in message.content if b.type == "text").strip()
+        if not text:
+            raise RuntimeError("The model returned no text.")
+        return text
 
     import openai
 
@@ -163,4 +172,14 @@ def complete(system: str, prompt: str, *, model: str | None = None, max_tokens: 
             {"role": "user", "content": prompt},
         ],
     )
-    return (completion.choices[0].message.content or "").strip()
+    if not completion.choices:
+        raise RuntimeError("The model returned no completion choices.")
+    choice = completion.choices[0]
+    if choice.message.refusal:
+        raise RuntimeError("The model refused the request on content policy grounds.")
+    if choice.finish_reason == "content_filter":
+        raise RuntimeError("The model response was filtered on content policy grounds.")
+    text = (choice.message.content or "").strip()
+    if not text:
+        raise RuntimeError("The model returned no text.")
+    return text

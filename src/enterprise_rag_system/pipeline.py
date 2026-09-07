@@ -6,7 +6,11 @@ from time import perf_counter
 from uuid import uuid4
 
 from enterprise_rag_system.embeddings import Embedder
-from enterprise_rag_system.generation import AnswerGenerator, build_answer_generator
+from enterprise_rag_system.generation import (
+    AnswerGenerator,
+    build_answer_generator,
+    generate_answer,
+)
 from enterprise_rag_system.models import Chunk, Citation, QueryResponse
 from enterprise_rag_system.retrieval import HybridRetriever, Reranker
 from enterprise_rag_system.vector_store import VectorStore
@@ -36,17 +40,17 @@ class RAGPipeline:
             Citation(doc_id=r.chunk.doc_id, title=r.chunk.title, chunk_id=r.chunk.chunk_id)
             for r in results
         ]
-        answer = self.answer_generator.compose(question, results)
+        generated = generate_answer(self.answer_generator, question, results)
         latency_ms = round((perf_counter() - started) * 1000, 3)
         logger.info(
             "query answered: top_k=%d results=%d mode=%s latency_ms=%.1f",
             top_k,
             len(results),
-            self.answer_generator.mode,
+            generated.mode,
             latency_ms,
         )
         return QueryResponse(
-            answer=answer,
+            answer=generated.text,
             citations=citations,
             results=results,
             metadata={
@@ -54,7 +58,7 @@ class RAGPipeline:
                 "latency_ms": latency_ms,
                 "top_k": top_k,
                 "result_count": len(results),
-                "generation_mode": self.answer_generator.mode,
+                "generation_mode": generated.mode,
             },
         )
 
