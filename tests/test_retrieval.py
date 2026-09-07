@@ -1,5 +1,7 @@
 """Retrieval unit tests."""
 
+import pytest
+
 from enterprise_rag_system.embeddings import HashingEmbedder
 from enterprise_rag_system.models import Chunk
 from enterprise_rag_system.retrieval import HybridRetriever, Reranker, tokenize
@@ -51,3 +53,35 @@ def test_reranker_boosts_exact_title_mention():
 
     assert reranked[0].chunk.doc_id == "policy_security"
     assert reranked[0].rerank_score > reranked[0].hybrid_score
+
+
+def test_lexical_ablation_does_not_query_vector_store(monkeypatch):
+    retriever = _retriever()
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Lexical retrieval queried the vector store")
+
+    monkeypatch.setattr(retriever.vector_store, "search", forbidden)
+    results = retriever.search("refund", mode="lexical")
+
+    assert results[0].chunk.doc_id == "policy_refunds"
+    assert all(r.vector_score == 0 and r.hybrid_score == r.lexical_score for r in results)
+
+
+def test_vector_ablation_does_not_use_lexical_scores(monkeypatch):
+    retriever = _retriever()
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Vector retrieval invoked lexical scoring")
+
+    monkeypatch.setattr(retriever, "_lexical_score", forbidden)
+    results = retriever.search("refund", mode="vector")
+
+    assert all(r.lexical_score == 0 and r.hybrid_score == r.vector_score for r in results)
+
+
+def test_search_rejects_unknown_modes_and_nonpositive_cutoffs():
+    with pytest.raises(ValueError, match="mode"):
+        _retriever().search("refund", mode="unknown")
+    with pytest.raises(ValueError, match="positive"):
+        _retriever().search("refund", top_k=0)

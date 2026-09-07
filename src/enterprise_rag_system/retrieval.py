@@ -12,12 +12,14 @@ import re
 from collections import Counter
 from collections.abc import Iterable
 from math import log
+from typing import Literal
 
 from enterprise_rag_system.embeddings import Embedder, build_embedder
 from enterprise_rag_system.models import Chunk, SearchResult
 from enterprise_rag_system.vector_store import VectorStore, build_vector_store
 
 logger = logging.getLogger(__name__)
+RetrievalMode = Literal["lexical", "vector", "hybrid"]
 
 
 def tokenize(text: str) -> list[str]:
@@ -52,20 +54,34 @@ class HybridRetriever:
             self.vector_store.name,
         )
 
-    def search(self, question: str, top_k: int = 3) -> list[SearchResult]:
+    def search(
+        self, question: str, top_k: int = 3, *, mode: RetrievalMode = "hybrid"
+    ) -> list[SearchResult]:
+        if mode not in ("lexical", "vector", "hybrid"):
+            raise ValueError(f"Unknown retrieval mode: {mode!r}")
+        if top_k < 1:
+            raise ValueError("top_k must be positive")
         query_tokens = tokenize(question)
         # Every chunk gets a hybrid score, so ask the store for the full
         # ranking. Fine at document-collection scale; for very large corpora
         # this becomes a candidate pool instead.
         vector_scores: dict[str, float] = {}
-        if self.chunks:
+        if self.chunks and mode != "lexical":
             query_vector = self.embedder.embed_query(question)
             vector_scores = dict(self.vector_store.search(query_vector, top_k=len(self.chunks)))
         scored = []
         for chunk in self.chunks:
-            lexical = self._lexical_score(query_tokens, self.chunk_tokens[chunk.chunk_id])
+            lexical = (
+                self._lexical_score(query_tokens, self.chunk_tokens[chunk.chunk_id])
+                if mode != "vector" else 0.0
+            )
             vector = vector_scores.get(chunk.chunk_id, 0.0)
-            hybrid = (0.55 * lexical) + (0.45 * vector)
+            if mode == "lexical":
+                hybrid = lexical
+            elif mode == "vector":
+                hybrid = vector
+            else:
+                hybrid = (0.55 * lexical) + (0.45 * vector)
             scored.append(
                 SearchResult(
                     chunk=chunk,

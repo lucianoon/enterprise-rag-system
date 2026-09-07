@@ -7,5 +7,6 @@ __pycache__/
 .ruff_cache/
 .DS_Store
 qdrant_storage/
+benchmark-report.json
 
 .venv/

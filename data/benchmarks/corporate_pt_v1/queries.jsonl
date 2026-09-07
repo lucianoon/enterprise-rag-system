@@ -1,0 +1,80 @@
+{"query_id":"dev01","question":"Com quantos dias de antecedência preciso pedir uma passagem aérea nacional?","relevant_doc_ids":["viagem_transporte"],"split":"dev","category":"direct"}
+{"query_id":"dev02","question":"O hotel do congresso custa mais do que a diária permitida. Quem libera a exceção?","relevant_doc_ids":["viagem_hotel"],"split":"dev","category":"paraphrase"}
+{"query_id":"dev03","question":"Voltei de viagem ontem. Até quando envio as notas dos almoços?","relevant_doc_ids":["viagem_refeicao"],"split":"dev","category":"paraphrase"}
+{"query_id":"dev04","question":"Qual é o teto mensal do auxílio de internet residencial?","relevant_doc_ids":["remoto_internet"],"split":"dev","category":"direct"}
+{"query_id":"dev05","question":"Posso comprar meu próprio notebook e depois pedir o dinheiro à empresa?","relevant_doc_ids":["equipamento_compra"],"split":"dev","category":"exception"}
+{"query_id":"dev06","question":"Fui desligado e trabalho de casa. Como envio o computador de volta?","relevant_doc_ids":["equipamento_devolucao"],"split":"dev","category":"paraphrase"}
+{"query_id":"dev07","question":"Quanto tempo dura uma permissão administrativa concedida pelo portal?","relevant_doc_ids":["acesso_concessao"],"split":"dev","category":"direct"}
+{"query_id":"dev08","question":"É preciso esperar o notebook chegar para bloquear a conta de quem saiu?","relevant_doc_ids":["acesso_revogacao"],"split":"dev","category":"exception"}
+{"query_id":"dev09","question":"Perdi o celular do autenticador. Como provo minha identidade para cadastrar outro?","relevant_doc_ids":["mfa_recuperacao"],"split":"dev","category":"paraphrase"}
+{"query_id":"dev10","question":"Quanto tempo tenho para usar o link de redefinição de senha?","relevant_doc_ids":["senha_redefinicao"],"split":"dev","category":"direct"}
+{"query_id":"dev11","question":"Enviei um documento restrito para a pessoa errada. Devo apagar as mensagens?","relevant_doc_ids":["incidente_seguranca"],"split":"dev","category":"exception"}
+{"query_id":"dev12","question":"O sistema interno caiu e não há aviso. Que informações coloco no chamado?","relevant_doc_ids":["incidente_servico"],"split":"dev","category":"paraphrase"}
+{"query_id":"dev13","question":"Uma ferramenta de IA aprovada pode receber qualquer contrato confidencial?","relevant_doc_ids":["dados_ia"],"split":"dev","category":"exception"}
+{"query_id":"dev14","question":"Por quanto tempo guardamos os registros técnicos de acesso?","relevant_doc_ids":["retencao_logs"],"split":"dev","category":"direct"}
+{"query_id":"dev15","question":"Quando começa a contagem da guarda de um contrato encerrado?","relevant_doc_ids":["retencao_contratos"],"split":"dev","category":"direct"}
+{"query_id":"dev16","question":"Um terceiro pediu para apagar seus dados. Posso remover os registros diretamente?","relevant_doc_ids":["exclusao_dados"],"split":"dev","category":"exception"}
+{"query_id":"dev17","question":"O fornecedor terminou o serviço antes dos trinta dias. Preciso cancelar o acesso?","relevant_doc_ids":["fornecedor_acesso"],"split":"dev","category":"exception"}
+{"query_id":"dev18","question":"O crachá de visitante permite entrar na sala de servidores sem autorização?","relevant_doc_ids":["visitante_fisico"],"split":"dev","category":"exception"}
+{"query_id":"dev19","question":"A nota fiscal chegou com uma conta bancária nova. Como validar a mudança?","relevant_doc_ids":["fornecedor_pagamento"],"split":"dev","category":"paraphrase"}
+{"query_id":"dev20","question":"O cliente pagou duas vezes a mesma cobrança. Quais identificadores pedir?","relevant_doc_ids":["cliente_reembolso"],"split":"dev","category":"paraphrase"}
+{"query_id":"dev21","question":"O crédito concedido por indisponibilidade é depositado na conta do cliente?","relevant_doc_ids":["cliente_credito"],"split":"dev","category":"exception"}
+{"query_id":"dev22","question":"O SLA crítico garante solução definitiva em quinze minutos?","relevant_doc_ids":["sla_critico"],"split":"dev","category":"exception"}
+{"query_id":"dev23","question":"Quando começa a contar o prazo de um chamado normal aberto no sábado?","relevant_doc_ids":["sla_normal"],"split":"dev","category":"paraphrase"}
+{"query_id":"dev24","question":"Como alterar um período de férias que já foi aprovado?","relevant_doc_ids":["ferias"],"split":"dev","category":"direct"}
+{"query_id":"dev25","question":"A folga para compensar horas deve ser registrada como férias?","relevant_doc_ids":["banco_horas"],"split":"dev","category":"exception"}
+{"query_id":"dev26","question":"Posso anexar documentos médicos da licença parental num chamado visível ao time?","relevant_doc_ids":["licenca_parental"],"split":"dev","category":"exception"}
+{"query_id":"dev27","question":"Mudar permanentemente de cidade no Brasil exige qual antecedência de aviso?","relevant_doc_ids":["remoto_nacional"],"split":"dev","category":"direct"}
+{"query_id":"dev28","question":"Ter férias aprovadas me permite trabalhar de outro país?","relevant_doc_ids":["remoto_exterior"],"split":"dev","category":"exception"}
+{"query_id":"dev29","question":"Uma ferramenta gratuita que usa dados corporativos também precisa passar por segurança?","relevant_doc_ids":["software_compra"],"split":"dev","category":"exception"}
+{"query_id":"dev30","question":"Desinstalar um aplicativo encerra o contrato e a cobrança das licenças?","relevant_doc_ids":["software_renovacao"],"split":"dev","category":"exception"}
+{"query_id":"dev31","question":"Quais são os limites de hotel e alimentação numa viagem de trabalho?","relevant_doc_ids":["viagem_hotel","viagem_refeicao"],"split":"dev","category":"multi_document"}
+{"query_id":"dev32","question":"No desligamento, quando bloquear as contas e quando devolver o notebook?","relevant_doc_ids":["acesso_revogacao","equipamento_devolucao"],"split":"dev","category":"multi_document"}
+{"query_id":"dev33","question":"Qual a diferença entre estorno de cobrança duplicada e crédito por indisponibilidade?","relevant_doc_ids":["cliente_reembolso","cliente_credito"],"split":"dev","category":"multi_document"}
+{"query_id":"dev34","question":"Como os prazos de primeira resposta mudam entre suporte crítico e normal?","relevant_doc_ids":["sla_critico","sla_normal"],"split":"dev","category":"multi_document"}
+{"query_id":"dev35","question":"Quem aprova uma ferramenta nova e quando deve começar a revisão das licenças para renovar?","relevant_doc_ids":["software_compra","software_renovacao"],"split":"dev","category":"multi_document"}
+{"query_id":"dev36","question":"Qual é a senha atual da rede Wi-Fi de visitantes?","relevant_doc_ids":[],"split":"dev","category":"unanswerable"}
+{"query_id":"dev37","question":"Quantos dias dura a licença parental remunerada?","relevant_doc_ids":[],"split":"dev","category":"unanswerable"}
+{"query_id":"dev38","question":"Qual a lista de países previamente autorizados para trabalho remoto?","relevant_doc_ids":[],"split":"dev","category":"unanswerable"}
+{"query_id":"dev39","question":"Quanto a empresa contribui para o plano de previdência privada?","relevant_doc_ids":[],"split":"dev","category":"unanswerable"}
+{"query_id":"dev40","question":"Qual o prazo garantido de resolução de todos os chamados normais?","relevant_doc_ids":[],"split":"dev","category":"unanswerable"}
+{"query_id":"test01","question":"A multa do carro alugado será devolvida junto com o recibo do táxi do aeroporto?","relevant_doc_ids":["viagem_transporte"],"split":"test","category":"exception"}
+{"query_id":"test02","question":"Vou ficar seis noites fora a serviço. A lavagem das roupas entra nas despesas permitidas?","relevant_doc_ids":["viagem_hotel"],"split":"test","category":"paraphrase"}
+{"query_id":"test03","question":"O congresso já ofereceu almoço. Recebo esse valor como crédito extra na prestação de contas?","relevant_doc_ids":["viagem_refeicao"],"split":"test","category":"exception"}
+{"query_id":"test04","question":"Minha fatura de conexão ficou abaixo do teto. Posso aproveitar a diferença no mês seguinte?","relevant_doc_ids":["remoto_internet"],"split":"test","category":"paraphrase"}
+{"query_id":"test05","question":"Quem providencia uma máquina nova e qual é o prazo depois de aprovada a aquisição?","relevant_doc_ids":["equipamento_compra"],"split":"test","category":"paraphrase"}
+{"query_id":"test06","question":"Saí da empresa. Posso passar meu computador diretamente para um colega que ficou?","relevant_doc_ids":["equipamento_devolucao"],"split":"test","category":"exception"}
+{"query_id":"test07","question":"Meu chefe autorizou pelo chat que eu use um sistema novo. Isso substitui o processo de acesso?","relevant_doc_ids":["acesso_concessao"],"split":"test","category":"paraphrase"}
+{"query_id":"test08","question":"Troquei de departamento. Até quando precisam retirar as permissões do cargo antigo?","relevant_doc_ids":["acesso_revogacao"],"split":"test","category":"paraphrase"}
+{"query_id":"test09","question":"Se eu mudar a senha, o telefone antigo deixa de servir como segundo fator?","relevant_doc_ids":["mfa_recuperacao"],"split":"test","category":"exception"}
+{"query_id":"test10","question":"Esqueci a senha, mas continuo com o autenticador. Qual canal devo usar para recuperar a entrada?","relevant_doc_ids":["senha_redefinicao"],"split":"test","category":"paraphrase"}
+{"query_id":"test11","question":"Cliquei num email falso e minha credencial pode ter vazado. Quem deve revogar as sessões?","relevant_doc_ids":["incidente_seguranca"],"split":"test","category":"paraphrase"}
+{"query_id":"test12","question":"Durante uma queda crítica dos serviços, de quanto em quanto tempo operações publica novidades?","relevant_doc_ids":["incidente_servico"],"split":"test","category":"paraphrase"}
+{"query_id":"test13","question":"Quero pedir a um chatbot público que resuma um acordo sigiloso de um cliente. Onde posso processá-lo?","relevant_doc_ids":["dados_ia"],"split":"test","category":"paraphrase"}
+{"query_id":"test14","question":"Os registros de login completaram 180 dias, mas existe uma investigação com ordem de preservação. Serão apagados?","relevant_doc_ids":["retencao_logs"],"split":"test","category":"exception"}
+{"query_id":"test15","question":"Quem pode consultar a versão integral de um acordo comercial já encerrado?","relevant_doc_ids":["retencao_contratos"],"split":"test","category":"paraphrase"}
+{"query_id":"test16","question":"Recebemos um pedido para eliminar dados pessoais. Quais verificações vêm antes da avaliação?","relevant_doc_ids":["exclusao_dados"],"split":"test","category":"paraphrase"}
+{"query_id":"test17","question":"Uma consultoria ficará mais um mês. As contas temporárias renovam sozinhas e podem ser compartilhadas?","relevant_doc_ids":["fornecedor_acesso"],"split":"test","category":"exception"}
+{"query_id":"test18","question":"Vou receber alguém no escritório amanhã. Como preparar a entrada e quem acompanha essa pessoa?","relevant_doc_ids":["visitante_fisico"],"split":"test","category":"paraphrase"}
+{"query_id":"test19","question":"Entreguei a nota fiscal com pedido de compra e aceite no dia 9. Em qual dia entra o pagamento?","relevant_doc_ids":["fornecedor_pagamento"],"split":"test","category":"paraphrase"}
+{"query_id":"test20","question":"Confirmamos que o cartão foi cobrado duas vezes. Qual prazo para pedir estorno e onde o dinheiro volta?","relevant_doc_ids":["cliente_reembolso"],"split":"test","category":"paraphrase"}
+{"query_id":"test21","question":"Foi aprovado abatimento por uma interrupção prevista no contrato. Em qual fatura ele aparece?","relevant_doc_ids":["cliente_credito"],"split":"test","category":"paraphrase"}
+{"query_id":"test22","question":"Toda a operação parou sem alternativa no domingo. O suporte ampliado tem atendimento nessa hora?","relevant_doc_ids":["sla_critico"],"split":"test","category":"paraphrase"}
+{"query_id":"test23","question":"Ainda consigo trabalhar por um caminho alternativo. Qual prioridade e janela de atendimento se aplicam?","relevant_doc_ids":["sla_normal"],"split":"test","category":"paraphrase"}
+{"query_id":"test24","question":"Consigo calcular meu saldo de descanso anual apenas pelos meses desde que fui contratado?","relevant_doc_ids":["ferias"],"split":"test","category":"paraphrase"}
+{"query_id":"test25","question":"As horas que registrei hoje não aparecem no saldo para tirar folga. Quando ele é atualizado?","relevant_doc_ids":["banco_horas"],"split":"test","category":"paraphrase"}
+{"query_id":"test26","question":"Vou me afastar por chegada de um filho. Como aviso sem expor meus documentos ao restante da equipe?","relevant_doc_ids":["licenca_parental"],"split":"test","category":"paraphrase"}
+{"query_id":"test27","question":"A autorização para morar em outra cidade brasileira muda automaticamente meu salário?","relevant_doc_ids":["remoto_nacional"],"split":"test","category":"exception"}
+{"query_id":"test28","question":"Já estou viajando fora do Brasil e o pedido ainda está em análise. Posso começar a trabalhar?","relevant_doc_ids":["remoto_exterior"],"split":"test","category":"exception"}
+{"query_id":"test29","question":"O vendedor de um aplicativo pediu que eu aceite os termos e cadastre o cartão antes da análise. É permitido?","relevant_doc_ids":["software_compra"],"split":"test","category":"paraphrase"}
+{"query_id":"test30","question":"Precisamos parar de pagar por um serviço digital. Quanto tempo antes aviso compras e desinstalar basta?","relevant_doc_ids":["software_renovacao"],"split":"test","category":"paraphrase"}
+{"query_id":"test31","question":"Qual a diferença entre o prazo de guarda dos registros de acesso e o dos contratos encerrados?","relevant_doc_ids":["retencao_logs","retencao_contratos"],"split":"test","category":"multi_document"}
+{"query_id":"test32","question":"O que muda na aprovação quando saio para outra cidade do Brasil ou para trabalhar de outro país?","relevant_doc_ids":["remoto_nacional","remoto_exterior"],"split":"test","category":"multi_document"}
+{"query_id":"test33","question":"Como pedir ausência usando banco de horas e como pedir férias, incluindo antecedência e registro?","relevant_doc_ids":["banco_horas","ferias"],"split":"test","category":"multi_document"}
+{"query_id":"test34","question":"Quais controles diferenciam a conta digital de um fornecedor e a entrada de um visitante no escritório?","relevant_doc_ids":["fornecedor_acesso","visitante_fisico"],"split":"test","category":"multi_document"}
+{"query_id":"test35","question":"Posso enviar dados identificáveis a uma IA pública e quem aciono se já expus informações por engano?","relevant_doc_ids":["dados_ia","incidente_seguranca"],"split":"test","category":"multi_document"}
+{"query_id":"test36","question":"Qual é o valor do salário do diretor financeiro?","relevant_doc_ids":[],"split":"test","category":"unanswerable"}
+{"query_id":"test37","question":"Qual o modelo exato de notebook entregue aos engenheiros neste ano?","relevant_doc_ids":[],"split":"test","category":"unanswerable"}
+{"query_id":"test38","question":"Quantos dias são garantidos para concluir qualquer pedido de exclusão de dados pessoais?","relevant_doc_ids":[],"split":"test","category":"unanswerable"}
+{"query_id":"test39","question":"Que percentual da receita anual será distribuído como participação nos lucros?","relevant_doc_ids":[],"split":"test","category":"unanswerable"}
+{"query_id":"test40","question":"Qual o número de telefone do analista que está de plantão hoje?","relevant_doc_ids":[],"split":"test","category":"unanswerable"}

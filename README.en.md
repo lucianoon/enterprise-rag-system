@@ -40,13 +40,27 @@ or comparing these numbers.
 
 | Evidence | What it demonstrates |
 |---|---|
-| 55 offline test functions | API, auth, retrieval, backends and evaluation |
-| 81% branch coverage, gate ≥ 80% | Measured coverage, with regressions blocked in CI |
-| Labeled, versioned dataset | Reproducible Recall@K and MRR |
+| Offline tests in CI | API, auth, retrieval, backends, concurrency and evaluation |
+| Statement and branch coverage, gate ≥ 80% | Automated coverage checks |
+| 30 documents and 80 synthetic Portuguese queries | Retrieval baseline with dev/test splits |
+| Lexical/vector/hybrid matrix and quality gate | Reproducible Recall, MRR, nDCG, precision and latency |
 | Per-stage scores | Diagnosing retrieval failures |
 | Hashing/TF-IDF/sentence-transformers | Deterministic CI plus a real semantic backend |
 | In-memory/Qdrant | Same interface from local tests to external infrastructure |
 | Heuristic or LLM judge | Faithfulness evaluation with an explicit fallback |
+
+**Portuguese regression benchmark:** `corporate_pt_v1` includes paraphrases,
+exceptions, multiple sources and unanswerable questions. Compare four
+configurations without invoking an LLM:
+
+```bash
+uv run python -m enterprise_rag_system.benchmark --split dev --output benchmark-report.json
+```
+
+See the [protocol](docs/BENCHMARKING.md),
+[measured results](docs/CORPORATE_BENCHMARK_RESULTS.md) and
+[product direction](docs/PRODUCT_DIRECTION.md). The corpus is fictional and
+AI-assisted; its results do not establish superiority on real enterprise data.
 
 ## Problem
 
