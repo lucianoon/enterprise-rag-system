@@ -113,9 +113,11 @@ continua consultável. Testes de contrato executam tanto no cliente local quanto
 em um Qdrant descartável real na CI: preservação da coleção legada, instâncias
 com o mesmo namespace, mudança de dimensão e leitor durante construção.
 
-A CI usa `qdrant/qdrant:v1.12.4`, mesma versão já declarada no Compose, e um
-namespace UUID exclusivo por teste. A limpeza dos testes é restrita a esses
-namespaces. Para executar os contratos remotos, forneça `RAG_QDRANT_TEST_URL`
+A CI principal usa `qdrant/qdrant:v1.19.1`, da mesma linha do cliente 1.19
+fixado no lock. Um job separado verifica os contratos no servidor legado
+`v1.12.4`, ainda declarado no Compose. Essa combinação legada emite aviso de
+incompatibilidade; passar nestes contratos não equivale a suporte geral.
+Cada teste usa um namespace UUID exclusivo e a limpeza é restrita a ele. Para executar os contratos remotos, forneça `RAG_QDRANT_TEST_URL`
 apontando para um servidor de teste descartável. Não use o banco de produção.
 
 As três referências de recuperação anteriores permanecem congeladas. Este
@@ -134,3 +136,17 @@ trabalho não modifica o ranking e deve passar pelos mesmos controles de qualida
 4. Validar citações, abstenção, qualidade e custo com um corpus autorizado e
    anotação humana. Depois disponibilizar a interface de documentos e perguntas
    ao usuário piloto, com limites de consumo e observabilidade.
+
+## Compatibilidade do servidor existente
+
+O [servidor Qdrant 1.19.1](https://github.com/qdrant/qdrant/releases/tag/v1.19.1)
+foi confirmado na pesquisa e é validado pela CI principal com o cliente 1.19.
+O Compose legado continua fixado em 1.12.4 para não introduzir uma migração
+implícita de volumes existentes neste PR. A combinação legado/cliente atual
+não deve ser apresentada como ambiente recomendado de produção: a biblioteca
+avisa que a diferença de versões minor excede sua faixa compatível.
+
+Antes de atualizar o Compose para uso continuado, preparar backup/restauração,
+verificar o procedimento de upgrade das versões envolvidas e testar uma cópia
+do volume. Esta entrega não executou upgrade de banco algum. Os contratos em
+ambos os servidores delimitam apenas as operações usadas nesta implementação.

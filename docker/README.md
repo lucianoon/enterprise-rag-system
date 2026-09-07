@@ -35,3 +35,10 @@ This prevents destructive replacement but requires storage monitoring and manual
 retention management. Do not delete a generation still used by a running process.
 The JSONL source needs its own backup; vector payloads do not contain full text.
 See [the deployment limits and next lifecycle steps](../docs/SAFE_INGESTION_STRATEGY.md).
+
+Version note: the existing Compose file still pins Qdrant 1.12.4, while the
+locked client is 1.19. This combination emits a compatibility warning. CI
+checks generation contracts on that legacy version and runs the full suite
+against server 1.19.1. Passing these contracts is not general compatibility
+support; plan and test a backed-up volume migration before upgrading an
+existing installation. This change does not silently upgrade your server.
