@@ -87,6 +87,12 @@ A capacidade para corpora maiores e múltiplos processos ainda exige teste de ca
 ## Operação, backup e restauração
 
 `/health` indica processo ativo; `/ready` verifica acesso ao registro.
+`GET /quality?days=30` agrega consultas e avaliações do tenant (janela de 1 a
+30 dias). O painel de acompanhamento apresenta participação, utilidade entre
+avaliações, modos de resposta, motivos negativos e latências p50/p95.
+`PUT /queries/{query_id}/feedback` aceita uma avaliação atual por consulta,
+somente do próprio usuário; reenvios idênticos não duplicam nem consomem quota.
+Alterações de avaliação compartilham o limite de 20 mutações/minuto.
 `GET /audit` com Bearer de administrador retorna os 100 eventos mais recentes
 do tenant (usuário, ação, recurso e horário), sem pergunta, texto ou token.
 Consultas retornam revisão do corpus, modo de geração e latência total.
@@ -126,3 +132,28 @@ Antes de oferta ampla: validar tarefas e qualidade com usuários e corpus real,
 medir carga/latência/custo, definir retenção e apagamento definitivo, integrar
 SSO e observabilidade operacional e testar recuperação de desastre no ambiente
 escolhido. Esses itens não são declarados concluídos por este PR.
+
+## Medição e atualização do registro
+
+As consultas retornam `query_id`, gerado no servidor. O registro de medição não
+contém pergunta, resposta, trecho, título ou ID de documento. Guarda identidade
+para autorização, horário, revisão do corpus, modo de geração, contagem de
+fontes e latência. Não é dado anônimo. A latência termina antes da gravação
+dessa medição e da entrega HTTP; consultas rejeitadas ou interrompidas antes do
+registro não entram no painel. Ausência de avaliações aparece como ausência
+de medida, não 0% de qualidade. Veja [metodologia e fontes](QUALITY_MEASUREMENT.md).
+
+Retenção: no máximo 10.000 consultas por tenant, dentro de 30 dias. Cada nova
+consulta elimina medições antigas/excedentes daquele tenant. Para empresas
+inativas, o operador deve executar periodicamente `prune-measurements` com o
+mesmo prefixo CLI de backup. Consultas e feedback expirados ficam indisponíveis
+mesmo antes dessa manutenção. O expurgo afeta somente medições, não documentos,
+credenciais nem histórico. Não apaga backups ou garante limpeza física do disco.
+
+O esquema passa de v1 para v2 automaticamente em transação, preservando os
+registros existentes. Faça backup antes do upgrade. A versão anterior da
+aplicação recusa abrir v2; rollback requer parar o serviço e restaurar o backup
+anterior em volume separado, conforme o procedimento acima. Não altere
+`user_version` manualmente. A aplicação revalida a credencial antes de registrar
+e retornar a consulta: revogação durante a geração impede essa resposta, mas
+mudança de ACL ainda respeita o snapshot lido no começo da consulta.

@@ -8,11 +8,12 @@ import sqlite3
 from pathlib import Path
 from threading import BoundedSemaphore
 from time import perf_counter
+from typing import Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi import Path as APIPath
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from enterprise_rag_system import llm_client
 from enterprise_rag_system.ingestion import chunk_documents
@@ -34,6 +35,20 @@ class ProductQuery(BaseModel):
         if not value.strip():
             raise ValueError("Question must not be blank")
         return value
+
+
+class FeedbackRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    rating: Literal["helpful", "not_helpful"]
+    reason: (
+        Literal["missing_information", "irrelevant_sources", "incorrect_answer", "other"] | None
+    ) = None
+
+    @model_validator(mode="after")
+    def consistent(self):
+        if self.rating == "helpful" and self.reason is not None:
+            raise ValueError("Helpful feedback must not include a negative reason")
+        return self
 
 
 class RestoreRequest(BaseModel):
@@ -216,6 +231,18 @@ def create_product_app(database: Path, *, generation: str = "extractive") -> Fas
     def audit(token: str = Depends(credential)):
         return {"events": registry.audit(token)}
 
+    @app.put("/queries/{query_id}/feedback")
+    def feedback(
+        request: FeedbackRequest,
+        query_id: str = APIPath(pattern=r"^[0-9a-f]{32}$"),
+        token: str = Depends(credential),
+    ):
+        return registry.feedback(token, query_id, request.rating, request.reason)
+
+    @app.get("/quality")
+    def quality(days: int = Query(default=30, ge=1, le=30), token: str = Depends(credential)):
+        return registry.quality(token, days)
+
     @app.post("/query")
     def query(request: ProductQuery, token: str = Depends(credential)):
         if not slots.acquire(blocking=False):
@@ -271,14 +298,17 @@ def create_product_app(database: Path, *, generation: str = "extractive") -> Fas
                     except Exception:
                         logger.warning("Generation failed; using extractive evidence")
                         mode = "extractive-provider-fallback"
+            latency_ms = round((perf_counter() - started) * 1000, 2)
+            query_id = registry.record_query(token, revision, mode, latency_ms, len(citations))
             return {
+                "query_id": query_id,
                 "answer": answer,
                 "citations": citations,
                 "abstained": not selected,
                 "metadata": {
                     "corpus_revision": revision,
                     "generation_mode": mode,
-                    "latency_ms": round((perf_counter() - started) * 1000, 2),
+                    "latency_ms": latency_ms,
                 },
             }
         finally:

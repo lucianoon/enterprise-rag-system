@@ -19,6 +19,7 @@ def main():
     revoke.add_argument("--user", required=True)
     backup = commands.add_parser("backup")
     backup.add_argument("destination", type=Path)
+    commands.add_parser("prune-measurements", help="Remove expired quality measurements")
     args = parser.parse_args()
     if args.command != "issue-user" and not args.database.is_file():
         parser.error("Database does not exist")
@@ -28,6 +29,8 @@ def main():
     elif args.command == "revoke-user":
         store.revoke(args.tenant, args.user)
         print("Credential revoked")
+    elif args.command == "prune-measurements":
+        print(f"Removed {store.prune_measurements()} measurements")
     else:
         store.backup(args.destination)
         print("Backup completed")

@@ -65,6 +65,11 @@ SQLite durável, ACL antes da busca, histórico, backup e UI. Esse modo usa BM25
 e não reindexa Qdrant ao iniciar. Retenção/expurgo, integração das gerações
 vetoriais ao registro e medição sob carga continuam pendentes.
 
+O piloto também incorpora avaliação pelo próprio usuário e painel administrativo
+com participação, utilidade percebida, fontes ausentes e latência. A
+[metodologia](QUALITY_MEASUREMENT.md) diferencia esses sinais de correção factual
+e explicita retenção, privacidade e limites da amostra.
+
 ### 5. Demonstrar valor em um piloto
 
 - Selecionar usuários e tarefas reais antes de escolher um concorrente de comparação.

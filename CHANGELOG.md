@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add user-owned query feedback and a tenant-admin quality dashboard with explicit
+  participation denominators, generation/fallback counts and latency percentiles.
+  Store metadata only, retain at most 10,000 queries per tenant for 30 days, and
+  migrate the registry transactionally to schema v2 without losing documents.
+  Add inactive-tenant measurement maintenance and backup/restart regression tests.
+
 - Add an opt-in persistent product pilot with a Portuguese document/query UI,
   SQLite revisions, optimistic concurrency, tenant/document ACLs before BM25
   retrieval, individual revocable credentials, admin history/restore and audit.

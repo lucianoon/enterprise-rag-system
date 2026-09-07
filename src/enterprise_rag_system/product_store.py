@@ -8,6 +8,7 @@ import secrets
 import sqlite3
 from contextlib import closing, contextmanager
 from dataclasses import dataclass
+from math import ceil
 from pathlib import Path
 from time import time
 from typing import Literal
@@ -49,7 +50,7 @@ class Registry:
     def __init__(self, path: Path):
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
-        with self.connection() as db:
+        with self.connection(write=True) as db:
             version = db.execute("PRAGMA user_version").fetchone()[0]
             if (
                 version == 0
@@ -59,10 +60,9 @@ class Registry:
                 ).fetchone()
             ):
                 raise ValueError("Database is not an empty registry")
-            if version not in (0, 1):
+            if version not in (0, 1, 2):
                 raise ValueError("Unsupported registry schema; do not downgrade this database")
-            db.executescript("""
-                PRAGMA journal_mode=WAL;
+            schema = """
                 CREATE TABLE IF NOT EXISTS users (
                     tenant TEXT NOT NULL, user TEXT NOT NULL, role TEXT NOT NULL,
                     token_hash TEXT UNIQUE, PRIMARY KEY(tenant,user));
@@ -85,8 +85,21 @@ class Registry:
                 CREATE TABLE IF NOT EXISTS usage (
                     tenant TEXT NOT NULL, user TEXT NOT NULL, window INTEGER NOT NULL,
                     count INTEGER NOT NULL, PRIMARY KEY(tenant,user,window));
-                PRAGMA user_version=1;
-            """)
+                CREATE TABLE IF NOT EXISTS query_events (
+                    id TEXT PRIMARY KEY, tenant TEXT NOT NULL, user TEXT NOT NULL,
+                    created REAL NOT NULL, corpus_revision INTEGER NOT NULL,
+                    generation_mode TEXT NOT NULL, latency_ms REAL NOT NULL,
+                    citation_count INTEGER NOT NULL,
+                    rating TEXT, reason TEXT);
+                CREATE INDEX IF NOT EXISTS query_events_tenant_created
+                    ON query_events(tenant,created DESC,id DESC);
+                PRAGMA user_version=2;
+            """
+            for statement in schema.split(";"):
+                if statement.strip():
+                    db.execute(statement)
+        with closing(sqlite3.connect(path, timeout=5)) as db:
+            db.execute("PRAGMA journal_mode=WAL")
         path.chmod(0o600)
 
     @contextmanager
@@ -368,3 +381,100 @@ class Registry:
         except Exception:
             destination.unlink()
             raise
+
+    @staticmethod
+    def _prune_measurements(db, tenant: str, now: float):
+        db.execute(
+            "DELETE FROM query_events WHERE tenant=? AND created < ?", (tenant, now - 30 * 86400)
+        )
+        db.execute(
+            "DELETE FROM query_events WHERE tenant=? AND id IN "
+            "(SELECT id FROM query_events WHERE tenant=? "
+            "ORDER BY created DESC,id DESC LIMIT -1 OFFSET 10000)",
+            (tenant, tenant),
+        )
+
+    def record_query(
+        self, token: str, revision: int, mode: str, latency_ms: float, citation_count: int
+    ) -> str:
+        # No prompt, answer, document ID or title enters the measurement ledger.
+        query_id = secrets.token_hex(16)
+        with self.connection(write=True) as db:
+            p = self._principal(db, token)
+            now = time()
+            db.execute(
+                "INSERT INTO query_events VALUES(?,?,?,?,?,?,?,?,NULL,NULL)",
+                (query_id, p.tenant, p.user, now, revision, mode, latency_ms, citation_count),
+            )
+            self._prune_measurements(db, p.tenant, now)
+        return query_id
+
+    def feedback(self, token: str, query_id: str, rating: str, reason: str | None):
+        with self.connection(write=True) as db:
+            p = self._principal(db, token)
+            row = db.execute(
+                "SELECT rating,reason FROM query_events WHERE id=? AND tenant=? AND user=? "
+                "AND created>=?",
+                (query_id, p.tenant, p.user, time() - 30 * 86400),
+            ).fetchone()
+            if row is None:
+                raise StoreError(404, "Query not found or feedback window expired")
+            if (row["rating"], row["reason"]) != (rating, reason):
+                self._mutation_limit(db, p)
+                db.execute(
+                    "UPDATE query_events SET rating=?,reason=? WHERE id=?",
+                    (rating, reason, query_id),
+                )
+            return {"query_id": query_id, "rating": rating, "reason": reason}
+
+    def quality(self, token: str, days: int = 30):
+        with self.connection() as db:
+            p = self._principal(db, token)
+            if p.role != "admin":
+                raise StoreError(403, "Admin permission required")
+            rows = db.execute(
+                "SELECT generation_mode,latency_ms,citation_count,rating,reason "
+                "FROM query_events WHERE tenant=? AND created>=? "
+                "ORDER BY created DESC,id DESC LIMIT 10000",
+                (p.tenant, time() - days * 86400),
+            ).fetchall()
+        total = len(rows)
+        rated = sum(r["rating"] is not None for r in rows)
+        helpful = sum(r["rating"] == "helpful" for r in rows)
+        durations = sorted(r["latency_ms"] for r in rows)
+        modes: dict[str, int] = {}
+        reasons: dict[str, int] = {}
+        for row in rows:
+            modes[row["generation_mode"]] = modes.get(row["generation_mode"], 0) + 1
+            if row["rating"] == "not_helpful" and row["reason"]:
+                reasons[row["reason"]] = reasons.get(row["reason"], 0) + 1
+        return {
+            "window_days": days,
+            "retention_days": 30,
+            "max_retained_queries": 10000,
+            "queries": total,
+            "rated_queries": rated,
+            "helpful": helpful,
+            "not_helpful": rated - helpful,
+            "feedback_coverage": rated / total if total else None,
+            "helpful_rate_among_rated": helpful / rated if rated else None,
+            "without_sources": sum(r["citation_count"] == 0 for r in rows),
+            "generation_modes": modes,
+            "negative_reasons": reasons,
+            "latency_ms": {
+                "p50": durations[ceil(total * 0.5) - 1] if total else None,
+                "p95": durations[ceil(total * 0.95) - 1] if total else None,
+            },
+            "sample_at_capacity": total == 10000,
+        }
+
+    def prune_measurements(self):
+        """Operator maintenance for inactive tenants; preserves document history."""
+        with self.connection(write=True) as db:
+            before = db.execute("SELECT count(*) FROM query_events").fetchone()[0]
+            tenants = db.execute("SELECT DISTINCT tenant FROM query_events").fetchall()
+            now = time()
+            for row in tenants:
+                self._prune_measurements(db, row["tenant"], now)
+            after = db.execute("SELECT count(*) FROM query_events").fetchone()[0]
+        return before - after

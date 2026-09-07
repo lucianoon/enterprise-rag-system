@@ -59,11 +59,17 @@ request(
     "PUT",
     {"title": "Viagens", "text": "Reembolso no portal.", "expected_revision": 0},
 )
-assert request("/query", "POST", {"question": "reembolso"})["citations"][0]["doc_id"] == "policy"
+answer = request("/query", "POST", {"question": "reembolso"})
+assert answer["citations"][0]["doc_id"] == "policy"
+request("/queries/" + answer["query_id"] + "/feedback", "PUT", {"rating": "helpful"})
+assert request("/quality")["helpful"] == 1
 command("backup", "/app/state/backup.sqlite3")
 subprocess.run(["docker", "restart", "--time", "2", "rag-product"], check=True, capture_output=True)
 wait_ready()
 assert request("/documents/policy")["revision"] == 1
+assert request("/quality")["helpful"] == 1
+command("prune-measurements")
+assert request("/quality")["helpful"] == 1
 command("revoke-user", "--tenant", "smoke", "--user", "operator")
 try:
     request("/documents")
@@ -71,4 +77,6 @@ except urllib.error.HTTPError as exc:
     assert exc.code == 401
 else:
     raise AssertionError("Revoked credential still works")
-print("Product smoke passed: UI, persistence, query, backup, restart and revocation.")
+print(
+    "Product smoke passed: UI, query, backup, restart, feedback, quality and revocation."
+)
