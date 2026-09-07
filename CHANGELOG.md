@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add an opt-in persistent product pilot with a Portuguese document/query UI,
+  SQLite revisions, optimistic concurrency, tenant/document ACLs before BM25
+  retrieval, individual revocable credentials, admin history/restore and audit.
+- Add extractive evidence responses, optional structurally checked LLM output,
+  request/storage/rate limits, consistent backup CLI and dedicated Docker Compose.
+  Exercise product persistence and revocation in the Docker CI smoke test.
+
 - Replace destructive Qdrant reindexing with immutable physical generations.
   Validate the complete input before creating data, wait for every batch, check
   the exact point count, then pin the store instance to the completed generation.

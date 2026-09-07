@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import uuid
@@ -129,7 +130,14 @@ class QdrantVectorStore:
                 self._active_collection = None
                 return
             dims = len(next(iter(prepared.values())))
-            candidate = f"{self.collection}__generation_{uuid.uuid4().hex}"
+            prefix = self.collection
+            if len(prefix.encode("utf-8")) > 210:
+                digest = hashlib.sha256(prefix.encode("utf-8")).hexdigest()[:16]
+                prefix = (
+                    prefix.encode("utf-8")[:193].decode("utf-8", errors="ignore")
+                    + "_" + digest
+                )
+            candidate = f"{prefix}__generation_{uuid.uuid4().hex}"
             logger.info("Building generation %s", candidate)
             if not self._client.create_collection(
                 collection_name=candidate,

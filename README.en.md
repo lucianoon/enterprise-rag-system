@@ -7,14 +7,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lucianoon/enterprise-rag-system)
 
+**Persistent product pilot:** run `docker compose -f compose.product.yml up --build -d` and follow the [provisioning, permissions and backup guide](docs/PRODUCT_PILOT.md) (Portuguese). Includes a document library, revisions, restore and source-backed queries. This explicit mode is separate from the demo API described below.
+
 **[Live demo](https://enterprise-rag-demo.onrender.com/docs)** — interactive
 API with the sample corpus loaded; try `POST /query` and `POST /evaluate/batch`
 straight from the browser (free tier: the first request may take ~1 min to
 wake the service).
 
-**Measured test evidence:** the CI reports **81% branch coverage** across 633
-statements and 128 branches, with a **minimum 80% gate** that blocks material
-regressions. The machine-readable `coverage.json` is retained as a workflow
+**Measured test evidence:** CI enforces a **minimum 80% combined line/branch
+coverage gate** and frozen retrieval quality baselines. The machine-readable `coverage.json` is retained as a workflow
 artifact for 14 days.
 
 A retrieval-quality-first RAG engine: hybrid search (BM25-style lexical + vector) with

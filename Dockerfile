@@ -18,7 +18,8 @@ COPY . .
 RUN uv sync --extra extras --locked --no-dev
 
 # Processo sem root: a API só lê o próprio código e o corpus de exemplo.
-RUN useradd --system --uid 1000 --no-create-home rag && chown -R rag:rag /app
+RUN useradd --system --uid 1000 --no-create-home rag \
+    && mkdir -p /app/state && chown -R rag:rag /app
 USER rag
 
 EXPOSE 8000

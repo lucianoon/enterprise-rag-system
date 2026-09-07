@@ -60,8 +60,10 @@ embeddings multilíngues, validação independente e decisão sobre o padrão.
 A indexação Qdrant agora preserva gerações anteriores e só ativa uma nova
 após confirmação dos lotes e da contagem. A API aceita um corpus JSONL
 configurado. A [decisão e seus limites](SAFE_INGESTION_STRATEGY.md) estão
-documentados: ainda faltam registro durável, retenção, reutilização no restart
-e separação do job de ingestão da inicialização da API.
+documentados. O [modo piloto dedicado](PRODUCT_PILOT.md) acrescenta registro
+SQLite durável, ACL antes da busca, histórico, backup e UI. Esse modo usa BM25
+e não reindexa Qdrant ao iniciar. Retenção/expurgo, integração das gerações
+vetoriais ao registro e medição sob carga continuam pendentes.
 
 ### 5. Demonstrar valor em um piloto
 

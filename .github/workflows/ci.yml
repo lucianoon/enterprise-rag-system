@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -101,9 +104,19 @@ jobs:
           docker logs rag
           exit 1
 
+      - name: Smoke test persistent product
+        run: |
+          docker run --detach --name rag-product -p 127.0.0.1:8001:8000 \
+            --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true \
+            --mount source=rag-product-state,target=/app/state \
+            -e RAG_PRODUCT_DB=/app/state/registry.sqlite3 enterprise-rag-system:ci
+          uv run python scripts/smoke_product.py
+
       - name: Stop container
         if: always()
-        run: docker rm -f rag || true
+        run: |
+          docker rm -f rag rag-product || true
+          docker volume rm rag-product-state || true
 
   qdrant-legacy:
     # Verify existing Compose users separately from the supported server in test.

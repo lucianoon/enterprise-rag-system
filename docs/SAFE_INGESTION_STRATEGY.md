@@ -123,7 +123,14 @@ apontando para um servidor de teste descartável. Não use o banco de produção
 As três referências de recuperação anteriores permanecem congeladas. Este
 trabalho não modifica o ranking e deve passar pelos mesmos controles de qualidade.
 
-## Próximas decisões, em ordem
+## Evolução do piloto
+
+O [modo produto dedicado](PRODUCT_PILOT.md) agora implementa registro SQLite,
+credenciais por usuário, ACL antes da busca BM25, UI, revisões e backup. Sua
+inicialização é independente do corpus demo e Qdrant. Isso atende ao piloto
+lexical; não constitui um registro de publicação das gerações vetoriais.
+
+## Decisões ainda necessárias para a integração vetorial
 
 1. Registro durável de documentos e gerações, com hash do corpus/modelo/analisador,
    estado de publicação e vínculo dos leitores. Isso permite reutilização,
@@ -150,3 +157,7 @@ Antes de atualizar o Compose para uso continuado, preparar backup/restauração,
 verificar o procedimento de upgrade das versões envolvidas e testar uma cópia
 do volume. Esta entrega não executou upgrade de banco algum. Os contratos em
 ambos os servidores delimitam apenas as operações usadas nesta implementação.
+
+Nomes de geração reservam 45 bytes para sufixo e UUID. Prefixos maiores que
+210 bytes são abreviados com um hash do namespace original, mantendo o nome
+físico em até 255 bytes e preservando coleções anteriores.

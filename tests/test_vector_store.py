@@ -129,3 +129,24 @@ def test_qdrant_does_not_activate_unverified_generation(monkeypatch, failure):
         store.index(['new'], [[1.0]])
     assert store.active_collection == before
     assert store.search([1.0], top_k=1)[0][0] == 'old'
+
+
+@pytest.mark.parametrize("collection", ["x" * 210, "x" * 211, "x" * 255, "á" * 255])
+def test_qdrant_generation_reserves_suffix_space(collection, monkeypatch):
+    pytest.importorskip("qdrant_client")
+    from enterprise_rag_system.vector_store import QdrantVectorStore
+
+    store = QdrantVectorStore(url=":memory:", collection=collection)
+    create = store._client.create_collection
+
+    def bounded_create(**kwargs):
+        assert len(kwargs["collection_name"].encode("utf-8")) <= 255
+        return create(**kwargs)
+
+    monkeypatch.setattr(store._client, "create_collection", bounded_create)
+    store.index(["first"], [[1.0]])
+    previous = store.active_collection
+    store.index(["second"], [[1.0]])
+    assert store.active_collection != previous
+    assert store._client.collection_exists(previous)
+    assert store.search([1.0], top_k=1)[0][0] == "second"
