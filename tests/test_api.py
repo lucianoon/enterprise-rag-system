@@ -81,3 +81,24 @@ def test_api_stays_open_when_no_key_configured(monkeypatch):
     response = client.post("/query", json={"question": "refund policy", "top_k": 1})
     assert response.status_code == 200
 
+
+
+def test_bm25_configuration_is_used_by_http_query(monkeypatch):
+    from enterprise_rag_system import api
+
+    monkeypatch.setenv('RAG_RETRIEVAL_MODE', 'bm25')
+    monkeypatch.setattr(api, 'pipeline', api.build_pipeline())
+    response = TestClient(app).post('/query', json={'question': 'refund', 'top_k': 2})
+    assert response.status_code == 200
+    assert response.json()['metadata']['retrieval_mode'] == 'bm25'
+    assert response.json()['citations'][0]['doc_id'] == 'policy_refunds'
+
+
+def test_invalid_retrieval_configuration_fails_at_build(monkeypatch):
+    import pytest
+
+    from enterprise_rag_system.api import build_pipeline
+
+    monkeypatch.setenv('RAG_RETRIEVAL_MODE', 'typo')
+    with pytest.raises(ValueError, match='RAG_RETRIEVAL_MODE'):
+        build_pipeline()

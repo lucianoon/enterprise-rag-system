@@ -170,3 +170,37 @@ exige resultados completos e justificativa no PR.
 O relatório de resultados em
 [CORPORATE_BENCHMARK_RESULTS.md](CORPORATE_BENCHMARK_RESULTS.md) registra a
 baseline inicial, incluindo as configurações que tiveram desempenho pior.
+
+## Estratégias adicionais: BM25 e RRF
+
+O argumento `--strategies` seleciona uma matriz explícita. Sem esse argumento,
+as quatro estratégias originais continuam sendo executadas; a referência
+`baseline-hashing-test.json` não foi alterada.
+
+```bash
+uv run python -m enterprise_rag_system.benchmark --split test \
+  --strategies bm25 rrf --backend hashing \
+  --baseline data/benchmarks/corporate_pt_v1/baseline-bm25-rrf-hashing-test.json \
+  --output benchmark-bm25-hashing.json
+```
+
+Para TF-IDF, use `--backend tfidf` e `baseline-bm25-rrf-tfidf-test.json`.
+Todos os índices (incluindo BM25) são construídos antes da medição de consultas
+e entram em `index_ms`; esse tempo pertence ao pipeline compartilhado, não
+a um motor isolado. A inicialização do pipeline ainda cria o backend vetorial
+configurado, mesmo quando o modo BM25 não o consulta.
+
+BM25 retorna apenas chunks com correspondência de termos. RRF funde listas
+de BM25 e similaridade vetorial positiva; escores zero/negativos não votam.
+Empates são resolvidos por `chunk_id`, e escores novos não são arredondados
+antes da ordenação. O bônus legado de título não é aplicado nessas ablações.
+
+RRF usa a lista completa de candidatos, como a busca híbrida atual; não é uma
+implementação de busca distribuída para milhões de chunks. TF-IDF é lexical,
+não é embedding semântico multilíngue. A comparação exige o mesmo conjunto de
+estratégias/K em ambos os relatórios e continua rejeitando mudanças de dados.
+
+Na API, `RAG_RETRIEVAL_MODE=hybrid` continua incluindo o reranker legado.
+Os modos `lexical` e `vector` da API também mantêm esse reranker, enquanto suas
+ablações no benchmark usam `rerank=False`. Para comparar exatamente uma ablação
+legada pela interface Python, informe `rerank=False` explicitamente.

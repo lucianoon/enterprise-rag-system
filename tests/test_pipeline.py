@@ -46,3 +46,25 @@ def test_retrieve_matches_query_evidence_without_invoking_generator(monkeypatch)
 
     assert pipeline.retrieve("refund policy", top_k=2) == expected
 
+
+
+def test_bm25_pipeline_returns_same_evidence_as_retriever_without_legacy_rerank(monkeypatch):
+    docs = load_jsonl(ROOT / 'data' / 'sample' / 'policies.jsonl')
+    pipeline = RAGPipeline(chunk_documents(docs), retrieval_mode='bm25')
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError('Legacy title bonus must not be applied to BM25 by default')
+
+    monkeypatch.setattr(pipeline.reranker, 'rerank', forbidden)
+    expected = pipeline.retriever.search('refund policy', top_k=2, mode='bm25')
+    response = pipeline.query('refund policy', top_k=2)
+    assert response.results == expected
+    assert response.metadata['retrieval_mode'] == 'bm25'
+    assert pipeline.retrieve('refund policy', top_k=2) == expected
+
+
+def test_pipeline_rejects_unknown_mode():
+    import pytest
+
+    with pytest.raises(ValueError, match='Unknown retrieval mode'):
+        RAGPipeline([], retrieval_mode='typo')

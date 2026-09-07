@@ -27,6 +27,17 @@ recuperado, não apenas *que* ele foi.
 > novo. Problemas diferentes: este repo otimiza qualidade de ranqueamento,
 > aquele otimiza raciocínio em múltiplos passos sobre um corpus.
 
+**BM25 para português (opcional):** defina `RAG_RETRIEVAL_MODE=bm25` antes de
+iniciar a API. Esse modo normaliza acentos e usa BM25 completo, sem o bônus
+heurístico de título. O padrão continua `hybrid`. `rrf` é uma alternativa
+experimental; combiná-lo com hashing piorou a recuperação neste corpus.
+Veja a [comparação medida e os limites](docs/BM25_RRF_RESULTS.md).
+
+```bash
+uv run python -m enterprise_rag_system.benchmark --split dev --backend tfidf \
+  --strategies lexical hybrid-rerank bm25 rrf --output benchmark-report.json
+```
+
 ## Evidências rápidas
 
 | Evidência | O que demonstra |

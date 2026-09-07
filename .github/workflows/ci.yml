@@ -51,12 +51,23 @@ jobs:
             --baseline data/benchmarks/corporate_pt_v1/baseline-hashing-test.json \
             --output benchmark-report.json
 
+      - name: Check BM25 and RRF quality
+        run: |
+          for backend in hashing tfidf; do
+            uv run python -m enterprise_rag_system.benchmark \
+              --split test --backend "$backend" --strategies bm25 rrf \
+              --baseline "data/benchmarks/corporate_pt_v1/baseline-bm25-rrf-${backend}-test.json" \
+              --output "benchmark-bm25-${backend}.json"
+          done
+
       - name: Upload retrieval benchmark
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: retrieval-benchmark
-          path: benchmark-report.json
+          path: |
+            benchmark-report.json
+            benchmark-bm25-*.json
           if-no-files-found: warn
           retention-days: 14
 

@@ -16,10 +16,11 @@ from typing import Literal
 
 from enterprise_rag_system.embeddings import Embedder, build_embedder
 from enterprise_rag_system.models import Chunk, SearchResult
+from enterprise_rag_system.ranking import BM25Index, reciprocal_rank_fusion
 from enterprise_rag_system.vector_store import VectorStore, build_vector_store
 
 logger = logging.getLogger(__name__)
-RetrievalMode = Literal["lexical", "vector", "hybrid"]
+RetrievalMode = Literal["lexical", "vector", "hybrid", "bm25", "rrf"]
 
 
 def tokenize(text: str) -> list[str]:
@@ -39,6 +40,7 @@ class HybridRetriever:
         self.chunks = list(chunks)
         self.chunk_tokens = {c.chunk_id: tokenize(f"{c.title} {c.text}") for c in self.chunks}
         self.idf = self._build_idf()
+        self._bm25 = BM25Index({c.chunk_id: f"{c.title} {c.text}" for c in self.chunks})
 
         self.embedder = embedder or build_embedder()
         self.vector_store = vector_store or build_vector_store()
@@ -57,10 +59,12 @@ class HybridRetriever:
     def search(
         self, question: str, top_k: int = 3, *, mode: RetrievalMode = "hybrid"
     ) -> list[SearchResult]:
-        if mode not in ("lexical", "vector", "hybrid"):
+        if mode not in ("lexical", "vector", "hybrid", "bm25", "rrf"):
             raise ValueError(f"Unknown retrieval mode: {mode!r}")
         if top_k < 1:
             raise ValueError("top_k must be positive")
+        if mode in ("bm25", "rrf"):
+            return self._search_ranked(question, top_k, use_vectors=mode == "rrf")
         query_tokens = tokenize(question)
         # Every chunk gets a hybrid score, so ask the store for the full
         # ranking. Fine at document-collection scale; for very large corpora
@@ -92,6 +96,35 @@ class HybridRetriever:
             )
         scored.sort(key=lambda item: item.hybrid_score, reverse=True)
         return scored[:top_k]
+
+    def _search_ranked(
+        self, question: str, top_k: int, *, use_vectors: bool
+    ) -> list[SearchResult]:
+        lexical = self._bm25.score(question)
+        vectors: dict[str, float] = {}
+        if use_vectors and self.chunks:
+            vectors = dict(self.vector_store.search(
+                self.embedder.embed_query(question), top_k=len(self.chunks)
+            ))
+        # Canonical ID breaks ties independently of corpus/store iteration order.
+        # Only positive-score matches vote; zero-similarity padding is not evidence.
+        def ranked(scores: dict[str, float]) -> list[str]:
+            return sorted(
+                (key for key, score in scores.items() if score > 0),
+                key=lambda key: (-scores[key], key),
+            )
+
+        scores = (
+            reciprocal_rank_fusion([ranked(lexical), ranked(vectors)]) if use_vectors else lexical
+        )
+        chunks = {c.chunk_id: c for c in self.chunks}
+        return [
+            SearchResult(
+                chunk=chunks[key], lexical_score=lexical.get(key, 0.0),
+                vector_score=vectors.get(key, 0.0), hybrid_score=scores[key],
+            )
+            for key in ranked(scores) if key in chunks
+        ][:top_k]
 
     def _build_idf(self) -> dict[str, float]:
         doc_count = len(self.chunks) or 1

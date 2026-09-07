@@ -34,6 +34,10 @@ são uma baseline de engenharia; não são prova de superioridade comercial.
 - Usar avaliação pareada e intervalos de confiança para separar melhorias
   consistentes de ganhos de poucas perguntas. Não escolher apenas a melhor métrica.
 
+BM25 com normalização de acentos e RRF estão implementados como opções
+explícitas, com [resultados publicados](BM25_RRF_RESULTS.md). Ainda faltam
+embeddings multilíngues, validação independente e decisão sobre o padrão.
+
 ### 3. Respostas verificáveis e abstenção
 
 - Validar se cada marcador de citação aponta para uma fonte recuperada válida.
