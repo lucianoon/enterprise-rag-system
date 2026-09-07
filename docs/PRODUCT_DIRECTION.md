@@ -57,6 +57,19 @@ embeddings multilíngues, validação independente e decisão sobre o padrão.
   registrar documentos ou credenciais sensíveis por padrão.
 - Documentar backup, restauração, migração de índices e limites de requisição.
 
+A indexação Qdrant agora preserva gerações anteriores e só ativa uma nova
+após confirmação dos lotes e da contagem. A API aceita um corpus JSONL
+configurado. A [decisão e seus limites](SAFE_INGESTION_STRATEGY.md) estão
+documentados. O [modo piloto dedicado](PRODUCT_PILOT.md) acrescenta registro
+SQLite durável, ACL antes da busca, histórico, backup e UI. Esse modo usa BM25
+e não reindexa Qdrant ao iniciar. Retenção/expurgo, integração das gerações
+vetoriais ao registro e medição sob carga continuam pendentes.
+
+O piloto também incorpora avaliação pelo próprio usuário e painel administrativo
+com participação, utilidade percebida, fontes ausentes e latência. A
+[metodologia](QUALITY_MEASUREMENT.md) diferencia esses sinais de correção factual
+e explicita retenção, privacidade e limites da amostra.
+
 ### 5. Demonstrar valor em um piloto
 
 - Selecionar usuários e tarefas reais antes de escolher um concorrente de comparação.

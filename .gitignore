@@ -12,3 +12,12 @@ benchmark-report.json
 .venv/
 
 benchmark-bm25-*.json
+
+state/
+*.db
+*.db-*
+*.sqlite3
+*.sqlite3-*
+
+.coverage
+coverage.json

@@ -5,12 +5,21 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      qdrant:
+        image: qdrant/qdrant:v1.19.1
+        ports:
+          - 6333:6333
     env:
       # Force the deterministic answer generator: CI runs without API keys.
       RAG_LLM_MODE: deterministic
+      RAG_QDRANT_TEST_URL: http://localhost:6333
     steps:
       - uses: actions/checkout@v7
 
@@ -26,6 +35,11 @@ jobs:
 
       - name: Type check
         run: uv run mypy
+
+      - name: Wait for disposable Qdrant
+        run: >-
+          curl --fail --silent --show-error --retry 15 --retry-connrefused
+          --retry-delay 1 --max-time 3 --retry-max-time 45 http://localhost:6333/healthz
 
       - name: Run tests with branch coverage
         run: |
@@ -90,6 +104,41 @@ jobs:
           docker logs rag
           exit 1
 
+      - name: Smoke test persistent product
+        run: |
+          docker run --detach --name rag-product -p 127.0.0.1:8001:8000 \
+            --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true \
+            --mount source=rag-product-state,target=/app/state \
+            -e RAG_PRODUCT_DB=/app/state/registry.sqlite3 enterprise-rag-system:ci
+          uv run python scripts/smoke_product.py
+
       - name: Stop container
         if: always()
-        run: docker rm -f rag || true
+        run: |
+          docker rm -f rag rag-product || true
+          docker volume rm rag-product-state || true
+
+  qdrant-legacy:
+    # Verify existing Compose users separately from the supported server in test.
+    runs-on: ubuntu-latest
+    services:
+      qdrant:
+        image: qdrant/qdrant:v1.12.4
+        ports:
+          - 6333:6333
+    env:
+      RAG_LLM_MODE: deterministic
+      RAG_QDRANT_TEST_URL: http://localhost:6333
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --extra dev --extra extras --locked
+      - name: Wait for legacy Qdrant
+        run: >-
+          curl --fail --silent --show-error --retry 15 --retry-connrefused
+          --retry-delay 1 --max-time 3 --retry-max-time 45 http://localhost:6333/healthz
+      - name: Verify generation contracts on legacy Compose server
+        run: uv run pytest tests/test_qdrant_generations.py -q

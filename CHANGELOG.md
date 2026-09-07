@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+- Add user-owned query feedback and a tenant-admin quality dashboard with explicit
+  participation denominators, generation/fallback counts and latency percentiles.
+  Store metadata only, retain at most 10,000 queries per tenant for 30 days, and
+  migrate the registry transactionally to schema v2 without losing documents.
+  Add inactive-tenant measurement maintenance and backup/restart regression tests.
+
+- Add an opt-in persistent product pilot with a Portuguese document/query UI,
+  SQLite revisions, optimistic concurrency, tenant/document ACLs before BM25
+  retrieval, individual revocable credentials, admin history/restore and audit.
+- Add extractive evidence responses, optional structurally checked LLM output,
+  request/storage/rate limits, consistent backup CLI and dedicated Docker Compose.
+  Exercise product persistence and revocation in the Docker CI smoke test.
+
+- Replace destructive Qdrant reindexing with immutable physical generations.
+  Validate the complete input before creating data, wait for every batch, check
+  the exact point count, then pin the store instance to the completed generation.
+  Retain old and failed generations; do not delete existing collections.
+- Validate vector dimensions, finite values and unique IDs for both stores;
+  failed replacements preserve the previous view. Empty replacement clears only
+  the instance view, leaving retained Qdrant generations untouched.
+- Load an operator-specified JSONL corpus through `RAG_DOCUMENTS_PATH`. Reject
+  empty/duplicate/blank corpus records before initializing retrieval backends.
+- Exercise generation isolation and read-during-build behavior against a
+  disposable Qdrant server in CI, as well as the local backend.
+
 - Add opt-in BM25 retrieval with Unicode accent folding, term-frequency
   saturation, document-length normalization and cached posting lists. Add
   reciprocal rank fusion (RRF) as an experimental alternative.

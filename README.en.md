@@ -7,14 +7,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lucianoon/enterprise-rag-system)
 
+**Persistent product pilot:** run `docker compose -f compose.product.yml up --build -d` and follow the [provisioning, permissions and backup guide](docs/PRODUCT_PILOT.md) (Portuguese). Includes a document library, revisions, restore and source-backed queries. This explicit mode is separate from the demo API described below.
+
 **[Live demo](https://enterprise-rag-demo.onrender.com/docs)** — interactive
 API with the sample corpus loaded; try `POST /query` and `POST /evaluate/batch`
 straight from the browser (free tier: the first request may take ~1 min to
 wake the service).
 
-**Measured test evidence:** the CI reports **81% branch coverage** across 633
-statements and 128 branches, with a **minimum 80% gate** that blocks material
-regressions. The machine-readable `coverage.json` is retained as a workflow
+**Measured test evidence:** CI enforces a **minimum 80% combined line/branch
+coverage gate** and frozen retrieval quality baselines. The machine-readable `coverage.json` is retained as a workflow
 artifact for 14 days.
 
 A retrieval-quality-first RAG engine: hybrid search (BM25-style lexical + vector) with
@@ -229,6 +230,20 @@ Both retrieval stages are selected by environment variables (see `.env.example`)
   (uses `QDRANT_URL` and `COLLECTION_NAME`; `docker compose` wires this up).
 - `RAG_API_KEY` — when set, `/query` and `/evaluate*` require the same value in the
   `X-API-Key` header. Unset means open access for local development.
+
+### Custom corpus and retained index generations
+
+Set `RAG_DOCUMENTS_PATH` to a JSONL file with `doc_id`, `title`, and `text` per line.
+IDs must be unique and fields nonblank. Invalid input fails startup before index
+construction; leaving the variable unset retains the demo corpus. Configure
+`RAG_EVAL_DATASET` with labels for your corpus when using batch evaluation.
+
+Qdrant builds a new physical generation and activates it only after completed
+batch writes and exact count validation. Existing collections are retained.
+`COLLECTION_NAME` is a namespace prefix rather than a shared active alias.
+**Retained generations require storage monitoring and operator-managed cleanup.**
+This does not add incremental ingestion, tenant isolation or restart reuse.
+See the [research, operational contract and limitations](docs/SAFE_INGESTION_STRATEGY.md).
 
 ## Evaluation: Recall@K and MRR
 

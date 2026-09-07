@@ -1,0 +1,20 @@
+services:
+  api:
+    build: .
+    environment:
+      RAG_PRODUCT_DB: /app/state/registry.sqlite3
+      RAG_PRODUCT_GENERATION: extractive
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - product_state:/app/state
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+volumes:
+  product_state:

@@ -11,16 +11,38 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import uuid
 from collections.abc import Sequence
+from math import isfinite
+from threading import Lock
 from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_COLLECTION = "enterprise_docs"
 DEFAULT_URL = "http://localhost:6333"
+
+
+def _validated_vectors(
+    chunk_ids: Sequence[str], vectors: Sequence[Sequence[float]]
+) -> dict[str, list[float]]:
+    """Copy and validate the entire replacement before changing any stored data."""
+    if len(chunk_ids) != len(vectors):
+        raise ValueError("Chunk and vector counts must match")
+    if len(set(chunk_ids)) != len(chunk_ids) or any(not key.strip() for key in chunk_ids):
+        raise ValueError("Chunk ids must be unique and non-empty")
+    copied = {key: [float(v) for v in vector]
+              for key, vector in zip(chunk_ids, vectors, strict=True)}
+    if copied:
+        dims = len(next(iter(copied.values())))
+        if not dims or any(len(v) != dims for v in copied.values()):
+            raise ValueError("Vectors must have the same positive dimension")
+        if any(not isfinite(value) for vector in copied.values() for value in vector):
+            raise ValueError("Vectors must contain only finite values")
+    return copied
 
 
 class VectorStore(Protocol):
@@ -46,10 +68,7 @@ class InMemoryVectorStore:
         self._vectors: dict[str, list[float]] = {}
 
     def index(self, chunk_ids: Sequence[str], vectors: Sequence[Sequence[float]]) -> None:
-        self._vectors = {
-            chunk_id: [float(v) for v in vector]
-            for chunk_id, vector in zip(chunk_ids, vectors, strict=True)
-        }
+        self._vectors = _validated_vectors(chunk_ids, vectors)
 
     def search(self, vector: Sequence[float], top_k: int) -> list[tuple[str, float]]:
         query = [float(v) for v in vector]
@@ -66,7 +85,10 @@ class QdrantVectorStore:
 
     Chunk ids are strings like ``policy_sla:0``, which Qdrant does not accept
     as point ids, so each point gets a UUIDv5 derived from the chunk id and
-    keeps the original id in its payload.
+    keeps the original id in its payload. Each replacement builds a new physical
+    collection and pins this instance to it only after acknowledged writes and
+    exact count validation. No existing collection is overwritten or deleted.
+    This is an index generation, not a Qdrant backup/snapshot archive.
     """
 
     name = "qdrant"
@@ -88,34 +110,73 @@ class QdrantVectorStore:
             self._client = QdrantClient(":memory:")
         else:
             self._client = QdrantClient(url=self.url)
-        logger.info("Qdrant vector store: url=%s collection=%s", self.url, self.collection)
+        self._active_collection: str | None = None
+        self._index_lock = Lock()
+        logger.info("Qdrant vector store namespace: %s", self.collection)
+
+    @property
+    def active_collection(self) -> str | None:
+        """Physical generation pinned to this instance, for operational inspection."""
+        return self._active_collection
 
     def index(self, chunk_ids: Sequence[str], vectors: Sequence[Sequence[float]]) -> None:
-        from qdrant_client.models import Distance, PointStruct, VectorParams
+        from qdrant_client.models import Distance, PointStruct, UpdateStatus, VectorParams
 
-        if not chunk_ids:
-            return
-        dims = len(vectors[0])
-        if self._client.collection_exists(self.collection):
-            self._client.delete_collection(self.collection)
-        self._client.create_collection(
-            collection_name=self.collection,
-            vectors_config=VectorParams(size=dims, distance=Distance.COSINE),
-        )
-        points = [
-            PointStruct(
-                id=str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id)),
-                vector=[float(v) for v in vector],
-                payload={"chunk_id": chunk_id},
-            )
-            for chunk_id, vector in zip(chunk_ids, vectors, strict=True)
-        ]
-        self._client.upsert(collection_name=self.collection, points=points)
-        logger.info("Indexed %d vectors (%d dims) into %s.", len(points), dims, self.collection)
+        prepared = _validated_vectors(chunk_ids, vectors)
+        # Serialize replacements on this instance; searches keep using the old
+        # immutable generation while the new one is built.
+        with self._index_lock:
+            if not prepared:
+                self._active_collection = None
+                return
+            dims = len(next(iter(prepared.values())))
+            prefix = self.collection
+            if len(prefix.encode("utf-8")) > 210:
+                digest = hashlib.sha256(prefix.encode("utf-8")).hexdigest()[:16]
+                prefix = (
+                    prefix.encode("utf-8")[:193].decode("utf-8", errors="ignore")
+                    + "_" + digest
+                )
+            candidate = f"{prefix}__generation_{uuid.uuid4().hex}"
+            logger.info("Building generation %s", candidate)
+            if not self._client.create_collection(
+                collection_name=candidate,
+                vectors_config=VectorParams(size=dims, distance=Distance.COSINE),
+            ):
+                raise RuntimeError("Qdrant did not confirm creation of a new generation")
+            try:
+                items = list(prepared.items())
+                for offset in range(0, len(items), 256):
+                    points = [
+                        PointStruct(
+                            id=str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id)),
+                            vector=vector,
+                            payload={"chunk_id": chunk_id},
+                        )
+                        for chunk_id, vector in items[offset:offset + 256]
+                    ]
+                    result = self._client.upsert(
+                        collection_name=candidate, points=points, wait=True,
+                    )
+                    if result.status != UpdateStatus.COMPLETED:
+                        raise RuntimeError("Qdrant did not complete the generation write")
+                count = self._client.count(collection_name=candidate, exact=True).count
+                if count != len(prepared):
+                    raise RuntimeError("Qdrant generation count does not match the input")
+            except Exception:
+                # Retain incomplete generations too: a network timeout leaves the
+                # outcome uncertain. No automatic deletion can affect other readers.
+                logger.warning("Generation was not activated: %s", candidate)
+                raise
+            self._active_collection = candidate
+            logger.info("Activated generation %s (%d vectors, %d dims)", candidate, count, dims)
 
     def search(self, vector: Sequence[float], top_k: int) -> list[tuple[str, float]]:
+        active = self._active_collection
+        if active is None:
+            return []
         response = self._client.query_points(
-            collection_name=self.collection,
+            collection_name=active,
             query=[float(v) for v in vector],
             limit=top_k,
             with_payload=True,

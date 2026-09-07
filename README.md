@@ -7,6 +7,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lucianoon/enterprise-rag-system)
 
+**Piloto com interface e persistência:** use `docker compose -f compose.product.yml up --build -d` e siga o [guia de provisionamento, permissões e backup](docs/PRODUCT_PILOT.md). Inclui biblioteca em português, histórico, restauração e consultas com fontes. É um modo explícito separado da API de demonstração descrita abaixo.
+
 **[Demo ao vivo](https://enterprise-rag-demo.onrender.com/docs)** — API
 interativa com o corpus de exemplo carregado; experimente o `POST /query` e o
 `POST /evaluate/batch` direto do navegador (free tier: o primeiro acesso pode
@@ -235,6 +237,21 @@ Os dois estágios de recuperação são escolhidos por variáveis de ambiente (v
   isso).
 - `RAG_API_KEY` — quando definida, `/query` e `/evaluate*` exigem o mesmo valor
   no cabeçalho `X-API-Key`. Sem ela, acesso aberto para desenvolvimento local.
+
+### Corpus próprio e indexação preservada
+
+Defina `RAG_DOCUMENTS_PATH` para um JSONL com `doc_id`, `title` e `text` por linha.
+IDs precisam ser únicos e os campos não podem estar vazios. Um arquivo inválido
+interrompe a inicialização antes da construção dos índices; sem a variável, a
+API continua usando o exemplo. Configure também `RAG_EVAL_DATASET` com rótulos
+do seu corpus para usar a avaliação em lote.
+
+Qdrant agora cria uma geração física nova por indexação e só a usa depois de
+confirmar os lotes e a contagem. Coleções existentes são preservadas.
+`COLLECTION_NAME` é o prefixo dessas gerações, não um alias compartilhado.
+**Gerações antigas consomem espaço e ainda exigem gestão operacional**; esta
+mudança não adiciona ingestão incremental, multiempresa ou reutilização no restart.
+Veja a [estratégia pesquisada, operação e limites](docs/SAFE_INGESTION_STRATEGY.md).
 
 ## Avaliação: Recall@K e MRR
 

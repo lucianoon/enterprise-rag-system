@@ -39,8 +39,11 @@ SAMPLE_DOCS = ROOT / "data" / "sample" / "policies.jsonl"
 
 
 def build_pipeline() -> RAGPipeline:
-    """Build an in-memory pipeline from sample docs."""
-    docs = load_jsonl(SAMPLE_DOCS)
+    """Build from the configured corpus, or sample documents when unset."""
+    source = os.getenv("RAG_DOCUMENTS_PATH")
+    if source is not None and not source.strip():
+        raise ValueError("RAG_DOCUMENTS_PATH must name a non-empty JSONL corpus")
+    docs = load_jsonl(Path(source) if source is not None else SAMPLE_DOCS)
     chunks = chunk_documents(docs)
     mode = os.getenv("RAG_RETRIEVAL_MODE", "hybrid").strip().lower()
     if mode not in get_args(RetrievalMode):
@@ -60,60 +63,70 @@ def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
         raise HTTPException(status_code=401, detail="Invalid or missing API key.")
 
 
-app = FastAPI(
-    title="Enterprise RAG System",
-    version="0.3.0",
-    description="Hybrid RAG with citations, reranking and retrieval evaluation.",
-)
-pipeline = build_pipeline()
-evaluator = RetrievalEvaluator(pipeline)
+if "RAG_PRODUCT_DB" in os.environ:
+    if not os.environ["RAG_PRODUCT_DB"].strip():
+        raise ValueError("RAG_PRODUCT_DB must not be blank")
+    from enterprise_rag_system.product_api import create_product_app
 
+    app = create_product_app(
+        Path(os.environ["RAG_PRODUCT_DB"]),
+        generation=os.getenv("RAG_PRODUCT_GENERATION", "extractive"),
+    )
+else:
+    app = FastAPI(
+        title="Enterprise RAG System",
+        version="0.3.0",
+        description="Hybrid RAG with citations, reranking and retrieval evaluation.",
+    )
+    pipeline = build_pipeline()
+    evaluator = RetrievalEvaluator(pipeline)
 
-@app.get("/", include_in_schema=False)
-def root() -> RedirectResponse:
-    return RedirectResponse(url="/docs")
+    @app.get("/", include_in_schema=False)
+    def root() -> RedirectResponse:
+        return RedirectResponse(url="/docs")
 
+    @app.get("/health")
+    def health() -> dict:
+        return {"status": "ok"}
 
-@app.get("/health")
-def health() -> dict:
-    return {"status": "ok"}
+    @app.post("/query", response_model=QueryResponse, dependencies=[Depends(require_api_key)])
+    def query(request: QueryRequest) -> QueryResponse:
+        return pipeline.query(request.question, top_k=request.top_k)
 
+    @app.post(
+        "/evaluate", response_model=EvaluationResponse, dependencies=[Depends(require_api_key)]
+    )
+    def evaluate(request: EvaluationRequest) -> EvaluationResponse:
+        return evaluator.evaluate(request.question, request.relevant_doc_ids, top_k=request.top_k)
 
-@app.post("/query", response_model=QueryResponse, dependencies=[Depends(require_api_key)])
-def query(request: QueryRequest) -> QueryResponse:
-    return pipeline.query(request.question, top_k=request.top_k)
+    @app.post(
+        "/evaluate/batch",
+        response_model=BatchEvaluationResponse,
+        dependencies=[Depends(require_api_key)],
+    )
+    def evaluate_batch(request: BatchEvaluationRequest) -> BatchEvaluationResponse:
+        dataset_path = Path(os.getenv("RAG_EVAL_DATASET", str(DEFAULT_EVAL_DATASET)))
+        if not dataset_path.exists():
+            raise HTTPException(
+                status_code=404, detail=f"Eval dataset not found: {dataset_path.name}"
+            )
+        examples = load_eval_dataset(dataset_path)
+        return evaluator.evaluate_batch(
+            examples, top_k=request.top_k, dataset_name=dataset_path.stem
+        )
 
+    @app.post(
+        "/evaluate/answer",
+        response_model=AnswerEvaluationResponse,
+        dependencies=[Depends(require_api_key)],
+    )
+    def evaluate_answer(request: AnswerEvaluationRequest) -> AnswerEvaluationResponse:
+        """Answer the question, then judge the answer against its own context.
 
-@app.post("/evaluate", response_model=EvaluationResponse, dependencies=[Depends(require_api_key)])
-def evaluate(request: EvaluationRequest) -> EvaluationResponse:
-    return evaluator.evaluate(request.question, request.relevant_doc_ids, top_k=request.top_k)
-
-
-@app.post(
-    "/evaluate/batch",
-    response_model=BatchEvaluationResponse,
-    dependencies=[Depends(require_api_key)],
-)
-def evaluate_batch(request: BatchEvaluationRequest) -> BatchEvaluationResponse:
-    dataset_path = Path(os.getenv("RAG_EVAL_DATASET", str(DEFAULT_EVAL_DATASET)))
-    if not dataset_path.exists():
-        raise HTTPException(status_code=404, detail=f"Eval dataset not found: {dataset_path.name}")
-    examples = load_eval_dataset(dataset_path)
-    return evaluator.evaluate_batch(examples, top_k=request.top_k, dataset_name=dataset_path.stem)
-
-
-@app.post(
-    "/evaluate/answer",
-    response_model=AnswerEvaluationResponse,
-    dependencies=[Depends(require_api_key)],
-)
-def evaluate_answer(request: AnswerEvaluationRequest) -> AnswerEvaluationResponse:
-    """Answer the question, then judge the answer against its own context.
-
-    The judge is selected per-request from ``RAG_JUDGE_MODE`` so deployments
-    can switch between the heuristic and LLM judges without a restart.
-    """
-    query_response = pipeline.query(request.question, top_k=request.top_k)
-    judge = build_answer_judge()
-    judgement = judge.judge(request.question, query_response.answer, query_response.results)
-    return AnswerEvaluationResponse(judgement=judgement, query=query_response)
+        The judge is selected per-request from ``RAG_JUDGE_MODE`` so deployments
+        can switch between the heuristic and LLM judges without a restart.
+        """
+        query_response = pipeline.query(request.question, top_k=request.top_k)
+        judge = build_answer_judge()
+        judgement = judge.judge(request.question, query_response.answer, query_response.results)
+        return AnswerEvaluationResponse(judgement=judgement, query=query_response)
