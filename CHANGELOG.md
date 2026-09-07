@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Add opt-in BM25 retrieval with Unicode accent folding, term-frequency
+  saturation, document-length normalization and cached posting lists. Add
+  reciprocal rank fusion (RRF) as an experimental alternative.
+- Select the API retrieval profile with `RAG_RETRIEVAL_MODE`; expose the
+  selected profile in response metadata. Preserve the default hybrid ranking.
+  BM25/RRF skip the legacy title reranker by default and omit zero-score padding.
+- Extend the benchmark with explicit `--strategies` selection, preserving
+  the original frozen matrix. Record both improvements and RRF regressions.
+
 - Add a retrieval-only benchmark matrix (lexical, vector, hybrid, hybrid with
   reranking), with Recall, precision, MRR, binary nDCG, median/p95 latency and
   per-query rankings. A synthetic Portuguese corpus contains 30 documents and

@@ -10,3 +10,5 @@ qdrant_storage/
 benchmark-report.json
 
 .venv/
+
+benchmark-bm25-*.json

@@ -12,3 +12,5 @@ tests
 *.md
 # pyproject declara readme = "README.md"; o build do pacote precisa dele.
 !README.md
+
+benchmark-bm25-*.json

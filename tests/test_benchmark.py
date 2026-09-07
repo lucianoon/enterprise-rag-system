@@ -254,3 +254,30 @@ def test_bundled_benchmark_has_disjoint_queries_and_valid_labels():
         assert len(selected) == 40
         assert sum(not case.relevant_doc_ids for case in selected) == 5
         assert sum(len(case.relevant_doc_ids) > 1 for case in selected) == 5
+
+
+@pytest.mark.parametrize('strategies', [(), ('bm25', 'bm25'), ('unknown',)])
+def test_benchmark_rejects_invalid_strategy_selection(dataset, strategies):
+    with pytest.raises(ValueError, match='Strategies'):
+        run_benchmark(*dataset, strategies=strategies)
+
+
+def test_experimental_matrix_is_explicit_and_reproducible(dataset):
+    report = run_benchmark(*dataset, strategies=('bm25', 'rrf'), top_ks=(1,), repeats=1)
+    assert [r.strategy for r in report.rows] == ['bm25', 'rrf']
+    assert report.rows[0].unanswerable_return_rate == 0.0
+    assert report.rows[0].mean_metrics.recall == 1.0
+    assert compare_reports(report, run_benchmark(
+        *dataset, strategies=('bm25', 'rrf'), top_ks=(1,), repeats=1,
+    )) == []
+
+
+def test_cli_selects_requested_strategies(dataset, monkeypatch, capsys):
+    corpus, queries = dataset
+    monkeypatch.setattr(sys, 'argv', [
+        'benchmark', '--corpus', str(corpus), '--queries', str(queries),
+        '--strategies', 'bm25', 'rrf', '--repeats', '1', '--top-k', '1',
+    ])
+    main()
+    report = BenchmarkReport.model_validate_json(capsys.readouterr().out)
+    assert [r.strategy for r in report.rows] == ['bm25', 'rrf']

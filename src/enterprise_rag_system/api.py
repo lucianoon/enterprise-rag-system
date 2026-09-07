@@ -3,6 +3,7 @@
 import logging
 import os
 from pathlib import Path
+from typing import cast, get_args
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import RedirectResponse
@@ -25,6 +26,7 @@ from enterprise_rag_system.models import (
     QueryResponse,
 )
 from enterprise_rag_system.pipeline import RAGPipeline
+from enterprise_rag_system.retrieval import RetrievalMode
 
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO").upper(),
@@ -40,7 +42,10 @@ def build_pipeline() -> RAGPipeline:
     """Build an in-memory pipeline from sample docs."""
     docs = load_jsonl(SAMPLE_DOCS)
     chunks = chunk_documents(docs)
-    return RAGPipeline(chunks)
+    mode = os.getenv("RAG_RETRIEVAL_MODE", "hybrid").strip().lower()
+    if mode not in get_args(RetrievalMode):
+        raise ValueError(f"Unknown RAG_RETRIEVAL_MODE={mode!r}")
+    return RAGPipeline(chunks, retrieval_mode=cast(RetrievalMode, mode))
 
 
 def require_api_key(x_api_key: str | None = Header(default=None)) -> None:

@@ -36,6 +36,16 @@ the hashing + in-memory configuration reached **Recall@1 = 1.000** and
 read the [results and limitations](docs/BENCHMARK_RESULTS.md) before interpreting
 or comparing these numbers.
 
+**Optional Portuguese BM25:** set `RAG_RETRIEVAL_MODE=bm25` before starting
+the API. It folds accents and uses full BM25 without the heuristic title bonus.
+The default remains `hybrid`. `rrf` is experimental: pairing it with hashing
+decreased quality on this corpus. See the [measured comparison and limitations](docs/BM25_RRF_RESULTS.md).
+
+```bash
+uv run python -m enterprise_rag_system.benchmark --split dev --backend tfidf \
+  --strategies lexical hybrid-rerank bm25 rrf --output benchmark-report.json
+```
+
 ## Quick evidence
 
 | Evidence | What it demonstrates |

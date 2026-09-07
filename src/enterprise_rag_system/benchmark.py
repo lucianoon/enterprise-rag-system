@@ -35,6 +35,14 @@ STRATEGIES: tuple[tuple[str, RetrievalMode, bool], ...] = (
     ("hybrid", "hybrid", False),
     ("hybrid-rerank", "hybrid", True),
 )
+DEFAULT_STRATEGIES = tuple(name for name, _, _ in STRATEGIES)
+EXPERIMENTAL_STRATEGIES: tuple[tuple[str, RetrievalMode, bool], ...] = (
+    ("bm25", "bm25", False),
+    ("rrf", "rrf", False),
+)
+STRATEGY_OPTIONS = {name: (mode, rerank) for name, mode, rerank in (
+    *STRATEGIES, *EXPERIMENTAL_STRATEGIES,
+)}
 
 
 class BenchmarkCase(BaseModel):
@@ -158,11 +166,15 @@ def run_benchmark(
     corpus: Path, queries: Path, *, split: Literal["dev", "test"] = "dev",
     backend: Literal["hashing", "tfidf"] = "hashing", top_ks: tuple[int, ...] = (1, 3, 5),
     repeats: int = 5, max_words: int = 80,
+    strategies: tuple[str, ...] = DEFAULT_STRATEGIES,
 ) -> BenchmarkReport:
     if repeats < 1 or max_words < 1 or not top_ks or any(k < 1 for k in top_ks):
         raise ValueError("repeats, max_words and top_ks must be positive")
     if backend not in ("hashing", "tfidf"):
         raise ValueError(f"Unknown embedding backend: {backend}")
+    if (not strategies or len(set(strategies)) != len(strategies)
+            or any(name not in STRATEGY_OPTIONS for name in strategies)):
+        raise ValueError("Strategies must be non-empty, unique and supported")
     documents = load_jsonl(corpus)
     document_ids = {doc.doc_id for doc in documents}
     if not documents or len(document_ids) != len(documents):
@@ -183,7 +195,8 @@ def run_benchmark(
     )
     index_ms = (perf_counter() - started) * 1000
     rows = []
-    for strategy, mode, rerank in STRATEGIES:
+    for strategy in strategies:
+        mode, rerank = STRATEGY_OPTIONS[strategy]
         for top_k in sorted(set(top_ks)):
             durations = []
             results = []
@@ -280,6 +293,8 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, nargs="+", default=[1, 3, 5])
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument("--max-words", type=int, default=80)
+    parser.add_argument("--strategies", nargs="+", choices=tuple(STRATEGY_OPTIONS),
+                        default=list(DEFAULT_STRATEGIES))
     parser.add_argument("--output", type=Path)
     parser.add_argument("--baseline", type=Path)
     parser.add_argument("--max-regression", type=float, default=0.0)
@@ -288,6 +303,7 @@ def main() -> None:
         report = run_benchmark(
             args.corpus, args.queries, split=args.split, backend=args.backend,
             top_ks=tuple(args.top_k), repeats=args.repeats, max_words=args.max_words,
+            strategies=tuple(args.strategies),
         )
         output = report.model_dump_json(indent=2) + "\n"
         if args.output:
