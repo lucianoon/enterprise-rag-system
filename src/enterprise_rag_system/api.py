@@ -71,6 +71,7 @@ if "RAG_PRODUCT_DB" in os.environ:
     app = create_product_app(
         Path(os.environ["RAG_PRODUCT_DB"]),
         generation=os.getenv("RAG_PRODUCT_GENERATION", "extractive"),
+        profile=os.getenv("RAG_PRODUCT_PROFILE", "default"),
     )
 else:
     app = FastAPI(
