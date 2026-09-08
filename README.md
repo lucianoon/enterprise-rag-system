@@ -7,6 +7,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lucianoon/enterprise-rag-system)
 
+**Perfil pastoral opcional:** veja a [configuração do perfil Pr. Luiz Hermínio](docs/PASTORAL_PROFILE.md), com fontes e identidade transparente de assistente de IA.
+
 **Piloto com interface e persistência:** use `docker compose -f compose.product.yml up --build -d` e siga o [guia de provisionamento, permissões e backup](docs/PRODUCT_PILOT.md). Inclui biblioteca em português, histórico, restauração e consultas com fontes. É um modo explícito separado da API de demonstração descrita abaixo.
 
 **[Demo ao vivo](https://enterprise-rag-demo.onrender.com/docs)** — API

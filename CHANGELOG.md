@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add the explicit `luiz-herminio` pastoral editorial profile, a packaged system
+  prompt, research references and runtime profile/hash metadata. Preserve ACLs,
+  grounded citations, abstention and extractive fallback.
+
 - Add user-owned query feedback and a tenant-admin quality dashboard with explicit
   participation denominators, generation/fallback counts and latency percentiles.
   Store metadata only, retain at most 10,000 queries per tenant for 30 days, and

@@ -3,7 +3,8 @@ services:
     build: .
     environment:
       RAG_PRODUCT_DB: /app/state/registry.sqlite3
-      RAG_PRODUCT_GENERATION: extractive
+      RAG_PRODUCT_GENERATION: ${RAG_PRODUCT_GENERATION:-extractive}
+      RAG_PRODUCT_PROFILE: ${RAG_PRODUCT_PROFILE:-default}
     ports:
       - "127.0.0.1:8000:8000"
     volumes:

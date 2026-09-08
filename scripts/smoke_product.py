@@ -38,6 +38,12 @@ def command(*args):
 
 
 wait_ready()
+subprocess.run([
+    "docker", "exec", "rag-product", "python", "-c",
+    "from enterprise_rag_system.product_profiles import load_profile; "
+    "prompt, digest = load_profile('luiz-herminio'); "
+    "assert len(prompt) > 100 and len(digest) == 64",
+], check=True)
 token = command("issue-user", "--tenant", "smoke", "--user", "operator", "--role", "admin")
 
 
