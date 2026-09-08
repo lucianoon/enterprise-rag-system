@@ -45,7 +45,9 @@ def test_profile_reaches_provider_without_leaking_other_tenant(tmp_path, monkeyp
     response.raise_for_status()
     body = response.json()
     expected, digest = load_profile("luiz-herminio")
-    assert calls[0][0] == expected
+    assert (
+        calls[0][0] == expected + "\n\nResponda em um parágrafo curto, idealmente até 100 palavras."
+    )
     assert "PRIVATE-OTHER-TENANT" not in calls[0][1]
     assert body["metadata"]["prompt_sha256"] == digest
     assert body["metadata"]["editorial_profile"] == "luiz-herminio"
@@ -112,3 +114,93 @@ def test_empty_profile_asset_is_rejected(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "read_text", lambda *a, **kw: " ")
     with pytest.raises(ValueError, match="empty"):
         create_product_app(tmp_path / "not-created.db", profile="luiz-herminio")
+
+
+def test_technical_answer_repairs_missing_citations(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from enterprise_rag_system.product_api import create_product_app
+    from enterprise_rag_system.product_store import DocumentInput
+
+    app = create_product_app(tmp_path / "db", generation="llm", profile="luiz-herminio")
+    token = app.state.registry.issue_user("a", "owner", "admin")
+    app.state.registry.write_document(
+        token,
+        "technical",
+        DocumentInput(
+            title="RAG",
+            text="RAG recupera documentos para fundamentar respostas.",
+            expected_revision=0,
+        ),
+    )
+    responses = iter(
+        ["RAG recupera documentos.", "RAG recupera documentos para fundamentar respostas [1]."]
+    )
+    calls = []
+
+    def completion(system, prompt, **kwargs):
+        calls.append((system, prompt))
+        return next(responses)
+
+    monkeypatch.setattr("enterprise_rag_system.product_api.llm_client.complete", completion)
+    result = (
+        TestClient(app)
+        .post(
+            "/query",
+            headers={"Authorization": "Bearer " + token},
+            json={"question": "O que é RAG?"},
+        )
+        .json()
+    )
+    assert result["metadata"]["generation_mode"] == "llm-structurally-checked"
+    assert result["answer"].endswith("[1].")
+    assert len(calls) == 2
+    assert "não redirecione à religião" in calls[0][0]
+
+
+def test_default_profile_is_general_and_has_no_pastoral_persona():
+    from enterprise_rag_system.product_profiles import load_profile
+
+    prompt, _ = load_profile("default")
+    assert "assistente geral de consulta documental" in prompt
+    for word in ["pastoral", "Hermínio", "MEVAM", "bíblico"]:
+        assert word not in prompt
+
+
+def test_answer_style_and_only_used_sources(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from enterprise_rag_system.product_api import create_product_app
+    from enterprise_rag_system.product_store import DocumentInput
+
+    app = create_product_app(tmp_path / "db", generation="llm")
+    store = app.state.registry
+    token = store.issue_user("a", "owner", "admin")
+    for key in ["first", "second"]:
+        store.write_document(
+            token,
+            key,
+            DocumentInput(title=key, text="RAG recupera documentos.", expected_revision=0),
+        )
+    systems = []
+
+    def complete(system, prompt, **kwargs):
+        systems.append(system)
+        assert "Documento:" in prompt
+        return "RAG recupera documentos [2]."
+
+    monkeypatch.setattr("enterprise_rag_system.product_api.llm_client.complete", complete)
+    client = TestClient(app)
+    headers = {"Authorization": "Bearer " + token}
+    result = client.post(
+        "/query", headers=headers, json={"question": "RAG", "answer_style": "detailed"}
+    ).json()
+    assert result["metadata"]["answer_style"] == "detailed"
+    assert [c["number"] for c in result["citations"]] == [2]
+    assert "Desenvolva a explicação" in systems[-1]
+    assert (
+        client.post(
+            "/query", headers=headers, json={"question": "RAG", "answer_style": "invalid"}
+        ).status_code
+        == 422
+    )

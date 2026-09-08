@@ -322,12 +322,27 @@
             excluídos</label
           >
           <div id="documents"></div>
-          <button id="new" class="secondary" hidden>Novo documento</button>
+          <form id="upload-form" hidden>
+            <label for="upload-file">1. Escolha seu documento</label>
+            <input id="upload-file" type="file" accept=".txt,.md,.pdf,.docx" required />
+            <p class="muted">PDF, DOCX, TXT ou MD · documentos grandes são processados em segundo plano. Acesso privado por padrão.</p>
+            <button id="upload-submit">2. Indexar documento</button>
+            <p id="upload-status" role="status" aria-live="polite"></p>
+            <button id="upload-retry" type="button" hidden>Retomar indexação</button>
+          </form>
+          <button id="new" class="secondary" hidden>Escrever documento manualmente</button>
         </aside>
         <section class="panel">
           <span class="badge">Pergunta e fontes</span>
           <h2>Encontre a informação na origem.</h2>
           <form id="ask">
+            <label for="query-document">3. Perguntar sobre</label>
+            <select id="query-document"><option value="">Todos os documentos disponíveis</option></select>
+            <label for="answer-style">Nível de detalhe</label>
+            <select id="answer-style">
+              <option value="concise">Resposta direta</option>
+              <option value="detailed">Explicação detalhada</option>
+            </select>
             <label for="question">O que você precisa saber?</label
             ><textarea
               id="question"
@@ -379,8 +394,8 @@
           <details id="editor" hidden>
             <summary>Editar documento</summary>
             <form id="edit">
-              <label for="import">Importar texto (.txt ou .md)</label
-              ><input id="import" type="file" accept=".txt,.md" /><label
+              <label for="import" hidden>Importar TXT, MD, PDF ou DOCX (até 5 MB)</label
+              ><input id="import" hidden type="file" accept=".txt,.md,.pdf,.docx" /><label
                 for="docid"
                 >Identificador</label
               ><input
@@ -394,7 +409,6 @@
               ><textarea
                 id="text"
                 rows="10"
-                maxlength="32000"
                 required
               ></textarea
               ><label for="visibility">Quem pode consultar?</label
@@ -453,7 +467,8 @@
         epoch = 0,
         viewEpoch = 0,
         queryId = "",
-        qualityEpoch = 0;
+        qualityEpoch = 0,
+        pendingUpload = null;
       function notice(text, error = false) {
         el("notice").textContent = text;
         el("notice").classList.toggle("error", error);
@@ -488,17 +503,20 @@
         el("question").value = "";
         el("deleted").checked = false;
         clearEditor();
+        el("upload-form").reset();
+        el("upload-status").textContent = "";
+        el("query-document").replaceChildren();
         notice("Sessão encerrada.");
       }
-      async function api(path, method = "GET", body) {
+      async function api(path, method = "GET", body, raw = false) {
         const current = epoch;
         const r = await fetch(path, {
           method,
           headers: {
             Authorization: "Bearer " + token,
-            "Content-Type": "application/json",
+            "Content-Type": raw ? "application/octet-stream" : "application/json",
           },
-          body: body === undefined ? undefined : JSON.stringify(body),
+          body: body === undefined ? undefined : raw ? body : JSON.stringify(body),
           cache: "no-store",
         });
         if (current !== epoch) throw Error("Sessão encerrada.");
@@ -507,6 +525,10 @@
           throw Error("Credencial inválida ou revogada. Entre novamente.");
         }
         if (!r.ok) {
+          if (path.startsWith("/imports/") || path.startsWith("/uploads")) {
+            const error = await r.json();
+            throw Error(typeof error.detail === "string" ? error.detail : "Arquivo inválido.");
+          }
           const messages = {
             403: "Sua função não permite esta ação.",
             404: "Documento não encontrado ou acesso indisponível.",
@@ -529,6 +551,12 @@
           "/documents" + (el("deleted").checked ? "?include_deleted=true" : ""),
         );
         el("documents").replaceChildren();
+        const previousDocument = el("query-document").value;
+        el("query-document").replaceChildren(new Option("Todos os documentos disponíveis", ""));
+        for (const doc of d.documents.filter(doc => !doc.deleted))
+          el("query-document").append(new Option(doc.title, doc.doc_id));
+        if ([...el("query-document").options].some(option => option.value === previousDocument))
+          el("query-document").value = previousDocument;
         if (!d.documents.length) {
           const p = document.createElement("p");
           p.className = "muted";
@@ -553,6 +581,7 @@
                   (role === "admin" ? "?include_deleted=true" : ""),
               );
               if (selected !== viewEpoch) return;
+              el("query-document").value = v.deleted ? "" : v.doc_id;
               if (role === "reader") {
                 clearFeedback();
                 el("answer").textContent = v.text;
@@ -596,24 +625,97 @@
           el("workspace").hidden = false;
           el("logout").hidden = false;
           el("editor").hidden = role === "reader";
+          el("upload-form").hidden = role === "reader";
           el("new").hidden = role === "reader";
           el("deleted-option").hidden = role !== "admin";
           el("quality").hidden = role !== "admin";
           await refresh();
           notice("Biblioteca carregada.");
+          const pendingJob = (await api("/uploads")).jobs[0];
+          if (pendingJob) await monitorUpload(pendingJob);
+        });
+      };
+      async function monitorUpload(jobId) {
+        const current = epoch;
+        const labels = {queued:"Na fila de indexação…", extracting:"Extraindo o conteúdo…",
+          indexing:"Gerando embeddings e gravando no Qdrant…"};
+        pendingUpload = jobId;
+        el("upload-retry").hidden = true;
+        while (current === epoch) {
+          const job = await api("/uploads/" + jobId);
+          if (current !== epoch) return;
+          el("upload-status").textContent = (labels[job.state] || job.detail) +
+            (job.characters ? " " + job.characters + " caracteres · " + job.chunks + " trechos." : "");
+          if (job.state === "ready") {
+            await refresh();
+            if (current !== epoch) return;
+            el("query-document").value = job.id;
+            pendingUpload = null;
+            el("upload-form").reset();
+            el("question").focus();
+            notice("Documento salvo e indexado. Faça sua pergunta.");
+            return;
+          }
+          if (["failed", "interrupted"].includes(job.state)) {
+            el("upload-retry").hidden = false;
+            return;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      }
+      el("upload-retry").onclick = () => run(async () => {
+        const jobId = pendingUpload;
+        if (!jobId) return;
+        el("upload-retry").hidden = true;
+        await api("/uploads/" + jobId + "/retry", "POST", {});
+        await monitorUpload(jobId);
+      });
+      el("upload-form").onsubmit = (event) => {
+        event.preventDefault();
+        if (el("upload-submit").disabled) return;
+        run(async () => {
+          const file = el("upload-file").files[0];
+          if (!file) throw Error("Escolha um documento.");
+          const current = epoch;
+          el("upload-submit").disabled = true;
+          el("upload-file").disabled = true;
+          el("upload-status").textContent = "Enviando arquivo…";
+          try {
+            const result = await api("/uploads?filename=" + encodeURIComponent(file.name),
+              "POST", file, true);
+            if (current !== epoch) return;
+            await monitorUpload(result.job_id);
+          } catch (error) {
+            if (current === epoch) el("upload-status").textContent = error.message;
+            throw error;
+          } finally {
+            el("upload-submit").disabled = false;
+            el("upload-file").disabled = false;
+          }
         });
       };
       el("import").onchange = () =>
         run(async () => {
           const file = el("import").files[0];
           if (!file) return;
-          if (file.size > 32000)
-            throw Error("Importe um arquivo de até 32 KB.");
+          if (file.size > 5 * 1024 * 1024)
+            throw Error("Importe um arquivo de até 5 MB.");
           const current = epoch,
             selected = viewEpoch;
-          const text = await file.text();
+          notice("Extraindo texto… PDFs digitalizados podem levar até 90 segundos.");
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          let binary = "";
+          for (let i = 0; i < bytes.length; i += 8192)
+            binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+          const result = await api("/imports/extract", "POST", {
+            filename: file.name, content: btoa(binary),
+          });
+          const text = result.text;
           if (current !== epoch || selected !== viewEpoch) return;
           el("text").value = text;
+          notice(result.ocr_pages.length
+            ? "Texto extraído com OCR. Revise possíveis erros antes de salvar."
+            : "Texto extraído. Revise e salve o documento.");
           if (!el("title").value)
             el("title").value = file.name.replace(/\.[^.]+$/, "");
         });
@@ -637,15 +739,28 @@
           try {
             const d = await api("/query", "POST", {
               question: el("question").value,
+              answer_style: el("answer-style").value,
+              doc_id: el("query-document").value || null,
             });
             queryId = d.query_id;
             el("feedback").hidden = false;
             el("answer").textContent = d.answer;
-            el("mode").textContent = d.metadata.generation_mode.startsWith(
+            el("mode").textContent = d.abstained
+              ? (d.metadata.verification === "unavailable"
+                ? "Verificação indisponível. Tente novamente."
+                : "Evidência insuficiente nos trechos recuperados; reformule a pergunta.")
+              : d.metadata.generation_mode.startsWith(
               "llm",
             )
               ? "Resposta gerada: confira o suporte nas fontes."
               : "Trechos do acervo: confira se respondem à sua pergunta.";
+            if (d.metadata.verification === "supported")
+              el("mode").textContent += " Suporte nas fontes revisado automaticamente; confira as citações.";
+            el("mode").textContent += d.metadata.retrieval_mode === "hybrid"
+              ? " Busca híbrida · " + d.metadata.vector_store + "."
+              : d.metadata.retrieval_mode === "bm25-semantic-fallback"
+              ? " Busca semântica indisponível; usando busca por palavras."
+              : " Busca por palavras.";
             el("sources").replaceChildren();
             for (const c of d.citations) {
               const source = document.createElement("article");
@@ -697,7 +812,9 @@
           el("remove").hidden = false;
           el("versions").hidden = role !== "admin";
           await refresh();
-          notice("Documento salvo. Versão " + revision + ".");
+          notice("Documento salvo. Versão " + revision + "." +
+            (d.indexing === "ready" ? " Embeddings indexados." :
+             d.indexing === "pending" ? " Indexação semântica pendente; será tentada na próxima consulta." : ""));
         });
       };
       el("remove").onclick = () => {
