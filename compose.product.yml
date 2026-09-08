@@ -1,12 +1,22 @@
 services:
   api:
     build: .
+    depends_on:
+      - qdrant
     environment:
+      RAG_PRODUCT_RETRIEVAL: hybrid
+      RAG_PRODUCT_RERANK: "true"
+      RAG_PRODUCT_VERIFY: "true"
+      RAG_PRODUCT_VECTOR_STORE: qdrant
+      QDRANT_URL: http://qdrant:6333
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Configure OPENAI_API_KEY}
+      RAG_LLM_BACKEND: openai
+      RAG_LLM_MODEL: ${RAG_LLM_MODEL:-gpt-4.1-mini}
       RAG_PRODUCT_DB: /app/state/registry.sqlite3
-      RAG_PRODUCT_GENERATION: ${RAG_PRODUCT_GENERATION:-extractive}
-      RAG_PRODUCT_PROFILE: ${RAG_PRODUCT_PROFILE:-default}
+      RAG_PRODUCT_GENERATION: ${RAG_PRODUCT_GENERATION:-llm}
+      RAG_PRODUCT_PROFILE: default
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${RAG_HTTP_PORT:-8002}:8000"
     volumes:
       - product_state:/app/state
     read_only: true
@@ -17,5 +27,15 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+  qdrant:
+    image: qdrant/qdrant:v1.19.1
+    volumes:
+      - qdrant_state:/qdrant/storage
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      QDRANT__TELEMETRY_DISABLED: "true"
 volumes:
+  qdrant_state:
   product_state:

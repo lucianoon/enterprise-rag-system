@@ -26,7 +26,7 @@ class StoreError(Exception):
 class DocumentInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     title: str = Field(min_length=1, max_length=300)
-    text: str = Field(min_length=1, max_length=32000)
+    text: str = Field(min_length=1)
     visibility: Literal["private", "tenant"] = "private"
     readers: list[str] = Field(default_factory=list, max_length=100)
     expected_revision: int = Field(ge=0)
@@ -242,12 +242,6 @@ class Registry:
                     "SELECT 1 FROM users WHERE tenant=? AND user=?", (principal.tenant, user)
                 ).fetchone():
                     raise StoreError(422, "Reader must belong to this tenant")
-            size = db.execute(
-                "SELECT COALESCE(SUM(length(CAST(text AS BLOB))),0) FROM versions WHERE tenant=?",
-                (principal.tenant,),
-            ).fetchone()[0]
-            if size + len(document.text.encode()) > 64 * 1024 * 1024:
-                raise StoreError(409, "Pilot history storage limit reached; contact the operator")
             revision += 1
             db.execute(
                 "INSERT INTO versions VALUES(?,?,?,?,?,?,?,?,?,?)",
