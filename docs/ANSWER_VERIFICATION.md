@@ -29,7 +29,8 @@ not a market benchmark.
 ## Repeatable live-corpus smoke test
 
 Create a JSON array with `question`, `doc_id`, and boolean `expected_abstention` for
-each labelled case. Use document IDs accessible to the evaluation credential. Run:
+each labelled case. Answerable cases also require `required_concepts` and
+`expected_chunk_ids`; see [quality gates](PRODUCT_QUALITY_GATES.md). Use document IDs accessible to the evaluation credential. Run:
 
 ```sh
 python scripts/evaluate_product_answers.py \

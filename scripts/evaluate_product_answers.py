@@ -8,6 +8,9 @@ import argparse
 import json
 import urllib.request
 from pathlib import Path
+from time import perf_counter
+
+from enterprise_rag_system.product_evaluation import AnswerCase, assess, summarize
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -23,32 +26,40 @@ def main():
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     token = args.token_file.read_text().strip()
-    cases = json.loads(args.cases.read_text())
-    if not cases or any(type(c.get("expected_abstention")) is not bool for c in cases):
-        parser.error("Cases must be nonempty and specify expected_abstention as a boolean")
+    cases = [AnswerCase.model_validate(c) for c in json.loads(args.cases.read_text())]
+    if not cases:
+        parser.error("Cases must be nonempty")
     opener = urllib.request.build_opener(NoRedirect())
     results = []
     for case in cases:
         request = urllib.request.Request(
             args.url.rstrip("/") + "/query",
-            data=json.dumps({"question": case["question"], "doc_id": case["doc_id"]}).encode(),
+            data=json.dumps({"question": case.question, "doc_id": case.doc_id}).encode(),
             headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
         )
+        started = perf_counter()
         try:
             with opener.open(request, timeout=180) as response:
                 result = json.load(response)
-            passed = result["abstained"] == case["expected_abstention"]
-            if case["expected_abstention"]:
-                passed &= result["metadata"]["verification"] == "insufficient"
-                passed &= not result["citations"]
-            else:
-                passed &= result["metadata"]["verification"] == "supported"
-                passed &= bool(result["citations"])
-            results.append({**case, "passed": passed, "response": result})
+            verdict = assess(case, result, (perf_counter() - started) * 1000)
+            results.append({"case": case.model_dump(), **verdict, "response": result})
         except Exception as exc:
-            results.append({**case, "passed": False, "error_type": type(exc).__name__})
+            results.append(
+                {
+                    "case": case.model_dump(),
+                    "passed": False,
+                    "elapsed_ms": (perf_counter() - started) * 1000,
+                    "error_type": type(exc).__name__,
+                }
+            )
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(results, ensure_ascii=False, indent=2) + "\n")
+    report = {"summary": summarize(results), "results": results}
+    # Do not overwrite an earlier run; create private reports from the start.
+    import os
+
+    fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w") as output:
+        output.write(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     print(f"{sum(r['passed'] for r in results)}/{len(results)} cases passed")
     raise SystemExit(0 if all(r["passed"] for r in results) else 1)
 

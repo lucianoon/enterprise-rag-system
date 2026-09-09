@@ -22,6 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from enterprise_rag_system import llm_client
 from enterprise_rag_system.answer_verification import review
+from enterprise_rag_system.evidence_context import expand_context
 from enterprise_rag_system.file_import import extract
 from enterprise_rag_system.ingestion import chunk_documents
 from enterprise_rag_system.large_import import LargeImports
@@ -391,6 +392,35 @@ def create_product_app(
             "deleted": bool(row["deleted"]),
         }
 
+    @app.get("/documents/{doc_id}/evidence")
+    def evidence(
+        doc_id: str,
+        revision: int = Query(ge=1),
+        chunk_index: int = Query(ge=0),
+        token: str = Depends(credential),
+    ):
+        _, _, rows = registry.documents(token)
+        row = next((r for r in rows if r["doc_id"] == doc_id), None)
+        if row is None:
+            raise StoreError(404, "Document not found")
+        if row["revision"] != revision:
+            raise StoreError(409, "O documento mudou. Consulte novamente para obter fontes atuais.")
+        parts = chunk_documents([Document(doc_id=doc_id, title=row["title"], text=row["text"])])
+        if chunk_index >= len(parts):
+            raise StoreError(404, "Trecho não encontrado")
+        start, stop = max(0, chunk_index - 1), min(len(parts), chunk_index + 2)
+        return {
+            "doc_id": doc_id,
+            "title": row["title"],
+            "revision": revision,
+            "total_chunks": len(parts),
+            "location_kind": "extracted_text",
+            "chunks": [
+                {"chunk_id": part.chunk_id, "text": part.text, "selected": index == chunk_index}
+                for index, part in enumerate(parts[start:stop], start)
+            ],
+        }
+
     @app.put("/documents/{doc_id}")
     def save_document(
         document: DocumentInput,
@@ -502,6 +532,9 @@ def create_product_app(
                 except Exception:
                     logger.warning("Semantic retrieval unavailable; using BM25")
                     retrieval_mode = "bm25-semantic-fallback"
+            context_members = {c.chunk_id: [c.chunk_id] for c in selected}
+            if generation == "llm":
+                selected, context_members = expand_context(selected, chunks)
             versions = {r["doc_id"]: r["revision"] for r in rows}
             citations = [
                 {
@@ -511,6 +544,8 @@ def create_product_app(
                     "chunk_id": c.chunk_id,
                     "revision": versions[c.doc_id],
                     "excerpt": c.text,
+                    "context_chunk_ids": context_members[c.chunk_id],
+                    "location_kind": "extracted_text",
                 }
                 for i, c in enumerate(selected, 1)
             ]
