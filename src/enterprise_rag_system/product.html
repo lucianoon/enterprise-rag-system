@@ -772,7 +772,47 @@
                 "Documento " + c.doc_id + " · versão " + c.revision;
               const p = document.createElement("p");
               p.textContent = c.excerpt;
-              source.append(title, document.createElement("br"), info, p);
+              const open = document.createElement("button");
+              open.type = "button";
+              open.textContent = "Conferir no texto extraído";
+              const context = document.createElement("div");
+              context.hidden = true;
+              open.onclick = async () => {
+                if (!context.hidden) {
+                  context.hidden = true;
+                  open.textContent = "Conferir no texto extraído";
+                  return;
+                }
+                open.disabled = true;
+                const epoch = viewEpoch;
+                try {
+                  const index = Number(c.chunk_id.slice(c.chunk_id.lastIndexOf(":") + 1));
+                  const evidence = await api("/documents/" + encodeURIComponent(c.doc_id)
+                    + "/evidence?revision=" + c.revision + "&chunk_index=" + index);
+                  if (epoch !== viewEpoch || !source.isConnected) return;
+                  context.replaceChildren();
+                  const label = document.createElement("p");
+                  label.textContent = "Texto extraído · versão " + evidence.revision
+                    + " · trecho encontrado em destaque. A paginação original não está disponível.";
+                  context.append(label);
+                  for (const part of evidence.chunks) {
+                    const paragraph = document.createElement("p");
+                    const text = document.createElement(part.selected ? "mark" : "span");
+                    text.textContent = part.text;
+                    paragraph.append(text);
+                    context.append(paragraph);
+                  }
+                  context.hidden = false;
+                  open.textContent = "Ocultar contexto";
+                } catch (error) {
+                  if (epoch !== viewEpoch || !source.isConnected) return;
+                  context.textContent = error.message;
+                  context.hidden = false;
+                } finally {
+                  open.disabled = false;
+                }
+              };
+              source.append(title, document.createElement("br"), info, p, open, context);
               el("sources").append(source);
             }
             notice(

@@ -1,8 +1,10 @@
 """Offline operator commands for pilot credentials and consistent backups."""
 
 import argparse
+import json
 from pathlib import Path
 
+from enterprise_rag_system.product_backup import verify_backup
 from enterprise_rag_system.product_store import Registry
 
 
@@ -20,7 +22,11 @@ def main():
     backup = commands.add_parser("backup")
     backup.add_argument("destination", type=Path)
     commands.add_parser("prune-measurements", help="Remove expired quality measurements")
+    commands.add_parser("verify-backup", help="Validate a registry snapshot without modifying it")
     args = parser.parse_args()
+    if args.command == "verify-backup":
+        print(json.dumps(verify_backup(args.database)))
+        return
     if args.command != "issue-user" and not args.database.is_file():
         parser.error("Database does not exist")
     store = Registry(args.database)

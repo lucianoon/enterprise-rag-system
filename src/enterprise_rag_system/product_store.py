@@ -372,6 +372,8 @@ class Registry:
                 closing(sqlite3.connect(destination)) as target,
             ):
                 source.backup(target)
+                if target.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
+                    raise ValueError("Backup failed SQLite integrity check")
         except Exception:
             destination.unlink()
             raise
