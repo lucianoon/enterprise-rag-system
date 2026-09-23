@@ -1,6 +1,7 @@
 """Pilot boundary tests: persistence, authorization, concurrency and safe generation."""
 
 import sqlite3
+import sys
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -118,7 +119,8 @@ def test_restart_retains_docs_and_versions_and_backup_is_restorable(pilot, tmp_p
     assert restored.get("/documents/a", headers=headers(keys)).json()["revision"] == 1
     with pytest.raises(FileExistsError):
         store.backup(backup)
-    assert backup.stat().st_mode & 0o777 == 0o600
+    if sys.platform != "win32":  # POSIX permission bits; Windows uses ACLs.
+        assert backup.stat().st_mode & 0o777 == 0o600
 
 
 def test_stale_writes_delete_restore_and_history(pilot):

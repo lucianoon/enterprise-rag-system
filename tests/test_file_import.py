@@ -6,6 +6,7 @@ import zipfile
 import pytest
 from fastapi.testclient import TestClient
 
+from enterprise_rag_system import file_import
 from enterprise_rag_system.file_import import MAX_BYTES, extract, parse
 from enterprise_rag_system.product_api import create_product_app
 
@@ -24,7 +25,10 @@ def test_docx_paragraphs_and_table_cells(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "data,name", [(b"hello", "x.exe"), (b"", "x.txt"), (b"x" * (MAX_BYTES + 1), "x.pdf")]
+    "data,name",
+    [(b"hello", "x.exe"), (b"", "x.txt"), (b"x" * (MAX_BYTES + 1), "x.pdf")],
+    # Short IDs: a 5 MB parameter ID overflows PYTEST_CURRENT_TEST on Windows.
+    ids=["unsupported", "empty", "oversized"],
 )
 def test_file_limits(data, name):
     with pytest.raises(ValueError):
@@ -74,3 +78,27 @@ def test_auth_and_preview_do_not_persist(tmp_path, monkeypatch):
     assert client.get("/documents", headers=headers).json()["documents"] == []
     payload["content"] = "@invalid"
     assert client.post("/imports/extract", json=payload, headers=headers).status_code == 422
+
+
+def test_resource_limits_are_skipped_on_windows(monkeypatch):
+    monkeypatch.setattr(file_import.sys, "platform", "win32")
+    assert file_import.limit_resources() is False
+
+
+def test_resource_limits_applied_on_posix(monkeypatch):
+    resource = pytest.importorskip("resource")
+    calls = []
+    monkeypatch.setattr(resource, "setrlimit", lambda kind, value: calls.append((kind, value)))
+    monkeypatch.setenv("RAG_IMPORT_MEMORY_MB", "1")
+    monkeypatch.delenv("RAG_LARGE_IMPORT", raising=False)
+    assert file_import.limit_resources() is True
+    assert calls[0] == (resource.RLIMIT_AS, (1024**2, 1024**2))
+    assert {kind for kind, _ in calls} == {
+        resource.RLIMIT_AS, resource.RLIMIT_FSIZE, resource.RLIMIT_CPU,
+    }
+
+
+def test_text_extraction_runs_in_isolated_child_on_every_platform():
+    assert extract("Política de férias\n".encode(), "notas.txt") == {
+        "text": "Política de férias", "ocr_pages": [],
+    }
