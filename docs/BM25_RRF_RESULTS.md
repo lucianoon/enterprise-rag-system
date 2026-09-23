@@ -32,7 +32,7 @@ a porcentagem de respostas corretas. K conta chunks, como no benchmark original.
 | Híbrido + reranker legado | 0.5857 | 0.8429 | 0.8429 | 0.7286 | 0.7482 |
 | BM25 | 0.7429 | 0.8857 | 0.9429 | 0.8667 | 0.8727 |
 | RRF + hashing | 0.3143 | 0.6000 | 0.6857 | 0.4948 | 0.5305 |
-| RRF + TF-IDF | 0.7000 | 0.8857 | 0.9429 | 0.8414 | 0.8493 |
+| RRF + TF-IDF | 0.7000 | 0.8857 | 0.9429 | 0.8462 | 0.8553 |
 
 BM25 melhora a ordem dos resultados frente ao híbrido atual, mas não vence em
 todas as métricas: lexical legado mantém Recall@5 ligeiramente maior (0,9571
