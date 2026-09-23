@@ -1,8 +1,10 @@
 """API tests."""
 
+import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from enterprise_rag_system.api import app
+from enterprise_rag_system.api import app, require_api_key
 
 
 def test_health():
@@ -57,6 +59,35 @@ def test_api_key_protects_query_endpoints(monkeypatch):
 
     authed = client.post("/query", json=payload, headers={"X-API-Key": "test-secret"})
     assert authed.status_code == 200
+
+
+def test_api_key_rejects_wrong_empty_and_non_ascii_keys(monkeypatch):
+    monkeypatch.setenv("RAG_API_KEY", "test-secret")
+    client = TestClient(app)
+    payload = {"question": "What is the refund policy?", "top_k": 3}
+
+    for value in ("wrong-secret", "test-secre", "test-secret-extra", ""):
+        response = client.post("/query", json=payload, headers={"X-API-Key": value})
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Invalid or missing API key."}
+
+    # Raw non-ASCII bytes reach the handler as a latin-1 decoded str.
+    non_ascii = client.post(
+        "/query", json=payload, headers={"X-API-Key": "test-sécret".encode()}
+    )
+    assert non_ascii.status_code == 401
+
+
+def test_require_api_key_compares_without_raising(monkeypatch):
+    monkeypatch.setenv("RAG_API_KEY", "chave-ação")
+    require_api_key("chave-ação")
+    for value in (None, "", "chave-acao", "chave-ação!", "\udcff"):
+        with pytest.raises(HTTPException) as excinfo:
+            require_api_key(value)
+        assert excinfo.value.status_code == 401
+
+    monkeypatch.setenv("RAG_API_KEY", "")
+    require_api_key(None)
 
 
 def test_evaluate_answer_endpoint_judges_generated_answer(monkeypatch):

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Compare `X-API-Key` against `RAG_API_KEY` with `secrets.compare_digest` over
+  UTF-8 bytes instead of `!=`, closing the timing side channel. Missing, empty,
+  wrong and non-ASCII keys return 401 without raising. Product credentials
+  already resolve through a SHA-256 hash lookup, so no other secret is compared
+  directly.
+
 - Unify text analysis in `tokenization.py` (NFKD, combining-mark removal,
   casefold) for lexical scoring, BM25, hashing and TF-IDF vectors, the legacy
   title reranker, the heuristic answer judge and the product. The legacy

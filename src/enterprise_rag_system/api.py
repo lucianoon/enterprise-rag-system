@@ -2,6 +2,7 @@
 
 import logging
 import os
+import secrets
 from pathlib import Path
 from typing import cast, get_args
 
@@ -56,10 +57,15 @@ def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
 
     Auth is enabled by setting ``RAG_API_KEY``; when it is unset the API stays
     open (local development). The key is read per-request so tests and
-    deployments can toggle it without rebuilding the app.
+    deployments can toggle it without rebuilding the app. The comparison runs
+    in constant time over UTF-8 bytes, so a missing or non-ASCII header is a
+    plain 401 instead of a timing oracle or a ``TypeError``.
     """
     expected = os.getenv("RAG_API_KEY")
-    if expected and x_api_key != expected:
+    if not expected:
+        return
+    provided = (x_api_key or "").encode("utf-8", "surrogateescape")
+    if not secrets.compare_digest(provided, expected.encode("utf-8", "surrogateescape")):
         raise HTTPException(status_code=401, detail="Invalid or missing API key.")
 
 
