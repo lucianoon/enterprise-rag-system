@@ -7,7 +7,59 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lucianoon/enterprise-rag-system)
 
-**Persistent product pilot:** run `docker compose -f compose.product.yml up --build -d` and follow the [provisioning, permissions and backup guide](docs/PRODUCT_PILOT.md) (Portuguese). Includes a document library, revisions, restore and source-backed queries. This explicit mode is separate from the demo API described below.
+A RAG engine where **retrieval quality is the product**, measured in
+Portuguese. Most RAG failures are retrieval failures: semantic search misses
+exact terms (policy names, acronyms, IDs), keyword search misses paraphrases,
+and without metrics you cannot tell whether a bad answer came from the
+generator or from the ranked list. This repository treats that as measurable
+engineering:
+
+- **BM25 with Unicode normalization** (NFKD, accents removed, casefold) in a
+  single analyzer shared by every pipeline;
+- **pluggable vectors**: deterministic hashing (CI), TF-IDF or **real
+  multilingual embeddings** (`multilingual-e5-small`, CPU, pinned revision);
+- **score fusion or RRF**, plus heuristic reranking or an optional
+  **multilingual cross-encoder**;
+- citation-carrying answers, per-stage scores and an evaluation endpoint;
+- **regression gates in CI**: a versioned Portuguese benchmark with SHA-256 data
+  hashes, frozen baselines and zero tolerance.
+
+## Measured results
+
+`corporate_pt_v1`, **test** split: 30 fictional documents, 35 answerable and 5
+unanswerable questions, no LLM involved. Measured on 2026-09-22 (CPU,
+Windows 11, Python 3.12).
+
+| Configuration | Recall@1 | Recall@5 | MRR@5 | nDCG@5 | p95@5 |
+|---|---:|---:|---:|---:|---:|
+| Hybrid + reranker, hashing (API default) | 0.571 | 0.886 | 0.760 | 0.781 | < 1 ms |
+| Legacy lexical | 0.686 | 0.914 | 0.824 | 0.834 | < 1 ms |
+| BM25 | 0.743 | 0.943 | 0.867 | 0.873 | < 1 ms |
+| RRF: BM25 + TF-IDF | 0.700 | 0.943 | 0.850 | 0.859 | ~3 ms |
+| `multilingual-e5-small` vector | 0.757 | **0.971** | 0.891 | 0.911 | ~56 ms |
+| **RRF: BM25 + e5** | **0.843** | **0.971** | **0.943** | 0.945 | ~49 ms |
+| BM25 + mMiniLM cross-encoder | 0.843 | 0.971 | 0.943 | **0.950** | ~1.6 s |
+
+- A real multilingual embedding **beats lexical retrieval** on this set (the
+  previous best was legacy lexical at Recall@5 = 0.957); RRF is the fusion that
+  keeps the gain. The cross-encoder ties RRF + e5 at ~30x the latency.
+- The API default stays `hybrid` + hashing, with no heavy dependencies; changing
+  it requires a new, independent test set.
+- Synthetic, AI-assisted corpus and an already-known test split: these numbers
+  **do not establish superiority on real data**. Details, dev split and
+  limitations: [multilingual embeddings](docs/MULTILINGUAL_RETRIEVAL_RESULTS.md),
+  [BM25/RRF](docs/BM25_RRF_RESULTS.md),
+  [baseline and analyzer unification](docs/CORPORATE_BENCHMARK_RESULTS.md),
+  [protocol](docs/BENCHMARKING.md) (Portuguese).
+
+```bash
+uv run python -m enterprise_rag_system.benchmark --split test \
+  --baseline data/benchmarks/corporate_pt_v1/baseline-hashing-test.json
+# multilingual embeddings (optional extra, ~0.5 GB download):
+uv sync --extra dev --extra extras --extra semantic
+uv run python -m enterprise_rag_system.benchmark --split test \
+  --backend sentence-transformer --strategies bm25 vector rrf
+```
 
 **[Live demo](https://enterprise-rag-demo.onrender.com/docs)** — interactive
 API with the sample corpus loaded; try `POST /query` and `POST /evaluate/batch`
@@ -15,37 +67,8 @@ straight from the browser (free tier: the first request may take ~1 min to
 wake the service).
 
 **Measured test evidence:** CI enforces a **minimum 80% combined line/branch
-coverage gate** and frozen retrieval quality baselines. The machine-readable `coverage.json` is retained as a workflow
-artifact for 14 days.
-
-A retrieval-quality-first RAG engine: hybrid search (BM25-style lexical + vector) with
-score fusion, a heuristic rerank pass (title and exact-phrase overlap — not a
-cross-encoder), citation-carrying answers, and a built-in evaluation endpoint that
-reports **Recall@K** and **MRR** for any labeled query. Every response exposes its
-per-stage scores so you can see *why* a chunk was retrieved, not just *that* it was.
-
-> **Not the same project as [RAG Agentic System](https://github.com/lucianoon/rag-agentic-system).**
-> This engine retrieves **once** and answers; the design goal is a ranked list whose
-> quality you can measure. The other one wraps retrieval in a **multi-step Claude
-> tool-use loop** where the model decides when to search again. Different problems:
-> this repo optimizes ranking quality, that one optimizes multi-step reasoning
-> over a corpus.
-
-**Measured public baseline:** on the `retrieval_v1` demo dataset (10 queries),
-the hashing + in-memory configuration reached **Recall@1 = 1.000** and
-**MRR = 1.000** on August 2, 2026. The corpus contains only three documents;
-read the [results and limitations](docs/BENCHMARK_RESULTS.md) before interpreting
-or comparing these numbers.
-
-**Optional Portuguese BM25:** set `RAG_RETRIEVAL_MODE=bm25` before starting
-the API. It folds accents and uses full BM25 without the heuristic title bonus.
-The default remains `hybrid`. `rrf` is experimental: pairing it with hashing
-decreased quality on this corpus. See the [measured comparison and limitations](docs/BM25_RRF_RESULTS.md).
-
-```bash
-uv run python -m enterprise_rag_system.benchmark --split dev --backend tfidf \
-  --strategies lexical hybrid-rerank bm25 rrf --output benchmark-report.json
-```
+coverage gate** and frozen retrieval quality baselines. The machine-readable
+`coverage.json` is retained as a workflow artifact for 14 days.
 
 ## Quick evidence
 
@@ -56,22 +79,11 @@ uv run python -m enterprise_rag_system.benchmark --split dev --backend tfidf \
 | 30 documents and 80 synthetic Portuguese queries | Retrieval baseline with dev/test splits |
 | Lexical/vector/hybrid matrix and quality gate | Reproducible Recall, MRR, nDCG, precision and latency |
 | Per-stage scores | Diagnosing retrieval failures |
-| Hashing/TF-IDF/sentence-transformers | Deterministic CI plus a real semantic backend |
+| Hashing/TF-IDF/multilingual e5 + cross-encoder | Deterministic CI plus a real semantic backend with pinned model revisions |
 | In-memory/Qdrant | Same interface from local tests to external infrastructure |
 | Heuristic or LLM judge | Faithfulness evaluation with an explicit fallback |
 
-**Portuguese regression benchmark:** `corporate_pt_v1` includes paraphrases,
-exceptions, multiple sources and unanswerable questions. Compare four
-configurations without invoking an LLM:
-
-```bash
-uv run python -m enterprise_rag_system.benchmark --split dev --output benchmark-report.json
-```
-
-See the [protocol](docs/BENCHMARKING.md),
-[measured results](docs/CORPORATE_BENCHMARK_RESULTS.md) and
-[product direction](docs/PRODUCT_DIRECTION.md). The corpus is fictional and
-AI-assisted; its results do not establish superiority on real enterprise data.
+See also the [product direction](docs/PRODUCT_DIRECTION.md).
 
 ## Problem
 
@@ -93,11 +105,12 @@ A compact, fully typed pipeline (`src/enterprise_rag_system/`):
 | Stage | Module | What it actually does |
 |---|---|---|
 | Ingestion | `ingestion.py` | Loads JSONL documents, splits them into fixed-size word-count chunks (default 80 words) |
-| Lexical retrieval | `retrieval.py` | BM25-style scoring: IDF-weighted term matching with log-scaled term frequency |
-| Embeddings | `embeddings.py` | Pluggable backends: deterministic hashing (offline/CI default), TF-IDF (scikit-learn) or dense semantic vectors (sentence-transformers) |
+| Text analysis | `tokenization.py` | One analyzer (NFKD, accent removal, casefold) for lexical, BM25, vectors, reranker, judge and product |
+| Lexical retrieval | `retrieval.py`, `ranking.py` | Legacy IDF/log-TF score and full BM25 (`k1=1.2`, `b=0.75`) over posting lists |
+| Embeddings | `embeddings.py` | Pluggable backends: deterministic hashing (offline/CI default), TF-IDF (scikit-learn) or dense multilingual vectors (pinned `multilingual-e5-small`, `semantic` extra) |
 | Vector store | `vector_store.py` | Pluggable backends: exact in-memory cosine search or a real Qdrant index (the one `docker compose` starts) |
-| Score fusion | `retrieval.py` | Weighted hybrid score: `0.55 * lexical + 0.45 * vector` |
-| Reranking | `retrieval.py` | Boosts results by query/title token overlap plus an exact-title-phrase bonus |
+| Fusion | `retrieval.py`, `ranking.py` | Weighted hybrid score `0.55 * lexical + 0.45 * vector` or Reciprocal Rank Fusion |
+| Reranking | `retrieval.py`, `cross_encoder.py` | Title heuristic (overlap + exact phrase) or an optional multilingual cross-encoder over a candidate pool |
 | Generation | `generation.py` | Claude synthesizes a grounded answer with bracketed citations; a deterministic template generator is the offline/CI fallback |
 | Citations | `pipeline.py` | Every answer ships with `doc_id` / `title` / `chunk_id` for each supporting chunk |
 | Evaluation | `evaluation.py` | Recall@K and MRR per labeled query, plus batch evaluation over a versioned dataset with aggregate metrics |
@@ -163,6 +176,25 @@ Or with make: `make install && make test && make dev`. Docker:
 The API boots against the bundled sample corpus (`data/sample/policies.jsonl` — refund,
 security and SLA policies), so you can query it immediately.
 
+## Usage examples
+
+### Persistent product pilot
+
+`docker compose -f compose.product.yml up --build -d` starts an explicit mode,
+separate from the demo API: a Portuguese document library, revisions, restore,
+tenant/document permissions applied before retrieval, revocable credentials and
+source-backed queries. The product BM25 index reuses the core and is cached per
+authorized snapshot, invalidated on every edit. See the
+[provisioning, permissions and backup guide](docs/PRODUCT_PILOT.md) (Portuguese).
+
+### Configurable editorial profile
+
+The pilot accepts versioned prompt profiles (`RAG_PRODUCT_PROFILE`), with the
+prompt hash in every response's metadata. One bundled example is a study
+assistant inspired by a pastor's public themes, which always presents itself as
+an AI assistant rather than the person:
+[configuration and sources](docs/PASTORAL_PROFILE.md) (Portuguese).
+
 ## Configuration
 
 ### Answer generation modes
@@ -225,7 +257,9 @@ Both retrieval stages are selected by environment variables (see `.env.example`)
 
 - `RAG_EMBEDDING_BACKEND` — `hashing` (default: deterministic, zero dependencies,
   stable across processes), `tfidf` (scikit-learn, fitted on the indexed corpus),
-  `sentence-transformer` (dense semantic vectors, heavy) or `auto` (best available).
+  `sentence-transformer` (dense multilingual vectors; defaults to
+  `intfloat/multilingual-e5-small` at a pinned revision, overridable with
+  `RAG_ST_MODEL`/`RAG_ST_REVISION`; requires `--extra semantic`) or `auto` (best available).
 - `RAG_VECTOR_STORE` — `memory` (default: exact in-process cosine search) or `qdrant`
   (uses `QDRANT_URL` and `COLLECTION_NAME`; `docker compose` wires this up).
 - `RAG_API_KEY` — when set, `/query` and `/evaluate*` require the same value in the
@@ -331,8 +365,10 @@ Two judges share one interface, selected by `RAG_JUDGE_MODE` (`answer_eval.py`):
   infrastructure — ideal for CI and for isolating lexical-vs-vector behavior; the
   `tfidf` and `sentence-transformer` backends provide production semantics behind the
   same interface.
-- **Reranker** is a cheap heuristic (title overlap + exact phrase), not a cross-encoder;
-  it improves precision on title-shaped queries without adding a model dependency.
+- **The default reranker** is a cheap heuristic (title overlap + exact phrase). The
+  optional multilingual cross-encoder
+  (`RAGPipeline(chunks, reranker=CrossEncoderReranker(), rerank_pool=20)`) did not
+  improve Recall/MRR over RRF + e5 on the benchmark and costs ~1.6 s per query on CPU.
 
 ## API
 
@@ -383,7 +419,8 @@ changes.
 
 ## Roadmap
 
-- Cross-encoder reranker
+- Light Portuguese stemming (RSLP), evaluated on dev
+- An independent test set to decide RRF + e5 as the default
 - Batch answer-quality evaluation (aggregate faithfulness over the eval dataset)
 - Incremental indexing instead of full reindex on startup
 

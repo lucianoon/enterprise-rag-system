@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- Unify text analysis in `tokenization.py` (NFKD, combining-mark removal,
+  casefold) for lexical scoring, BM25, hashing and TF-IDF vectors, the legacy
+  title reranker, the heuristic answer judge and the product. The legacy
+  `[a-z0-9]+` analyzer split accented words (`política` -> `pol`, `tica`).
+  Re-freeze the three test baselines with per-metric before/after results.
+- Cache the product BM25 index per authorized snapshot (tenant + content digest
+  of every visible document), so unchanged corpora skip re-chunking/re-indexing
+  and any edit, restore, deletion or ACL change invalidates it. Split the
+  product application factory into route groups and query stages without
+  changing endpoints, payloads or metadata.
+- Add the optional `semantic` extra (sentence-transformers + CPU torch): pinned
+  `intfloat/multilingual-e5-small` embeddings with E5 prefixes and a pinned
+  multilingual cross-encoder reranker. Add the `sentence-transformer` benchmark
+  backend and `bm25-ce` / `rrf-ce` strategies; reports record model revisions
+  and the comparison rejects different weights.
+- Make document extraction and its tests run on Windows (no `resource` limits
+  there), and pin LF for benchmark data in `.gitattributes` so SHA-256 gates do
+  not break under `core.autocrlf`.
+
 - Add the explicit `luiz-herminio` pastoral editorial profile, a packaged system
   prompt, research references and runtime profile/hash metadata. Preserve ACLs,
   grounded citations, abstention and extractive fallback.
