@@ -23,6 +23,7 @@ from typing import Protocol
 
 from enterprise_rag_system import llm_client
 from enterprise_rag_system.models import AnswerJudgement, SearchResult
+from enterprise_rag_system.tokenization import content_terms
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ class AnswerJudge(Protocol):
 
 
 def _content_tokens(text: str) -> set[str]:
-    return {t for t in re.findall(r"[a-z0-9]+", text.lower()) if t not in _STOPWORDS}
+    return set(content_terms(text, _STOPWORDS))
 
 
 def _sentences(text: str) -> list[str]:

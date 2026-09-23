@@ -1,6 +1,6 @@
 # Baseline corporativa em português
 
-Medições locais do conjunto sintético `corporate_pt_v1`, em 7 de setembro de 2026. Não representam produção, avaliação humana independente ou comparação com concorrentes.
+Medições locais do conjunto sintético `corporate_pt_v1`, em 7 de setembro de 2026 (tabelas iniciais, com o analisador legado; veja a [unificação do analisador](#unificação-do-analisador-de-texto) para os números atuais). Não representam produção, avaliação humana independente ou comparação com concorrentes.
 
 ## Protocolo
 
@@ -81,6 +81,83 @@ Dimensões vetoriais: 48. Cada ablação usa o mesmo corpus e o mesmo embedder d
 - O componente vetorial por hashing, isolado, é fraco: Recall@5 de 0,3857 no teste. Não deve ser apresentado como busca semântica de alta qualidade.
 - No desenvolvimento, o vetor TF-IDF alcança Recall@5 de 0,9429; isso justifica novos experimentos, mas não prova generalização nem determina automaticamente o backend de produção.
 - Todas as configurações devolvem candidatos para todas as perguntas sem resposta (`unanswerable_return_rate = 1,0`). Essa é uma limitação do retriever atual, não uma medição de alucinação do gerador.
+
+## Unificação do analisador de texto
+
+Em 22 de setembro de 2026, todas as pipelines passaram a usar um único
+analisador (`src/enterprise_rag_system/tokenization.py`): NFKD, remoção de
+marcas combinantes e casefold, mantendo letras e dígitos Unicode. Antes, o
+score lexical, o embedder por hashing, o reranker de título e o juiz heurístico
+usavam `re.findall(r"[a-z0-9]+", text.lower())`, que parte palavras acentuadas
+(`política` virava `pol` + `tica`); o BM25 e o produto já usavam a normalização
+correta. O TF-IDF passou a usar o mesmo analisador (antes: tokenizador padrão do
+scikit-learn, sem remoção de acentos).
+
+A decisão de manter o TF-IDF no analisador comum foi tomada no **dev** (MRR@5 do
+vetor TF-IDF 0,8271 → 0,8629); o teste foi medido depois. Os números abaixo são
+de uma única execução por configuração no mesmo ambiente (Windows 11, Python
+3.12.13); as métricas são determinísticas, as latências não foram comparadas.
+
+**O efeito não é uniformemente positivo, e a mudança foi mantida por ser uma
+correção de bug:** no teste, o lexical legado ganha 10 pontos em Recall@1 e
+MRR@5, mas perde Recall@5 (0,9571 → 0,9143) em duas perguntas (`test28`,
+`test35`). Nelas, os fragmentos da tokenização quebrada davam casamentos extras
+ao documento relevante: `análise` contava duas vezes (`an` + `lise`) em
+`test28`, e o sufixo solto `es` (de `informações`, `identificáveis`) casava com
+outras palavras em `test35`. Era ruído favorável nesses casos, não um sinal
+confiável. O vetor por hashing também piora no teste. Stemming explícito para
+português (ex.: RSLP) é o próximo experimento, a ser decidido no dev. BM25 não
+muda: já usava este analisador.
+
+As três referências de teste (`baseline-hashing-test.json`,
+`baseline-bm25-rrf-hashing-test.json`, `baseline-bm25-rrf-tfidf-test.json`)
+foram recongeladas com o código novo. O gate continua com tolerância zero; nenhum
+limiar foi relaxado. Qualquer regressão a partir destas referências volta a
+falhar a CI.
+
+### dev / hashing
+
+| Estratégia | R@1 antes | R@1 depois | R@5 antes | R@5 depois | MRR@5 antes | MRR@5 depois | nDCG@5 antes | nDCG@5 depois |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| lexical | 0.6857 | 0.7286 | 0.8857 | 0.9143 | 0.7986 | 0.8414 | 0.8163 | 0.8551 |
+| vector | 0.1857 | 0.2571 | 0.5857 | 0.5714 | 0.3786 | 0.4010 | 0.4188 | 0.4319 |
+| hybrid | 0.6571 | 0.6143 | 0.9143 | 0.9143 | 0.7914 | 0.7733 | 0.8180 | 0.8062 |
+| hybrid-rerank | 0.7000 | 0.6714 | 0.8571 | 0.8286 | 0.7986 | 0.7738 | 0.8105 | 0.7875 |
+| bm25 | 0.7000 | 0.7000 | 0.9429 | 0.9429 | 0.8405 | 0.8405 | 0.8664 | 0.8664 |
+| rrf | 0.4857 | 0.4429 | 0.7714 | 0.8429 | 0.6390 | 0.6714 | 0.6651 | 0.7083 |
+
+### dev / tfidf
+
+| Estratégia | R@1 antes | R@1 depois | R@5 antes | R@5 depois | MRR@5 antes | MRR@5 depois | nDCG@5 antes | nDCG@5 depois |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| lexical | 0.6857 | 0.7286 | 0.8857 | 0.9143 | 0.7986 | 0.8414 | 0.8163 | 0.8551 |
+| vector | 0.7000 | 0.7571 | 0.9429 | 0.9429 | 0.8271 | 0.8629 | 0.8522 | 0.8790 |
+| hybrid | 0.6857 | 0.7286 | 0.9143 | 0.9143 | 0.8043 | 0.8414 | 0.8273 | 0.8551 |
+| hybrid-rerank | 0.7286 | 0.7571 | 0.8571 | 0.8571 | 0.8010 | 0.8152 | 0.8148 | 0.8253 |
+| bm25 | 0.7000 | 0.7000 | 0.9429 | 0.9429 | 0.8405 | 0.8405 | 0.8664 | 0.8664 |
+| rrf | 0.6714 | 0.7000 | 0.9429 | 0.9429 | 0.8238 | 0.8390 | 0.8516 | 0.8628 |
+
+### test / hashing
+
+| Estratégia | R@1 antes | R@1 depois | R@5 antes | R@5 depois | MRR@5 antes | MRR@5 depois | nDCG@5 antes | nDCG@5 depois |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| lexical | 0.5857 | 0.6857 | 0.9571 | 0.9143 | 0.7743 | 0.8238 | 0.8080 | 0.8335 |
+| vector | 0.1286 | 0.0714 | 0.3857 | 0.3429 | 0.2557 | 0.2152 | 0.2714 | 0.2225 |
+| hybrid | 0.5857 | 0.5714 | 0.9000 | 0.8857 | 0.7495 | 0.7405 | 0.7771 | 0.7641 |
+| hybrid-rerank | 0.5857 | 0.5714 | 0.8429 | 0.8857 | 0.7286 | 0.7595 | 0.7482 | 0.7807 |
+| bm25 | 0.7429 | 0.7429 | 0.9429 | 0.9429 | 0.8667 | 0.8667 | 0.8727 | 0.8727 |
+| rrf | 0.3143 | 0.3000 | 0.6857 | 0.7286 | 0.4948 | 0.5000 | 0.5305 | 0.5406 |
+
+### test / tfidf
+
+| Estratégia | R@1 antes | R@1 depois | R@5 antes | R@5 depois | MRR@5 antes | MRR@5 depois | nDCG@5 antes | nDCG@5 depois |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| lexical | 0.5857 | 0.6857 | 0.9571 | 0.9143 | 0.7743 | 0.8238 | 0.8080 | 0.8335 |
+| vector | 0.6714 | 0.6429 | 0.9143 | 0.9143 | 0.8167 | 0.8057 | 0.8240 | 0.8182 |
+| hybrid | 0.5857 | 0.6857 | 0.9429 | 0.9143 | 0.7719 | 0.8238 | 0.7992 | 0.8335 |
+| hybrid-rerank | 0.6143 | 0.6714 | 0.9000 | 0.9143 | 0.7771 | 0.8452 | 0.7984 | 0.8480 |
+| bm25 | 0.7429 | 0.7429 | 0.9429 | 0.9429 | 0.8667 | 0.8667 | 0.8727 | 0.8727 |
+| rrf | 0.7286 | 0.7000 | 0.9429 | 0.9429 | 0.8557 | 0.8500 | 0.8598 | 0.8586 |
 
 ## Limitações e próximos experimentos
 

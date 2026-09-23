@@ -7,9 +7,9 @@ Three interchangeable strategies:
   it keeps demos, tests and CI reproducible offline.
 - ``TfidfEmbedder`` — scikit-learn TF-IDF vectors fitted on the indexed
   corpus. Better lexical-semantic signal than hashing, still fully offline.
-- ``SentenceTransformerEmbedder`` — real dense semantic embeddings
-  (``all-MiniLM-L6-v2`` by default). Requires the optional
-  ``sentence-transformers`` dependency.
+- ``SentenceTransformerEmbedder`` — real dense multilingual embeddings
+  (``intfloat/multilingual-e5-small`` at a pinned revision by default).
+  Requires the optional ``semantic`` extra (sentence-transformers + torch CPU).
 
 ``build_embedder`` selects a backend from ``RAG_EMBEDDING_BACKEND``.
 """
@@ -19,14 +19,18 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
-import re
 from collections.abc import Sequence
 from math import sqrt
 from typing import Protocol
 
+from enterprise_rag_system.tokenization import tokenize
+
 logger = logging.getLogger(__name__)
 
-DEFAULT_ST_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+# Multilingual (Portuguese included), 384 dimensions, MIT licensed. The revision
+# is a Hugging Face commit, so a benchmark rerun downloads the same weights.
+DEFAULT_ST_MODEL = "intfloat/multilingual-e5-small"
+DEFAULT_ST_REVISION = "614241f622f53c4eeff9890bdc4f31cfecc418b3"
 
 
 class Embedder(Protocol):
@@ -48,10 +52,6 @@ class Embedder(Protocol):
 def _normalize(vector: list[float]) -> list[float]:
     norm = sqrt(sum(v * v for v in vector)) or 1.0
     return [v / norm for v in vector]
-
-
-def _tokenize(text: str) -> list[str]:
-    return re.findall(r"[a-z0-9]+", text.lower())
 
 
 class HashingEmbedder:
@@ -82,7 +82,7 @@ class HashingEmbedder:
 
     def _embed_one(self, text: str) -> list[float]:
         vector = [0.0] * self.dims
-        for token in _tokenize(text):
+        for token in tokenize(text):
             vector[self._bucket(token)] += 1.0
         return _normalize(vector)
 
@@ -101,7 +101,10 @@ class TfidfEmbedder:
                 "Install it with `uv sync --extra extras`."
             ) from exc
         self._vectorizer = TfidfVectorizer(
-            lowercase=True,
+            # Same analyzer as BM25/lexical/hashing; n-grams are built on its tokens.
+            tokenizer=tokenize,
+            lowercase=False,
+            token_pattern=None,
             stop_words="english",
             max_features=max_features,
             ngram_range=(1, 2),
@@ -134,26 +137,60 @@ class TfidfEmbedder:
         return self.embed_texts([text])[0]
 
 
+def _e5_prefixes(model_name: str) -> tuple[str, str]:
+    """E5 models are trained with ``query: `` / ``passage: `` prefixes; others use none."""
+    return ("query: ", "passage: ") if "e5" in model_name.rsplit("/", 1)[-1].lower() else ("", "")
+
+
 class SentenceTransformerEmbedder:
-    """Dense semantic embeddings via sentence-transformers (optional)."""
+    """Dense semantic embeddings via sentence-transformers on CPU (optional extra).
+
+    ``revision`` pins the Hugging Face commit; ``None`` means "latest", which is
+    not reproducible and is only meant for exploration. Queries and passages get
+    the model's asymmetric prefixes (E5) unless explicit prefixes are given.
+    """
 
     name = "sentence-transformer"
 
-    def __init__(self, model_name: str = DEFAULT_ST_MODEL):
-        try:
-            from sentence_transformers import SentenceTransformer
-        except ImportError as exc:  # pragma: no cover - exercised via build_embedder
-            raise RuntimeError(
-                "sentence-transformers is required for this backend. "
-                "Install it with `pip install sentence-transformers`."
-            ) from exc
-        logger.info("Loading sentence-transformer model: %s", model_name)
-        self._model = SentenceTransformer(model_name)
+    def __init__(
+        self,
+        model_name: str = DEFAULT_ST_MODEL,
+        revision: str | None = DEFAULT_ST_REVISION,
+        *,
+        query_prefix: str | None = None,
+        passage_prefix: str | None = None,
+        device: str = "cpu",
+        model=None,
+    ):
+        default_query, default_passage = _e5_prefixes(model_name)
+        self.model_name = model_name
+        self.revision = revision
+        self.query_prefix = default_query if query_prefix is None else query_prefix
+        self.passage_prefix = default_passage if passage_prefix is None else passage_prefix
+        if model is None:
+            try:
+                from sentence_transformers import SentenceTransformer
+            except ImportError as exc:
+                raise RuntimeError(
+                    "sentence-transformers is required for this backend. "
+                    "Install it with `uv sync --extra semantic`."
+                ) from exc
+            logger.info("Loading sentence-transformer %s@%s", model_name, revision or "latest")
+            model = SentenceTransformer(model_name, revision=revision, device=device)
+        self._model = model
+
+    @property
+    def dims(self) -> int:
+        # sentence-transformers >= 5 renamed the accessor; keep both working.
+        getter = getattr(self._model, "get_embedding_dimension", None) or (
+            self._model.get_sentence_embedding_dimension
+        )
+        return int(getter())
 
     def fit(self, corpus: Sequence[str]) -> None:
         return None
 
-    def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
+    def _encode(self, texts: Sequence[str]) -> list[list[float]]:
         vectors = self._model.encode(
             list(texts),
             normalize_embeddings=True,
@@ -162,8 +199,18 @@ class SentenceTransformerEmbedder:
         )
         return [[float(v) for v in row] for row in vectors]
 
+    def embed_texts(self, texts: Sequence[str]) -> list[list[float]]:
+        return self._encode([self.passage_prefix + text for text in texts])
+
     def embed_query(self, text: str) -> list[float]:
-        return self.embed_texts([text])[0]
+        return self._encode([self.query_prefix + text])[0]
+
+
+def sentence_transformer_from_env() -> SentenceTransformerEmbedder:
+    """``RAG_ST_MODEL`` / ``RAG_ST_REVISION`` override the pinned default model."""
+    model = os.getenv("RAG_ST_MODEL") or DEFAULT_ST_MODEL
+    default_revision = DEFAULT_ST_REVISION if model == DEFAULT_ST_MODEL else None
+    return SentenceTransformerEmbedder(model, os.getenv("RAG_ST_REVISION") or default_revision)
 
 
 def _importable(module: str) -> bool:
@@ -190,10 +237,10 @@ def build_embedder() -> Embedder:
     if backend == "tfidf":
         return TfidfEmbedder()
     if backend in ("sentence-transformer", "sentence_transformer", "st"):
-        return SentenceTransformerEmbedder()
+        return sentence_transformer_from_env()
     if backend == "auto":
         if _importable("sentence_transformers"):
-            return SentenceTransformerEmbedder()
+            return sentence_transformer_from_env()
         if _importable("sklearn"):
             return TfidfEmbedder()
         logger.info("No optional embedding backend installed; using hashing.")

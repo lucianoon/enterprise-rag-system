@@ -1,0 +1,5 @@
+# Benchmark data is hashed (SHA-256) by the regression gate: keep LF on every
+# platform, regardless of core.autocrlf, or the hashes stop matching.
+data/**/*.jsonl text eol=lf
+data/benchmarks/**/*.json text eol=lf
+*.sh text eol=lf

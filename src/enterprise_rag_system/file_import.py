@@ -12,6 +12,7 @@ from xml.etree import ElementTree
 
 MAX_BYTES = 5 * 1024 * 1024
 MAX_TEXT = 32000
+_CHILD_ENV = {"PATH", "PYTHONPATH", "LANG", "SYSTEMROOT"}
 
 
 def extract(data: bytes, filename: str) -> dict:
@@ -27,7 +28,8 @@ def extract(data: bytes, filename: str) -> dict:
             result = subprocess.run(
                 [sys.executable, "-m", __name__, str(source)],
                 capture_output=True,
-                env={k: v for k, v in os.environ.items() if k in {"PATH", "PYTHONPATH", "LANG"}}
+                # SYSTEMROOT is required by CPython on Windows; absent elsewhere.
+                env={k: v for k, v in os.environ.items() if k in _CHILD_ENV}
                 | {"OMP_THREAD_LIMIT": "1", "LC_ALL": "C"},
                 timeout=90,
                 check=False,
@@ -113,7 +115,15 @@ def parse(source: Path) -> dict:
     return {"text": text, "ocr_pages": ocr_pages}
 
 
-if __name__ == "__main__":
+def limit_resources() -> bool:
+    """Apply POSIX rlimits to the extractor child; returns whether they were applied.
+
+    ``resource`` does not exist on Windows. There the child still runs isolated
+    with a minimal environment and the parent's 90-second timeout, but without
+    memory, file-size or CPU limits, so it is meant for local development only.
+    """
+    if sys.platform == "win32":
+        return False
     import resource
 
     memory = int(os.getenv("RAG_IMPORT_MEMORY_MB", "768")) * 1024**2
@@ -121,6 +131,11 @@ if __name__ == "__main__":
     if os.getenv("RAG_LARGE_IMPORT") != "true":
         resource.setrlimit(resource.RLIMIT_FSIZE, (8 * 1024**2, 8 * 1024**2))
         resource.setrlimit(resource.RLIMIT_CPU, (60, 60))
+    return True
+
+
+if __name__ == "__main__":
+    limit_resources()
     try:
         print(json.dumps(parse(Path(sys.argv[1]))))
     except ValueError as error:

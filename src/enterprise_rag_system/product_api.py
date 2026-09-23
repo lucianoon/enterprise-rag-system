@@ -10,6 +10,7 @@ import secrets
 import shutil
 import sqlite3
 import uuid
+from dataclasses import dataclass, field
 from pathlib import Path
 from threading import BoundedSemaphore
 from time import perf_counter
@@ -26,12 +27,12 @@ from enterprise_rag_system.evidence_context import expand_context
 from enterprise_rag_system.file_import import extract
 from enterprise_rag_system.ingestion import chunk_documents
 from enterprise_rag_system.large_import import LargeImports
-from enterprise_rag_system.models import Document
+from enterprise_rag_system.models import Chunk, Document
 from enterprise_rag_system.product_profiles import load_profile
 from enterprise_rag_system.product_reranker import rerank
-from enterprise_rag_system.product_store import DocumentInput, Registry, StoreError
+from enterprise_rag_system.product_retrieval import LexicalIndexCache, lexical_question
+from enterprise_rag_system.product_store import DocumentInput, Principal, Registry, StoreError
 from enterprise_rag_system.product_vectors import ProductVectors
-from enterprise_rag_system.ranking import BM25Index, normalize_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +155,40 @@ def valid_citations(text: str, count: int) -> bool:
     )
 
 
+@dataclass
+class ProductContext:
+    """Everything the product routes share, created once per application."""
+
+    registry: Registry
+    generation: str
+    profile: str
+    system_prompt: str
+    prompt_sha256: str
+    vectors: ProductVectors | None
+    uploads: LargeImports | None
+    lexical: LexicalIndexCache = field(default_factory=LexicalIndexCache)
+    slots: BoundedSemaphore = field(default_factory=lambda: BoundedSemaphore(2))
+    import_slots: BoundedSemaphore = field(default_factory=lambda: BoundedSemaphore(2))
+
+    def authorize(
+        self, token: str, roles: set[str] | None = None, message: str = ""
+    ) -> Principal:
+        """Resolve the credential and, when ``roles`` is given, require one of them."""
+        with self.registry.connection() as db:
+            principal = self.registry._principal(db, token)
+        if roles is not None and principal.role not in roles:
+            raise StoreError(403, message)
+        return principal
+
+    def generation_prompt(self, answer_style: str) -> str:
+        style = (
+            "Responda em um parágrafo curto, idealmente até 100 palavras."
+            if answer_style == "concise"
+            else "Desenvolva a explicação em parágrafos organizados, sem repetições."
+        )
+        return self.system_prompt + "\n\n" + style
+
+
 def create_product_app(
     database: Path, *, generation: str = "extractive", profile: str = "default"
 ) -> FastAPI:
@@ -165,10 +200,26 @@ def create_product_app(
     app.state.registry = registry
     vectors = ProductVectors(registry) if os.getenv("RAG_PRODUCT_RETRIEVAL") == "hybrid" else None
     app.state.vectors = vectors
-    uploads = LargeImports(registry, vectors) if vectors is not None else None
+    ctx = ProductContext(
+        registry=registry,
+        generation=generation,
+        profile=profile,
+        system_prompt=system_prompt,
+        prompt_sha256=prompt_sha256,
+        vectors=vectors,
+        uploads=LargeImports(registry, vectors) if vectors is not None else None,
+    )
+    app.state.lexical_cache = ctx.lexical
     app.add_middleware(BodyLimit)
-    slots = BoundedSemaphore(2)
+    _register_error_handlers(app)
+    _register_system_routes(app, ctx)
+    _register_import_routes(app, ctx)
+    _register_document_routes(app, ctx)
+    _register_query_routes(app, ctx)
+    return app
 
+
+def _register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(StoreError)
     async def store_error(request, exc: StoreError):
         headers = {"Retry-After": "60"} if exc.status == 429 else None
@@ -178,6 +229,26 @@ def create_product_app(
     async def database_error(request, exc):
         logger.warning("Registry unavailable (%s)", type(exc).__name__)
         return JSONResponse({"detail": "Registry temporarily unavailable"}, status_code=503)
+
+
+def _render_home() -> HTMLResponse:
+    nonce = secrets.token_urlsafe(24)
+    html = (Path(__file__).parent / "product.html").read_text(encoding="utf-8")
+    html = html.replace("<script>", f'<script nonce="{nonce}">')
+    html = html.replace("<style>", f'<style nonce="{nonce}">')
+    return HTMLResponse(
+        html,
+        headers={
+            "Content-Security-Policy": "default-src 'none'; connect-src 'self'; "
+            "base-uri 'none'; "
+            "frame-ancestors 'none'; form-action 'self'; "
+            f"script-src 'nonce-{nonce}'; style-src 'nonce-{nonce}'"
+        },
+    )
+
+
+def _register_system_routes(app: FastAPI, ctx: ProductContext) -> None:
+    registry, vectors = ctx.registry, ctx.vectors
 
     @app.get("/health")
     def health():
@@ -196,63 +267,68 @@ def create_product_app(
 
     @app.get("/", response_class=HTMLResponse)
     def home():
-        nonce = secrets.token_urlsafe(24)
-        html = (Path(__file__).parent / "product.html").read_text(encoding="utf-8")
-        html = html.replace("<script>", f'<script nonce="{nonce}">')
-        html = html.replace("<style>", f'<style nonce="{nonce}">')
-        return HTMLResponse(
-            html,
-            headers={
-                "Content-Security-Policy": "default-src 'none'; connect-src 'self'; "
-                "base-uri 'none'; "
-                "frame-ancestors 'none'; form-action 'self'; "
-                f"script-src 'nonce-{nonce}'; style-src 'nonce-{nonce}'"
-            },
-        )
+        return _render_home()
 
     @app.get("/profile")
     def profile_info():
         return {
-            "profile": profile,
-            "generation": generation,
+            "profile": ctx.profile,
+            "generation": ctx.generation,
             "retrieval": "hybrid" if vectors else "bm25",
             "vector_store": vectors.storage if vectors else None,
-            "prompt_sha256": prompt_sha256,
+            "prompt_sha256": ctx.prompt_sha256,
             "identity": (
                 "Assistente de IA para estudos cristãos, inspirado em temas públicos do "
                 "Pr. Luiz Hermínio. Não é o pastor nem representa oficialmente o MEVAM."
-                if profile == "luiz-herminio"
+                if ctx.profile == "luiz-herminio"
                 else "Assistente de consulta documental"
             ),
         }
 
     @app.get("/me")
     def me(token: str = Depends(credential)):
-        with registry.connection() as db:
-            principal = registry._principal(db, token)
+        principal = ctx.authorize(token)
         return {"tenant": principal.tenant, "user": principal.user, "role": principal.role}
 
-    import_slots = BoundedSemaphore(2)
+    @app.post("/index/sync")
+    def sync_index(token: str = Depends(credential)):
+        ctx.authorize(token, {"admin"}, "Admin permission required")
+        if vectors is None:
+            raise HTTPException(409, "Hybrid retrieval is disabled")
+        if not ctx.slots.acquire(blocking=False):
+            raise HTTPException(429, "Indexing busy")
+        try:
+            return vectors.sync(token)
+        except Exception as exc:
+            raise HTTPException(503, "Semantic indexing unavailable; retry later") from exc
+        finally:
+            ctx.slots.release()
+
+
+def _extract_file(ctx: ProductContext, document: FileImport, token: str) -> dict:
+    """Authorize an editor, then run the isolated extractor under a bounded slot."""
+    ctx.authorize(token, {"admin", "editor"}, "Editor permission required")
+    if not ctx.import_slots.acquire(blocking=False):
+        raise HTTPException(429, "Extração ocupada. Tente novamente em instantes.")
+    try:
+        try:
+            data = base64.b64decode(document.content, validate=True)
+            result = extract(data, document.filename)
+        except (ValueError, binascii.Error) as exc:
+            raise HTTPException(422, str(exc)) from exc
+        # Re-check the credential: it may have been revoked during extraction.
+        ctx.authorize(token)
+        return result
+    finally:
+        ctx.import_slots.release()
+
+
+def _register_import_routes(app: FastAPI, ctx: ProductContext) -> None:
+    registry, vectors, uploads = ctx.registry, ctx.vectors, ctx.uploads
 
     @app.post("/imports/extract")
     def import_file(document: FileImport, token: str = Depends(credential)):
-        with registry.connection() as db:
-            principal = registry._principal(db, token)
-            if principal.role not in {"admin", "editor"}:
-                raise StoreError(403, "Editor permission required")
-        if not import_slots.acquire(blocking=False):
-            raise HTTPException(429, "Extração ocupada. Tente novamente em instantes.")
-        try:
-            try:
-                data = base64.b64decode(document.content, validate=True)
-                result = extract(data, document.filename)
-            except (ValueError, binascii.Error) as exc:
-                raise HTTPException(422, str(exc)) from exc
-            with registry.connection() as db:
-                registry._principal(db, token)
-            return result
-        finally:
-            import_slots.release()
+        return _extract_file(ctx, document, token)
 
     @app.post("/uploads", status_code=202)
     async def upload_document(
@@ -260,10 +336,7 @@ def create_product_app(
         filename: str = Query(min_length=1, max_length=255),
         token: str = Depends(credential),
     ):
-        with registry.connection() as db:
-            principal = registry._principal(db, token)
-            if principal.role not in {"admin", "editor"}:
-                raise StoreError(403, "Acesso de edição necessário")
+        principal = ctx.authorize(token, {"admin", "editor"}, "Acesso de edição necessário")
         if uploads is None:
             raise HTTPException(409, "Ative a busca híbrida")
         suffix = Path(filename).suffix.lower()
@@ -290,8 +363,7 @@ def create_product_app(
 
     @app.get("/uploads")
     def list_uploads(token: str = Depends(credential)):
-        with registry.connection() as db:
-            registry._principal(db, token)
+        ctx.authorize(token)
         return {"jobs": uploads.list_jobs(token) if uploads else []}
 
     @app.get("/uploads/{job_id}")
@@ -310,16 +382,15 @@ def create_product_app(
     @app.post("/imports/index")
     def index_file(document: IndexedImport, token: str = Depends(credential)):
         # Extract first. Do not create an empty document or overwrite an existing one.
-        extracted = import_file(document, token)
+        extracted = _extract_file(ctx, document, token)
         title = Path(document.filename).stem.strip() or "Documento"
-        with registry.connection() as db:
-            principal = registry._principal(db, token)
+        principal = ctx.authorize(token)
         chunks = chunk_documents(
             [Document(doc_id=document.doc_id, title=title, text=extracted["text"])]
         )
         if vectors is None:
             raise HTTPException(409, "Ative a busca híbrida antes de indexar arquivos.")
-        if not slots.acquire(blocking=False):
+        if not ctx.slots.acquire(blocking=False):
             raise HTTPException(429, "Indexação ocupada. Tente novamente.")
         try:
             try:
@@ -345,24 +416,11 @@ def create_product_app(
                 "indexing": "ready",
             }
         finally:
-            slots.release()
+            ctx.slots.release()
 
-    @app.post("/index/sync")
-    def sync_index(token: str = Depends(credential)):
-        with registry.connection() as db:
-            principal = registry._principal(db, token)
-            if principal.role != "admin":
-                raise StoreError(403, "Admin permission required")
-        if vectors is None:
-            raise HTTPException(409, "Hybrid retrieval is disabled")
-        if not slots.acquire(blocking=False):
-            raise HTTPException(429, "Indexing busy")
-        try:
-            return vectors.sync(token)
-        except Exception as exc:
-            raise HTTPException(503, "Semantic indexing unavailable; retry later") from exc
-        finally:
-            slots.release()
+
+def _register_document_routes(app: FastAPI, ctx: ProductContext) -> None:
+    registry, vectors = ctx.registry, ctx.vectors
 
     @app.get("/documents")
     def documents(include_deleted: bool = False, token: str = Depends(credential)):
@@ -469,200 +527,220 @@ def create_product_app(
     def quality(days: int = Query(default=30, ge=1, le=30), token: str = Depends(credential)):
         return registry.quality(token, days)
 
+
+@dataclass
+class Retrieval:
+    chunks: list[Chunk]
+    selected: list[Chunk]
+    retrieval_mode: str = "bm25"
+    rerank_mode: str = "disabled"
+
+
+def retrieve(ctx: ProductContext, tenant: str, rows: list, request: ProductQuery) -> Retrieval:
+    """BM25 over the authorized snapshot; RRF with semantic vectors when enabled.
+
+    ACL filtering already happened: ``rows`` holds only readable documents.
+    """
+    snapshot = ctx.lexical.get(tenant, rows)
+    vectors = ctx.vectors
+    question = lexical_question(request.question) if vectors else request.question
+    scores, selected = snapshot.rank(question, request.top_k)
+    result = Retrieval(chunks=list(snapshot.chunks), selected=selected)
+    if vectors:
+        try:
+            use_rerank = os.getenv("RAG_PRODUCT_RERANK") == "true"
+            candidates = vectors.rank(
+                tenant,
+                result.chunks,
+                request.question,
+                scores,
+                30 if use_rerank else request.top_k,
+            )
+            if use_rerank:
+                result.selected, result.rerank_mode = rerank(
+                    request.question, candidates, request.top_k
+                )
+            else:
+                result.selected = candidates
+            result.retrieval_mode = "hybrid"
+        except Exception:
+            logger.warning("Semantic retrieval unavailable; using BM25")
+            result.retrieval_mode = "bm25-semantic-fallback"
+    return result
+
+
+def build_citations(
+    selected: list[Chunk], versions: dict[str, int], context_members: dict[str, list[str]]
+) -> list[dict]:
+    return [
+        {
+            "number": i,
+            "doc_id": c.doc_id,
+            "title": c.title,
+            "chunk_id": c.chunk_id,
+            "revision": versions[c.doc_id],
+            "excerpt": c.text,
+            "context_chunk_ids": context_members[c.chunk_id],
+            "location_kind": "extracted_text",
+        }
+        for i, c in enumerate(selected, 1)
+    ]
+
+
+def generate_answer(
+    ctx: ProductContext, request: ProductQuery, selected: list[Chunk], versions: dict[str, int]
+) -> tuple[str, str]:
+    """Extractive evidence by default; an LLM draft only with structurally valid citations."""
+    if not selected:
+        return (
+            "Não encontrei trechos correspondentes nos documentos aos quais você tem acesso.",
+            "abstained",
+        )
+    answer = "Trechos relacionados à pergunta:\n\n" + "\n\n".join(
+        f"{c.text} [{i}]" for i, c in enumerate(selected, 1)
+    )
+    if ctx.generation != "llm":
+        return answer, "extractive"
+    context = "\n\n".join(
+        f"[{i}] Documento: {c.title} · versão {versions[c.doc_id]}\n{c.text}"
+        for i, c in enumerate(selected, 1)
+    )
+    prompt = ctx.generation_prompt(request.answer_style)
+    try:
+        candidate = llm_client.complete(
+            prompt,
+            f"Pergunta: {request.question}\n\nFontes:\n{context}",
+            max_tokens=700,
+        )
+        if not valid_citations(candidate, len(selected)):
+            candidate = llm_client.complete(
+                prompt,
+                f"Pergunta: {request.question}\n\nFontes:\n{context}\n\n"
+                "Mantenha o nível de detalhe solicitado e responda em português. "
+                "Cada parágrafo deve terminar com uma fonte "
+                f"de [1] a [{len(selected)}]. "
+                "Não copie números da bibliografia do documento. "
+                "Se as fontes forem insuficientes, diga isso "
+                "com a referência ao trecho.",
+                max_tokens=700,
+            )
+        if valid_citations(candidate, len(selected)):
+            return candidate, "llm-structurally-checked"
+        return answer, "extractive-invalid-citations"
+    except Exception:
+        logger.warning("Generation failed; using extractive evidence")
+        return answer, "extractive-provider-fallback"
+
+
+def verify_answer(
+    ctx: ProductContext,
+    request: ProductQuery,
+    answer: str,
+    citations: list[dict],
+    selected_count: int,
+    mode: str,
+) -> tuple[str, str, str, list[dict]]:
+    """Evidence review of an LLM answer; abstain unless the reviewer says ``supported``.
+
+    Returns ``(answer, mode, verification, citations)``.
+    """
+    verification = "unavailable"
+    if mode == "llm-structurally-checked":
+        try:
+            report = review(request.question, answer, citations)
+            if report.verdict == "revise":
+                revised = llm_client.complete(
+                    ctx.generation_prompt(request.answer_style),
+                    json.dumps(
+                        {
+                            "question": request.question,
+                            "sources": citations,
+                            "draft": answer,
+                            "review_issues": report.issues,
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\nReescreva a resposta corrigindo os problemas, somente com "
+                    "suporte nas fontes. Preserve citações e o nível de detalhe.",
+                    max_tokens=700,
+                )
+                if valid_citations(revised, selected_count):
+                    report = review(request.question, revised, citations)
+                    if report.verdict == "supported":
+                        answer = revised
+                else:
+                    raise ValueError("Invalid revised citations")
+            verification = report.verdict
+        except Exception:
+            logger.warning("Evidence review unavailable or invalid")
+    if verification == "supported":
+        return answer, "llm-evidence-reviewed", verification, citations
+    answer = (
+        "Não encontrei evidência suficiente nos trechos recuperados para "
+        "responder com segurança. Tente uma pergunta mais específica."
+        if verification in {"insufficient", "revise"}
+        else "Não foi possível concluir a verificação da resposta. Tente novamente."
+    )
+    return answer, "abstained-" + verification, verification, []
+
+
+def answer_query(ctx: ProductContext, request: ProductQuery, token: str) -> dict:
+    started = perf_counter()
+    registry = ctx.registry
+    principal, revision, rows = registry.documents(token, consume_query=True)
+    if request.doc_id is not None:
+        rows = [row for row in rows if row["doc_id"] == request.doc_id]
+        if not rows:
+            raise StoreError(404, "Document not found")
+    # ACL filtering precedes all lexical scoring, retrieval and generation.
+    found = retrieve(ctx, principal.tenant, rows, request)
+    selected = found.selected
+    context_members = {c.chunk_id: [c.chunk_id] for c in selected}
+    if ctx.generation == "llm":
+        selected, context_members = expand_context(selected, found.chunks)
+    versions = {r["doc_id"]: r["revision"] for r in rows}
+    citations = build_citations(selected, versions, context_members)
+    answer, mode = generate_answer(ctx, request, selected, versions)
+    verification = "disabled"
+    abstained = not selected
+    if os.getenv("RAG_PRODUCT_VERIFY") == "true" and ctx.generation == "llm" and selected:
+        answer, mode, verification, citations = verify_answer(
+            ctx, request, answer, citations, len(selected), mode
+        )
+        abstained = verification != "supported"
+    if mode in {"llm-structurally-checked", "llm-evidence-reviewed"}:
+        used = {int(n) for n in re.findall(r"\[(\d+)\]", answer)}
+        citations = [c for c in citations if c["number"] in used]
+    latency_ms = round((perf_counter() - started) * 1000, 2)
+    query_id = registry.record_query(token, revision, mode, latency_ms, len(citations))
+    vectors = ctx.vectors
+    return {
+        "query_id": query_id,
+        "answer": answer,
+        "citations": citations,
+        "abstained": abstained,
+        "metadata": {
+            "corpus_revision": revision,
+            "generation_mode": mode,
+            "verification": verification,
+            "answer_style": request.answer_style,
+            "retrieval_mode": found.retrieval_mode,
+            "rerank_mode": found.rerank_mode,
+            "embedding_model": vectors.model if vectors else None,
+            "vector_store": vectors.storage if vectors else None,
+            "editorial_profile": ctx.profile,
+            "prompt_sha256": ctx.prompt_sha256,
+            "latency_ms": latency_ms,
+        },
+    }
+
+
+def _register_query_routes(app: FastAPI, ctx: ProductContext) -> None:
     @app.post("/query")
     def query(request: ProductQuery, token: str = Depends(credential)):
-        if not slots.acquire(blocking=False):
+        if not ctx.slots.acquire(blocking=False):
             raise HTTPException(503, "Query capacity reached", headers={"Retry-After": "2"})
         try:
-            started = perf_counter()
-            principal, revision, rows = registry.documents(token, consume_query=True)
-            if request.doc_id is not None:
-                rows = [row for row in rows if row["doc_id"] == request.doc_id]
-                if not rows:
-                    raise StoreError(404, "Document not found")
-            # ACL filtering precedes all lexical scoring, retrieval and generation.
-            chunks = chunk_documents(
-                [Document(doc_id=r["doc_id"], title=r["title"], text=r["text"]) for r in rows]
-            )
-            index = BM25Index({c.chunk_id: f"{c.title} {c.text}" for c in chunks})
-            query_terms = normalize_tokens(request.question)
-            function_words = {
-                "o",
-                "a",
-                "os",
-                "as",
-                "que",
-                "e",
-                "de",
-                "do",
-                "da",
-                "um",
-                "uma",
-                "qual",
-                "quais",
-                "como",
-                "the",
-                "what",
-                "is",
-                "are",
-            }
-            lexical_question = " ".join(term for term in query_terms if term not in function_words)
-            scores = index.score(
-                (lexical_question or request.question) if vectors else request.question
-            )
-            ranked = sorted(chunks, key=lambda c: (-scores.get(c.chunk_id, 0), c.chunk_id))
-            selected = [c for c in ranked if scores.get(c.chunk_id, 0) > 0][: request.top_k]
-            rerank_mode = "disabled"
-            retrieval_mode = "bm25"
-            if vectors:
-                try:
-                    use_rerank = os.getenv("RAG_PRODUCT_RERANK") == "true"
-                    candidates = vectors.rank(
-                        principal.tenant,
-                        chunks,
-                        request.question,
-                        scores,
-                        30 if use_rerank else request.top_k,
-                    )
-                    if use_rerank:
-                        selected, rerank_mode = rerank(request.question, candidates, request.top_k)
-                    else:
-                        selected = candidates
-                    retrieval_mode = "hybrid"
-                except Exception:
-                    logger.warning("Semantic retrieval unavailable; using BM25")
-                    retrieval_mode = "bm25-semantic-fallback"
-            context_members = {c.chunk_id: [c.chunk_id] for c in selected}
-            if generation == "llm":
-                selected, context_members = expand_context(selected, chunks)
-            versions = {r["doc_id"]: r["revision"] for r in rows}
-            citations = [
-                {
-                    "number": i,
-                    "doc_id": c.doc_id,
-                    "title": c.title,
-                    "chunk_id": c.chunk_id,
-                    "revision": versions[c.doc_id],
-                    "excerpt": c.text,
-                    "context_chunk_ids": context_members[c.chunk_id],
-                    "location_kind": "extracted_text",
-                }
-                for i, c in enumerate(selected, 1)
-            ]
-            answer = (
-                "Não encontrei trechos correspondentes nos documentos aos quais você tem acesso."
-            )
-            mode = "abstained"
-            if selected:
-                answer = "Trechos relacionados à pergunta:\n\n" + "\n\n".join(
-                    f"{c.text} [{i}]" for i, c in enumerate(selected, 1)
-                )
-                mode = "extractive"
-                if generation == "llm":
-                    context = "\n\n".join(
-                        f"[{i}] Documento: {c.title} · versão {versions[c.doc_id]}\n{c.text}"
-                        for i, c in enumerate(selected, 1)
-                    )
-                    style = (
-                        "Responda em um parágrafo curto, idealmente até 100 palavras."
-                        if request.answer_style == "concise"
-                        else "Desenvolva a explicação em parágrafos organizados, sem repetições."
-                    )
-                    generation_prompt = system_prompt + "\n\n" + style
-                    try:
-                        candidate = llm_client.complete(
-                            generation_prompt,
-                            f"Pergunta: {request.question}\n\nFontes:\n{context}",
-                            max_tokens=700,
-                        )
-                        if not valid_citations(candidate, len(selected)):
-                            candidate = llm_client.complete(
-                                generation_prompt,
-                                f"Pergunta: {request.question}\n\nFontes:\n{context}\n\n"
-                                "Mantenha o nível de detalhe solicitado e responda em português. "
-                                "Cada parágrafo deve terminar com uma fonte "
-                                f"de [1] a [{len(selected)}]. "
-                                "Não copie números da bibliografia do documento. "
-                                "Se as fontes forem insuficientes, diga isso "
-                                "com a referência ao trecho.",
-                                max_tokens=700,
-                            )
-                        if valid_citations(candidate, len(selected)):
-                            answer, mode = candidate, "llm-structurally-checked"
-                        else:
-                            mode = "extractive-invalid-citations"
-                    except Exception:
-                        logger.warning("Generation failed; using extractive evidence")
-                        mode = "extractive-provider-fallback"
-            verification = "disabled"
-            abstained = not selected
-            if os.getenv("RAG_PRODUCT_VERIFY") == "true" and generation == "llm" and selected:
-                verification = "unavailable"
-                if mode == "llm-structurally-checked":
-                    try:
-                        report = review(request.question, answer, citations)
-                        if report.verdict == "revise":
-                            revised = llm_client.complete(
-                                generation_prompt,
-                                json.dumps(
-                                    {
-                                        "question": request.question,
-                                        "sources": citations,
-                                        "draft": answer,
-                                        "review_issues": report.issues,
-                                    },
-                                    ensure_ascii=False,
-                                )
-                                + "\nReescreva a resposta corrigindo os problemas, somente com "
-                                "suporte nas fontes. Preserve citações e o nível de detalhe.",
-                                max_tokens=700,
-                            )
-                            if valid_citations(revised, len(selected)):
-                                report = review(request.question, revised, citations)
-                                if report.verdict == "supported":
-                                    answer = revised
-                            else:
-                                raise ValueError("Invalid revised citations")
-                        verification = report.verdict
-                    except Exception:
-                        logger.warning("Evidence review unavailable or invalid")
-                if verification == "supported":
-                    mode = "llm-evidence-reviewed"
-                else:
-                    abstained = True
-                    mode = "abstained-" + verification
-                    answer = (
-                        "Não encontrei evidência suficiente nos trechos recuperados para "
-                        "responder com segurança. Tente uma pergunta mais específica."
-                        if verification in {"insufficient", "revise"}
-                        else "Não foi possível concluir a verificação da resposta. Tente novamente."
-                    )
-                    citations = []
-            if mode in {"llm-structurally-checked", "llm-evidence-reviewed"}:
-                used = {int(n) for n in re.findall(r"\[(\d+)\]", answer)}
-                citations = [c for c in citations if c["number"] in used]
-            latency_ms = round((perf_counter() - started) * 1000, 2)
-            query_id = registry.record_query(token, revision, mode, latency_ms, len(citations))
-            return {
-                "query_id": query_id,
-                "answer": answer,
-                "citations": citations,
-                "abstained": abstained,
-                "metadata": {
-                    "corpus_revision": revision,
-                    "generation_mode": mode,
-                    "verification": verification,
-                    "answer_style": request.answer_style,
-                    "retrieval_mode": retrieval_mode,
-                    "rerank_mode": rerank_mode,
-                    "embedding_model": vectors.model if vectors else None,
-                    "vector_store": vectors.storage if vectors else None,
-                    "editorial_profile": profile,
-                    "prompt_sha256": prompt_sha256,
-                    "latency_ms": latency_ms,
-                },
-            }
+            return answer_query(ctx, request, token)
         finally:
-            slots.release()
-
-    return app
+            ctx.slots.release()

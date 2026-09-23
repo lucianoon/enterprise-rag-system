@@ -7,40 +7,64 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/lucianoon/enterprise-rag-system)
 
-**Perfil pastoral opcional:** veja a [configuração do perfil Pr. Luiz Hermínio](docs/PASTORAL_PROFILE.md), com fontes e identidade transparente de assistente de IA.
+Motor de RAG em que **a qualidade da recuperação é o produto**, medido em
+português. A maior parte das falhas de RAG é falha de recuperação: busca
+semântica perde termos exatos (nomes de política, siglas, IDs), busca por
+palavra-chave perde paráfrases, e sem métricas não dá para saber se uma resposta
+ruim veio do gerador ou da lista ranqueada. Este repositório trata isso como
+engenharia mensurável:
 
-**Piloto com interface e persistência:** use `docker compose -f compose.product.yml up --build -d` e siga o [guia de provisionamento, permissões e backup](docs/PRODUCT_PILOT.md). Inclui biblioteca em português, histórico, restauração e consultas com fontes. É um modo explícito separado da API de demonstração descrita abaixo.
+- **BM25 com normalização Unicode** (NFKD, sem acentos, casefold) num único
+  analisador compartilhado por todas as pipelines;
+- **vetores plugáveis**: hashing determinístico (CI), TF-IDF ou **embeddings
+  multilíngues reais** (`multilingual-e5-small`, CPU, revisão fixada);
+- **fusão por score ou RRF** e reranking heurístico ou **cross-encoder
+  multilíngue** opcional;
+- respostas com citações, scores expostos por estágio e endpoint de avaliação;
+- **gates de regressão na CI**: benchmark versionado em português com hashes
+  SHA-256 dos dados, referências congeladas e tolerância zero.
+
+## Resultados medidos
+
+`corporate_pt_v1`, split **test**: 30 documentos fictícios, 35 perguntas
+respondíveis e 5 sem resposta, sem LLM. Medido em 22/09/2026 (CPU, Windows 11,
+Python 3.12).
+
+| Configuração | Recall@1 | Recall@5 | MRR@5 | nDCG@5 | p95@5 |
+|---|---:|---:|---:|---:|---:|
+| Híbrido + reranker, hashing (padrão da API) | 0,571 | 0,886 | 0,760 | 0,781 | < 1 ms |
+| Lexical legado | 0,686 | 0,914 | 0,824 | 0,834 | < 1 ms |
+| BM25 | 0,743 | 0,943 | 0,867 | 0,873 | < 1 ms |
+| RRF: BM25 + TF-IDF | 0,700 | 0,943 | 0,850 | 0,859 | ~3 ms |
+| Vetor `multilingual-e5-small` | 0,757 | **0,971** | 0,891 | 0,911 | ~56 ms |
+| **RRF: BM25 + e5** | **0,843** | **0,971** | **0,943** | 0,945 | ~49 ms |
+| BM25 + cross-encoder mMiniLM | 0,843 | 0,971 | 0,943 | **0,950** | ~1,6 s |
+
+- Um embedding multilíngue real **supera o lexical** neste conjunto (antes, o
+  melhor era o lexical legado com Recall@5 = 0,957); RRF é a fusão que preserva
+  esse ganho. O cross-encoder empata com RRF + e5 a ~30x a latência.
+- O padrão da API continua `hybrid` + hashing, sem dependências pesadas; a
+  troca de padrão exige um conjunto de teste novo e independente.
+- Corpus sintético, com autoria assistida por IA, e teste já conhecido: os
+  números **não provam superioridade em dados reais**. Detalhes, dev e
+  limitações: [embeddings multilíngues](docs/MULTILINGUAL_RETRIEVAL_RESULTS.md),
+  [BM25/RRF](docs/BM25_RRF_RESULTS.md),
+  [baseline e unificação do analisador](docs/CORPORATE_BENCHMARK_RESULTS.md),
+  [protocolo](docs/BENCHMARKING.md).
+
+```bash
+uv run python -m enterprise_rag_system.benchmark --split test \
+  --baseline data/benchmarks/corporate_pt_v1/baseline-hashing-test.json
+# embeddings multilíngues (extra opcional, baixa ~0,5 GB):
+uv sync --extra dev --extra extras --extra semantic
+uv run python -m enterprise_rag_system.benchmark --split test \
+  --backend sentence-transformer --strategies bm25 vector rrf
+```
 
 **[Demo ao vivo](https://enterprise-rag-demo.onrender.com/docs)** — API
 interativa com o corpus de exemplo carregado; experimente o `POST /query` e o
 `POST /evaluate/batch` direto do navegador (free tier: o primeiro acesso pode
 levar ~1 min para acordar).
-
-Um motor de RAG que trata a qualidade da recuperação como o problema principal:
-busca híbrida (lexical no estilo BM25 + vetorial) com fusão de scores, um passe
-de reranking heurístico (sobreposição de título e frase exata — não é
-cross-encoder), respostas com citações e um endpoint de avaliação embutido que
-reporta **Recall@K** e **MRR** para qualquer consulta rotulada. Toda resposta
-expõe os scores de cada estágio, então dá para ver *por que* um trecho foi
-recuperado, não apenas *que* ele foi.
-
-> **Não é o mesmo projeto que o [RAG Agentic System](https://github.com/lucianoon/rag-agentic-system).**
-> Este motor recupera **uma vez** e responde; o objetivo de projeto é uma lista
-> ranqueada cuja qualidade você consegue medir. O outro embrulha a recuperação
-> em um **loop de tool use com Claude**, em que o modelo decide quando buscar de
-> novo. Problemas diferentes: este repo otimiza qualidade de ranqueamento,
-> aquele otimiza raciocínio em múltiplos passos sobre um corpus.
-
-**BM25 para português (opcional):** defina `RAG_RETRIEVAL_MODE=bm25` antes de
-iniciar a API. Esse modo normaliza acentos e usa BM25 completo, sem o bônus
-heurístico de título. O padrão continua `hybrid`. `rrf` é uma alternativa
-experimental; combiná-lo com hashing piorou a recuperação neste corpus.
-Veja a [comparação medida e os limites](docs/BM25_RRF_RESULTS.md).
-
-```bash
-uv run python -m enterprise_rag_system.benchmark --split dev --backend tfidf \
-  --strategies lexical hybrid-rerank bm25 rrf --output benchmark-report.json
-```
 
 ## Evidências rápidas
 
@@ -51,7 +75,7 @@ uv run python -m enterprise_rag_system.benchmark --split dev --backend tfidf \
 | 30 documentos e 80 perguntas sintéticas em português | Baseline de recuperação com splits de desenvolvimento/teste |
 | Matriz lexical/vetorial/híbrida e gate de qualidade | Recall, MRR, nDCG, precisão e latência reproduzíveis |
 | Scores por estágio | Diagnóstico de falhas de recuperação |
-| Hashing/TF-IDF/sentence-transformers | CI determinística e backend semântico real |
+| Hashing/TF-IDF/e5 multilíngue + cross-encoder | CI determinística e backend semântico real, com revisão de modelo fixada |
 | Memória/Qdrant | Mesma interface do teste local à infraestrutura externa |
 | Juiz heurístico ou LLM | Avaliação de fidelidade com fallback explícito |
 
@@ -61,18 +85,7 @@ consultas), a configuração hashing + memória obteve **Recall@1 = 1,000** e
 leia os [resultados e limitações](docs/BENCHMARK_RESULTS.md) antes de interpretar
 ou comparar esses números.
 
-**Benchmark de regressão em português:** `corporate_pt_v1` amplia a avaliação
-com paráfrases, exceções, múltiplas fontes e perguntas sem resposta. Compare
-quatro configurações sem chamar um LLM:
-
-```bash
-uv run python -m enterprise_rag_system.benchmark --split dev --output benchmark-report.json
-```
-
-Veja o [protocolo](docs/BENCHMARKING.md), os
-[resultados medidos](docs/CORPORATE_BENCHMARK_RESULTS.md) e a
-[direção do produto](docs/PRODUCT_DIRECTION.md). O corpus é fictício, com autoria
-assistida por IA; seus resultados não demonstram superioridade em dados reais.
+Veja também a [direção do produto](docs/PRODUCT_DIRECTION.md).
 
 ## Problema
 
@@ -96,11 +109,12 @@ Um pipeline compacto e totalmente tipado (`src/enterprise_rag_system/`):
 | Estágio | Módulo | O que faz de fato |
 |---|---|---|
 | Ingestão | `ingestion.py` | Carrega documentos JSONL e os divide em chunks de tamanho fixo por contagem de palavras (padrão: 80 palavras) |
-| Recuperação lexical | `retrieval.py` | Score no estilo BM25: casamento de termos ponderado por IDF com frequência em escala logarítmica |
-| Embeddings | `embeddings.py` | Backends plugáveis: hashing determinístico (padrão offline/CI), TF-IDF (scikit-learn) ou vetores semânticos densos (sentence-transformers) |
+| Análise de texto | `tokenization.py` | Um único analisador (NFKD, remoção de acentos, casefold) para lexical, BM25, vetores, reranker, juiz e produto |
+| Recuperação lexical | `retrieval.py`, `ranking.py` | Score IDF/log-TF legado e BM25 completo (`k1=1.2`, `b=0.75`) com listas invertidas |
+| Embeddings | `embeddings.py` | Backends plugáveis: hashing determinístico (padrão offline/CI), TF-IDF (scikit-learn) ou vetores densos multilíngues (`multilingual-e5-small` fixado, extra `semantic`) |
 | Vector store | `vector_store.py` | Backends plugáveis: busca por cosseno exata em memória ou um índice Qdrant real (o que o `docker compose` sobe) |
-| Fusão de scores | `retrieval.py` | Score híbrido ponderado: `0.55 * lexical + 0.45 * vetorial` |
-| Reranking | `retrieval.py` | Reforça resultados pela sobreposição de tokens entre consulta e título, mais um bônus de frase exata no título |
+| Fusão | `retrieval.py`, `ranking.py` | Score híbrido ponderado `0.55 * lexical + 0.45 * vetorial` ou Reciprocal Rank Fusion |
+| Reranking | `retrieval.py`, `cross_encoder.py` | Heurística de título (sobreposição + frase exata) ou cross-encoder multilíngue opcional sobre um pool de candidatos |
 | Geração | `generation.py` | Claude sintetiza uma resposta fundamentada com citações entre colchetes; um gerador determinístico por template é o fallback offline/CI |
 | Citações | `pipeline.py` | Toda resposta traz `doc_id` / `title` / `chunk_id` de cada trecho de apoio |
 | Avaliação | `evaluation.py` | Recall@K e MRR por consulta rotulada, mais avaliação em lote sobre um dataset versionado com métricas agregadas |
@@ -167,6 +181,25 @@ Ou com make: `make install && make test && make dev`. Com Docker:
 A API sobe já com o corpus de exemplo embutido (`data/sample/policies.jsonl` —
 políticas de reembolso, segurança e SLA), então dá para consultar de imediato.
 
+## Exemplos de uso
+
+### Piloto com interface e persistência
+
+`docker compose -f compose.product.yml up --build -d` sobe um modo explícito,
+separado da API de demonstração: biblioteca de documentos em português,
+revisões, restauração, permissões por tenant/documento aplicadas antes da busca,
+credenciais revogáveis e consultas com fontes. O índice BM25 do produto usa o
+mesmo núcleo e fica em cache por snapshot autorizado, invalidado a cada edição.
+Veja o [guia de provisionamento, permissões e backup](docs/PRODUCT_PILOT.md).
+
+### Perfil editorial configurável
+
+O piloto aceita perfis de prompt versionados (`RAG_PRODUCT_PROFILE`), com hash
+do prompt nos metadados de cada resposta. Um exemplo incluído é um assistente de
+estudos inspirado em temas públicos de um pastor, que se apresenta sempre como
+assistente de IA e não como a pessoa:
+[configuração e fontes](docs/PASTORAL_PROFILE.md).
+
 ## Configuração
 
 ### Modos de geração de resposta
@@ -232,8 +265,10 @@ Os dois estágios de recuperação são escolhidos por variáveis de ambiente (v
 
 - `RAG_EMBEDDING_BACKEND` — `hashing` (padrão: determinístico, zero
   dependências, estável entre processos), `tfidf` (scikit-learn, ajustado no
-  corpus indexado), `sentence-transformer` (vetores semânticos densos, pesado)
-  ou `auto` (o melhor disponível).
+  corpus indexado), `sentence-transformer` (vetores densos multilíngues; padrão
+  `intfloat/multilingual-e5-small` em revisão fixada, trocável por
+  `RAG_ST_MODEL`/`RAG_ST_REVISION`; requer `--extra semantic`) ou `auto` (o
+  melhor disponível).
 - `RAG_VECTOR_STORE` — `memory` (padrão: busca exata por cosseno em processo) ou
   `qdrant` (usa `QDRANT_URL` e `COLLECTION_NAME`; o `docker compose` já liga
   isso).
@@ -352,9 +387,10 @@ Dois juízes compartilham a mesma interface, escolhidos por `RAG_JUDGE_MODE`
   comportamento lexical vs. vetorial; os backends `tfidf` e
   `sentence-transformer` oferecem semântica de produção atrás da mesma
   interface.
-- **O reranker** é uma heurística barata (sobreposição de título + frase exata),
-  não um cross-encoder; melhora a precisão em consultas com cara de título sem
-  adicionar dependência de modelo.
+- **O reranker padrão** é uma heurística barata (sobreposição de título + frase
+  exata). O cross-encoder multilíngue opcional
+  (`RAGPipeline(chunks, reranker=CrossEncoderReranker(), rerank_pool=20)`) não
+  melhorou Recall/MRR sobre RRF + e5 no benchmark e custa ~1,6 s por consulta em CPU.
 
 ## API
 
@@ -407,7 +443,8 @@ exige os mesmos gates da CI e evidência de regressão para mudanças de recuper
 
 ## Roadmap
 
-- Reranker com cross-encoder
+- Stemming leve para português (RSLP) avaliado no dev
+- Conjunto de teste independente para decidir RRF + e5 como padrão
 - Avaliação de qualidade de resposta em lote (fidelidade agregada sobre o
   dataset de avaliação)
 - Indexação incremental em vez de reindexação completa na inicialização

@@ -22,9 +22,12 @@ permissões e clique em salvar. Importar sozinho não grava no acervo.
 - OCR pode errar: sempre revise nomes, números e referências bíblicas.
 
 A imagem Docker instala Poppler e Tesseract com idiomas `por` e `eng`.
-A execução fora do Docker exige esses executáveis no PATH e ambiente Unix
-com suporte a `resource`. Extração ocorre em processo separado com limites
-de memória, CPU e arquivo; arquivos temporários são removidos ao concluir.
+A execução fora do Docker exige esses executáveis no PATH. Extração ocorre em
+processo separado; em Linux/macOS esse processo recebe limites `resource` de
+memória, CPU e tamanho de arquivo. No Windows o módulo `resource` não existe:
+a extração funciona (TXT, MD e DOCX sem dependências externas), isolada e com o
+timeout de 90 segundos, mas **sem** esses limites; use-a só para desenvolvimento
+local. Arquivos temporários são removidos ao concluir.
 As credenciais do provedor não são transmitidas ao processo de extração.
 
 API: `POST /imports/extract`, com Bearer token de editor/admin e JSON

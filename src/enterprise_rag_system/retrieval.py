@@ -8,7 +8,6 @@ instance without code changes.
 """
 
 import logging
-import re
 from collections import Counter
 from collections.abc import Iterable
 from math import log
@@ -17,15 +16,13 @@ from typing import Literal
 from enterprise_rag_system.embeddings import Embedder, build_embedder
 from enterprise_rag_system.models import Chunk, SearchResult
 from enterprise_rag_system.ranking import BM25Index, reciprocal_rank_fusion
+from enterprise_rag_system.tokenization import tokenize
 from enterprise_rag_system.vector_store import VectorStore, build_vector_store
+
+__all__ = ["HybridRetriever", "Reranker", "RetrievalMode", "tokenize"]
 
 logger = logging.getLogger(__name__)
 RetrievalMode = Literal["lexical", "vector", "hybrid", "bm25", "rrf"]
-
-
-def tokenize(text: str) -> list[str]:
-    """Normalize text into searchable tokens."""
-    return re.findall(r"[a-z0-9]+", text.lower())
 
 
 class HybridRetriever:
@@ -151,11 +148,14 @@ class Reranker:
     """Lightweight reranker for exact phrase and title matches."""
 
     def rerank(self, question: str, results: list[SearchResult]) -> list[SearchResult]:
-        query = question.lower()
-        query_tokens = set(tokenize(question))
+        question_tokens = tokenize(question)
+        query = f" {' '.join(question_tokens)} "
+        query_tokens = set(question_tokens)
         for result in results:
-            title_tokens = set(tokenize(result.chunk.title))
+            title = tokenize(result.chunk.title)
+            title_tokens = set(title)
             title_overlap = len(query_tokens & title_tokens) / (len(query_tokens) or 1)
-            exact_bonus = 0.25 if result.chunk.title.lower() in query else 0.0
+            # Accent- and case-insensitive whole-word phrase match of the title.
+            exact_bonus = 0.25 if title and f" {' '.join(title)} " in query else 0.0
             result.rerank_score = round(result.hybrid_score + title_overlap + exact_bonus, 4)
         return sorted(results, key=lambda item: item.rerank_score, reverse=True)

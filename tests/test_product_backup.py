@@ -1,4 +1,5 @@
 import sqlite3
+import sys
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,7 +27,8 @@ def test_restore_preserves_answers_tenant_isolation_and_revocation(tmp_path):
     original = destination.read_bytes()
     assert verify_backup(destination)["counts"]["heads"] == 1
     assert destination.read_bytes() == original
-    assert destination.stat().st_mode & 0o777 == 0o600
+    if sys.platform != "win32":  # POSIX permission bits; Windows uses ACLs.
+        assert destination.stat().st_mode & 0o777 == 0o600
     # A second process opens only the snapshot; source edits cannot affect it.
     source.write_document(
         owner,
