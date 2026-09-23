@@ -1,0 +1,4274 @@
+{
+  "schema_version": 1,
+  "corpus_sha256": "060423af4c6eff89c7cde4f9d6fefb8fd86665f21f6e14cf539dfe4df0c755d9",
+  "queries_sha256": "e513ec36756e386602e27342329abd2ede1871bc2d0afcc23cb183a1d91dd125",
+  "split": "test",
+  "embedding_backend": "sentence-transformer",
+  "max_words": 80,
+  "repeats": 1,
+  "document_count": 30,
+  "chunk_count": 30,
+  "query_count": 40,
+  "index_ms": 8393.66390000032,
+  "environment": {
+    "python": "3.12.13",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "source_sha256": "7406e45ca6fae5e5217771ee3bb778a94c3b3ed750d613c6bb1d049b479a21e8",
+    "timestamp_utc": "2026-09-23T02:20:30.219533+00:00",
+    "embedding_dimensions": "384",
+    "embedding_model": "intfloat/multilingual-e5-small",
+    "embedding_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "cross_encoder_model": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+    "cross_encoder_revision": "1427fd652930e4ba29e8149678df786c240d8825",
+    "pydantic": "2.13.5",
+    "scikit-learn": "not-used",
+    "numpy": "2.5.1",
+    "sentence-transformers": "6.1.0",
+    "torch": "2.14.0+cpu"
+  },
+  "rows": [
+    {
+      "strategy": "bm25-ce",
+      "top_k": 1,
+      "answerable_count": 35,
+      "unanswerable_count": 5,
+      "mean_metrics": {
+        "recall": 0.8428571428571429,
+        "precision": 0.9142857142857143,
+        "mrr": 0.9142857142857143,
+        "ndcg": 0.9142857142857143
+      },
+      "unanswerable_return_rate": 1.0,
+      "latency_median_ms": 1117.8129500003706,
+      "latency_p95_ms": 1560.013300000719,
+      "per_query": [
+        {
+          "query_id": "test01",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_transporte"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_transporte"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test02",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "viagem_hotel"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
+          }
+        },
+        {
+          "query_id": "test03",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_refeicao"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_refeicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test04",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "remoto_internet"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test05",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "equipamento_compra"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test06",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "equipamento_devolucao"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra"
+          ],
+          "metrics": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
+          }
+        },
+        {
+          "query_id": "test07",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_concessao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test08",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_revogacao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_revogacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test09",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "mfa_recuperacao"
+          ],
+          "retrieved_doc_ids": [
+            "mfa_recuperacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test10",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "senha_redefinicao"
+          ],
+          "retrieved_doc_ids": [
+            "senha_redefinicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test11",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_seguranca"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test12",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_servico"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_servico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test13",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "dados_ia"
+          ],
+          "retrieved_doc_ids": [
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
+          }
+        },
+        {
+          "query_id": "test14",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "retencao_logs"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test15",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_contratos"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test16",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "exclusao_dados"
+          ],
+          "retrieved_doc_ids": [
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test17",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "fornecedor_acesso"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_acesso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test18",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test19",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "fornecedor_pagamento"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test20",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_reembolso"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_reembolso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test21",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_credito"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_credito"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test22",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_critico"
+          ],
+          "retrieved_doc_ids": [
+            "sla_critico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test23",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_normal"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test24",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test25",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "banco_horas"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test26",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "licenca_parental"
+          ],
+          "retrieved_doc_ids": [
+            "licenca_parental"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test27",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_nacional"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test28",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_exterior"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test29",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_compra"
+          ],
+          "retrieved_doc_ids": [
+            "software_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test30",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_renovacao"
+          ],
+          "retrieved_doc_ids": [
+            "software_renovacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test31",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs"
+          ],
+          "metrics": {
+            "recall": 0.5,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test32",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional"
+          ],
+          "metrics": {
+            "recall": 0.5,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test33",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "banco_horas",
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas"
+          ],
+          "metrics": {
+            "recall": 0.5,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test34",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "fornecedor_acesso",
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico"
+          ],
+          "metrics": {
+            "recall": 0.5,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test35",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "dados_ia",
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "dados_ia"
+          ],
+          "metrics": {
+            "recall": 0.5,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test36",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "remoto_internet"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test37",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "equipamento_compra"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test38",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "exclusao_dados"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test39",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "remoto_internet"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test40",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "sla_critico"
+          ],
+          "metrics": null
+        }
+      ]
+    },
+    {
+      "strategy": "bm25-ce",
+      "top_k": 3,
+      "answerable_count": 35,
+      "unanswerable_count": 5,
+      "mean_metrics": {
+        "recall": 0.9714285714285714,
+        "precision": 0.3714285714285714,
+        "mrr": 0.9428571428571428,
+        "ndcg": 0.9503388430612262
+      },
+      "unanswerable_return_rate": 1.0,
+      "latency_median_ms": 1116.2888500002737,
+      "latency_p95_ms": 1404.8550999996223,
+      "per_query": [
+        {
+          "query_id": "test01",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_transporte"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_transporte",
+            "banco_horas",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test02",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "viagem_hotel"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal",
+            "viagem_hotel",
+            "viagem_refeicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
+          }
+        },
+        {
+          "query_id": "test03",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_refeicao"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_refeicao",
+            "sla_normal",
+            "banco_horas"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test04",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "remoto_internet"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_internet",
+            "banco_horas",
+            "cliente_reembolso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test05",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "equipamento_compra"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "fornecedor_acesso",
+            "software_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test06",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "equipamento_devolucao"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "equipamento_devolucao",
+            "acesso_revogacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
+          }
+        },
+        {
+          "query_id": "test07",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_concessao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_concessao",
+            "fornecedor_acesso",
+            "visitante_fisico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test08",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_revogacao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_revogacao",
+            "acesso_concessao",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test09",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "mfa_recuperacao"
+          ],
+          "retrieved_doc_ids": [
+            "mfa_recuperacao",
+            "senha_redefinicao",
+            "fornecedor_acesso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test10",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "senha_redefinicao"
+          ],
+          "retrieved_doc_ids": [
+            "senha_redefinicao",
+            "mfa_recuperacao",
+            "incidente_seguranca"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test11",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_seguranca",
+            "acesso_revogacao",
+            "senha_redefinicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test12",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_servico"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_servico",
+            "sla_critico",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test13",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "dados_ia"
+          ],
+          "retrieved_doc_ids": [
+            "exclusao_dados",
+            "incidente_seguranca",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
+          }
+        },
+        {
+          "query_id": "test14",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "retencao_logs"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos",
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test15",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_contratos",
+            "fornecedor_acesso",
+            "sla_critico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test16",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "exclusao_dados"
+          ],
+          "retrieved_doc_ids": [
+            "exclusao_dados",
+            "ferias",
+            "software_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test17",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "fornecedor_acesso"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_acesso",
+            "retencao_logs",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test18",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico",
+            "acesso_concessao",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test19",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "fornecedor_pagamento"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_pagamento",
+            "sla_normal",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test20",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_reembolso"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_reembolso",
+            "sla_normal",
+            "fornecedor_acesso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test21",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_credito"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_credito",
+            "fornecedor_acesso",
+            "software_renovacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test22",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_critico"
+          ],
+          "retrieved_doc_ids": [
+            "sla_critico",
+            "sla_normal",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test23",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_normal"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal",
+            "sla_critico",
+            "remoto_exterior"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test24",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "ferias",
+            "banco_horas",
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test25",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "banco_horas"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas",
+            "retencao_logs",
+            "incidente_servico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test26",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "licenca_parental"
+          ],
+          "retrieved_doc_ids": [
+            "licenca_parental",
+            "incidente_seguranca",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test27",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_nacional"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test28",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_exterior",
+            "remoto_nacional",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test29",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_compra"
+          ],
+          "retrieved_doc_ids": [
+            "software_compra",
+            "exclusao_dados",
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test30",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_renovacao"
+          ],
+          "retrieved_doc_ids": [
+            "software_renovacao",
+            "sla_normal",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test31",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos",
+            "fornecedor_acesso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.6666666666666666,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test32",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.6666666666666666,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test33",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "banco_horas",
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas",
+            "ferias",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.6666666666666666,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test34",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "fornecedor_acesso",
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico",
+            "fornecedor_acesso",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.6666666666666666,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test35",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "dados_ia",
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "dados_ia",
+            "incidente_seguranca",
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.6666666666666666,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test36",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "remoto_internet",
+            "ferias",
+            "fornecedor_pagamento"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test37",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "equipamento_devolucao",
+            "fornecedor_acesso"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test38",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "exclusao_dados",
+            "retencao_logs",
+            "ferias"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test39",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "remoto_internet",
+            "ferias",
+            "retencao_contratos"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test40",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "sla_critico",
+            "acesso_concessao",
+            "fornecedor_pagamento"
+          ],
+          "metrics": null
+        }
+      ]
+    },
+    {
+      "strategy": "bm25-ce",
+      "top_k": 5,
+      "answerable_count": 35,
+      "unanswerable_count": 5,
+      "mean_metrics": {
+        "recall": 0.9714285714285714,
+        "precision": 0.22285714285714286,
+        "mrr": 0.9428571428571428,
+        "ndcg": 0.9503388430612262
+      },
+      "unanswerable_return_rate": 1.0,
+      "latency_median_ms": 1070.5115000009755,
+      "latency_p95_ms": 1599.1715000000113,
+      "per_query": [
+        {
+          "query_id": "test01",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_transporte"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_transporte",
+            "banco_horas",
+            "sla_normal",
+            "visitante_fisico",
+            "retencao_contratos"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test02",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "viagem_hotel"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal",
+            "viagem_hotel",
+            "viagem_refeicao",
+            "acesso_concessao",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
+          }
+        },
+        {
+          "query_id": "test03",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_refeicao"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_refeicao",
+            "sla_normal",
+            "banco_horas",
+            "visitante_fisico",
+            "cliente_reembolso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test04",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "remoto_internet"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_internet",
+            "banco_horas",
+            "cliente_reembolso",
+            "fornecedor_pagamento",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test05",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "equipamento_compra"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "fornecedor_acesso",
+            "software_compra",
+            "software_renovacao",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test06",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "equipamento_devolucao"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "equipamento_devolucao",
+            "acesso_revogacao",
+            "remoto_internet",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
+          }
+        },
+        {
+          "query_id": "test07",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_concessao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_concessao",
+            "fornecedor_acesso",
+            "visitante_fisico",
+            "retencao_logs",
+            "software_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test08",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_revogacao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_revogacao",
+            "acesso_concessao",
+            "remoto_internet",
+            "sla_normal",
+            "retencao_logs"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test09",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "mfa_recuperacao"
+          ],
+          "retrieved_doc_ids": [
+            "mfa_recuperacao",
+            "senha_redefinicao",
+            "fornecedor_acesso",
+            "incidente_seguranca",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test10",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "senha_redefinicao"
+          ],
+          "retrieved_doc_ids": [
+            "senha_redefinicao",
+            "mfa_recuperacao",
+            "incidente_seguranca",
+            "incidente_servico",
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test11",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_seguranca",
+            "acesso_revogacao",
+            "senha_redefinicao",
+            "incidente_servico",
+            "mfa_recuperacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test12",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_servico"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_servico",
+            "sla_critico",
+            "ferias",
+            "fornecedor_acesso",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test13",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "dados_ia"
+          ],
+          "retrieved_doc_ids": [
+            "exclusao_dados",
+            "incidente_seguranca",
+            "sla_normal",
+            "sla_critico",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
+          }
+        },
+        {
+          "query_id": "test14",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "retencao_logs"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos",
+            "exclusao_dados",
+            "acesso_concessao",
+            "senha_redefinicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test15",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_contratos",
+            "fornecedor_acesso",
+            "sla_critico",
+            "ferias",
+            "incidente_servico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test16",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "exclusao_dados"
+          ],
+          "retrieved_doc_ids": [
+            "exclusao_dados",
+            "ferias",
+            "software_compra",
+            "remoto_exterior",
+            "mfa_recuperacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test17",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "fornecedor_acesso"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_acesso",
+            "retencao_logs",
+            "ferias",
+            "acesso_revogacao",
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test18",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico",
+            "acesso_concessao",
+            "sla_normal",
+            "fornecedor_pagamento",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test19",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "fornecedor_pagamento"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_pagamento",
+            "sla_normal",
+            "remoto_internet",
+            "cliente_reembolso",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test20",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_reembolso"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_reembolso",
+            "sla_normal",
+            "fornecedor_acesso",
+            "cliente_credito",
+            "retencao_contratos"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test21",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_credito"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_credito",
+            "fornecedor_acesso",
+            "software_renovacao",
+            "remoto_internet",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test22",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_critico"
+          ],
+          "retrieved_doc_ids": [
+            "sla_critico",
+            "sla_normal",
+            "acesso_concessao",
+            "visitante_fisico",
+            "incidente_seguranca"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test23",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_normal"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal",
+            "sla_critico",
+            "remoto_exterior",
+            "remoto_nacional",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test24",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "ferias",
+            "banco_horas",
+            "fornecedor_pagamento",
+            "cliente_credito",
+            "licenca_parental"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test25",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "banco_horas"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas",
+            "retencao_logs",
+            "incidente_servico",
+            "ferias",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test26",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "licenca_parental"
+          ],
+          "retrieved_doc_ids": [
+            "licenca_parental",
+            "incidente_seguranca",
+            "ferias",
+            "retencao_logs",
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test27",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_nacional"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior",
+            "remoto_internet",
+            "software_renovacao",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test28",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_exterior",
+            "remoto_nacional",
+            "sla_normal",
+            "remoto_internet",
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test29",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_compra"
+          ],
+          "retrieved_doc_ids": [
+            "software_compra",
+            "exclusao_dados",
+            "fornecedor_pagamento",
+            "fornecedor_acesso",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test30",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_renovacao"
+          ],
+          "retrieved_doc_ids": [
+            "software_renovacao",
+            "sla_normal",
+            "remoto_internet",
+            "cliente_reembolso",
+            "equipamento_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test31",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos",
+            "fornecedor_acesso",
+            "sla_critico",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test32",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior",
+            "remoto_internet",
+            "acesso_concessao",
+            "fornecedor_acesso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test33",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "banco_horas",
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas",
+            "ferias",
+            "sla_normal",
+            "visitante_fisico",
+            "retencao_logs"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test34",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "fornecedor_acesso",
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico",
+            "fornecedor_acesso",
+            "acesso_concessao",
+            "exclusao_dados",
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test35",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "dados_ia",
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "dados_ia",
+            "incidente_seguranca",
+            "exclusao_dados",
+            "senha_redefinicao",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test36",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "remoto_internet",
+            "ferias",
+            "fornecedor_pagamento",
+            "cliente_reembolso",
+            "acesso_concessao"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test37",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "equipamento_devolucao",
+            "fornecedor_acesso",
+            "retencao_logs",
+            "software_compra"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test38",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "exclusao_dados",
+            "retencao_logs",
+            "ferias",
+            "sla_normal",
+            "acesso_concessao"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test39",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "remoto_internet",
+            "ferias",
+            "retencao_contratos",
+            "cliente_reembolso",
+            "sla_normal"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test40",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "sla_critico",
+            "acesso_concessao",
+            "fornecedor_pagamento",
+            "remoto_internet",
+            "incidente_servico"
+          ],
+          "metrics": null
+        }
+      ]
+    },
+    {
+      "strategy": "rrf-ce",
+      "top_k": 1,
+      "answerable_count": 35,
+      "unanswerable_count": 5,
+      "mean_metrics": {
+        "recall": 0.8428571428571429,
+        "precision": 0.9142857142857143,
+        "mrr": 0.9142857142857143,
+        "ndcg": 0.9142857142857143
+      },
+      "unanswerable_return_rate": 1.0,
+      "latency_median_ms": 1290.4816499994922,
+      "latency_p95_ms": 1893.9212999994197,
+      "per_query": [
+        {
+          "query_id": "test01",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_transporte"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_transporte"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test02",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "viagem_hotel"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
+          }
+        },
+        {
+          "query_id": "test03",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_refeicao"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_refeicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test04",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "remoto_internet"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test05",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "equipamento_compra"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test06",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "equipamento_devolucao"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra"
+          ],
+          "metrics": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
+          }
+        },
+        {
+          "query_id": "test07",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_concessao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test08",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_revogacao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_revogacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test09",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "mfa_recuperacao"
+          ],
+          "retrieved_doc_ids": [
+            "mfa_recuperacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test10",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "senha_redefinicao"
+          ],
+          "retrieved_doc_ids": [
+            "senha_redefinicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test11",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_seguranca"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test12",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_servico"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_servico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test13",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "dados_ia"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
+          }
+        },
+        {
+          "query_id": "test14",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "retencao_logs"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test15",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_contratos"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test16",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "exclusao_dados"
+          ],
+          "retrieved_doc_ids": [
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test17",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "fornecedor_acesso"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_acesso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test18",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test19",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "fornecedor_pagamento"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test20",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_reembolso"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_reembolso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test21",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_credito"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_credito"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test22",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_critico"
+          ],
+          "retrieved_doc_ids": [
+            "sla_critico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test23",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_normal"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test24",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test25",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "banco_horas"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test26",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "licenca_parental"
+          ],
+          "retrieved_doc_ids": [
+            "licenca_parental"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test27",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_nacional"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test28",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_exterior"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test29",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_compra"
+          ],
+          "retrieved_doc_ids": [
+            "software_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test30",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_renovacao"
+          ],
+          "retrieved_doc_ids": [
+            "software_renovacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test31",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs"
+          ],
+          "metrics": {
+            "recall": 0.5,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test32",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional"
+          ],
+          "metrics": {
+            "recall": 0.5,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test33",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "banco_horas",
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas"
+          ],
+          "metrics": {
+            "recall": 0.5,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test34",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "fornecedor_acesso",
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico"
+          ],
+          "metrics": {
+            "recall": 0.5,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test35",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "dados_ia",
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "dados_ia"
+          ],
+          "metrics": {
+            "recall": 0.5,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test36",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "viagem_refeicao"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test37",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "equipamento_compra"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test38",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "exclusao_dados"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test39",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "viagem_refeicao"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test40",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "sla_critico"
+          ],
+          "metrics": null
+        }
+      ]
+    },
+    {
+      "strategy": "rrf-ce",
+      "top_k": 3,
+      "answerable_count": 35,
+      "unanswerable_count": 5,
+      "mean_metrics": {
+        "recall": 0.9714285714285714,
+        "precision": 0.3714285714285714,
+        "mrr": 0.9428571428571428,
+        "ndcg": 0.9503388430612262
+      },
+      "unanswerable_return_rate": 1.0,
+      "latency_median_ms": 1286.0075999997207,
+      "latency_p95_ms": 2171.7924999993556,
+      "per_query": [
+        {
+          "query_id": "test01",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_transporte"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_transporte",
+            "banco_horas",
+            "cliente_reembolso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test02",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "viagem_hotel"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal",
+            "viagem_hotel",
+            "viagem_refeicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
+          }
+        },
+        {
+          "query_id": "test03",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_refeicao"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_refeicao",
+            "sla_normal",
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test04",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "remoto_internet"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_internet",
+            "banco_horas",
+            "cliente_reembolso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test05",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "equipamento_compra"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "fornecedor_acesso",
+            "software_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test06",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "equipamento_devolucao"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "equipamento_devolucao",
+            "acesso_revogacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
+          }
+        },
+        {
+          "query_id": "test07",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_concessao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_concessao",
+            "fornecedor_acesso",
+            "visitante_fisico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test08",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_revogacao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_revogacao",
+            "acesso_concessao",
+            "software_renovacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test09",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "mfa_recuperacao"
+          ],
+          "retrieved_doc_ids": [
+            "mfa_recuperacao",
+            "senha_redefinicao",
+            "fornecedor_acesso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test10",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "senha_redefinicao"
+          ],
+          "retrieved_doc_ids": [
+            "senha_redefinicao",
+            "mfa_recuperacao",
+            "incidente_seguranca"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test11",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_seguranca",
+            "acesso_revogacao",
+            "senha_redefinicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test12",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_servico"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_servico",
+            "sla_critico",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test13",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "dados_ia"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_concessao",
+            "exclusao_dados",
+            "incidente_seguranca"
+          ],
+          "metrics": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
+          }
+        },
+        {
+          "query_id": "test14",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "retencao_logs"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs",
+            "incidente_seguranca",
+            "retencao_contratos"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test15",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_contratos",
+            "fornecedor_acesso",
+            "software_renovacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test16",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "exclusao_dados"
+          ],
+          "retrieved_doc_ids": [
+            "exclusao_dados",
+            "ferias",
+            "software_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test17",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "fornecedor_acesso"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_acesso",
+            "retencao_logs",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test18",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico",
+            "acesso_concessao",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test19",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "fornecedor_pagamento"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_pagamento",
+            "sla_normal",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test20",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_reembolso"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_reembolso",
+            "sla_normal",
+            "software_renovacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test21",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_credito"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_credito",
+            "fornecedor_acesso",
+            "software_renovacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test22",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_critico"
+          ],
+          "retrieved_doc_ids": [
+            "sla_critico",
+            "sla_normal",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test23",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_normal"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal",
+            "sla_critico",
+            "remoto_exterior"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test24",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "ferias",
+            "banco_horas",
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test25",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "banco_horas"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas",
+            "retencao_logs",
+            "incidente_servico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test26",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "licenca_parental"
+          ],
+          "retrieved_doc_ids": [
+            "licenca_parental",
+            "incidente_seguranca",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test27",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_nacional"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional",
+            "ferias",
+            "licenca_parental"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test28",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_exterior",
+            "remoto_nacional",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test29",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_compra"
+          ],
+          "retrieved_doc_ids": [
+            "software_compra",
+            "exclusao_dados",
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test30",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_renovacao"
+          ],
+          "retrieved_doc_ids": [
+            "software_renovacao",
+            "sla_normal",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test31",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos",
+            "fornecedor_acesso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.6666666666666666,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test32",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.6666666666666666,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test33",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "banco_horas",
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas",
+            "ferias",
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.6666666666666666,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test34",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "fornecedor_acesso",
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico",
+            "fornecedor_acesso",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.6666666666666666,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test35",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "dados_ia",
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "dados_ia",
+            "incidente_seguranca",
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.6666666666666666,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test36",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "viagem_refeicao",
+            "remoto_internet",
+            "viagem_hotel"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test37",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "equipamento_devolucao",
+            "fornecedor_acesso"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test38",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "exclusao_dados",
+            "retencao_logs",
+            "ferias"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test39",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "viagem_refeicao",
+            "remoto_internet",
+            "ferias"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test40",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "sla_critico",
+            "sla_normal",
+            "acesso_concessao"
+          ],
+          "metrics": null
+        }
+      ]
+    },
+    {
+      "strategy": "rrf-ce",
+      "top_k": 5,
+      "answerable_count": 35,
+      "unanswerable_count": 5,
+      "mean_metrics": {
+        "recall": 0.9714285714285714,
+        "precision": 0.22285714285714286,
+        "mrr": 0.9428571428571428,
+        "ndcg": 0.9503388430612262
+      },
+      "unanswerable_return_rate": 1.0,
+      "latency_median_ms": 1302.3659000000407,
+      "latency_p95_ms": 2547.8192000009585,
+      "per_query": [
+        {
+          "query_id": "test01",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_transporte"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_transporte",
+            "banco_horas",
+            "cliente_reembolso",
+            "visitante_fisico",
+            "viagem_refeicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test02",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "viagem_hotel"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal",
+            "viagem_hotel",
+            "viagem_refeicao",
+            "acesso_concessao",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
+          }
+        },
+        {
+          "query_id": "test03",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "viagem_refeicao"
+          ],
+          "retrieved_doc_ids": [
+            "viagem_refeicao",
+            "sla_normal",
+            "fornecedor_pagamento",
+            "banco_horas",
+            "visitante_fisico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test04",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "remoto_internet"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_internet",
+            "banco_horas",
+            "cliente_reembolso",
+            "senha_redefinicao",
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test05",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "equipamento_compra"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "fornecedor_acesso",
+            "software_compra",
+            "acesso_concessao",
+            "software_renovacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test06",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "equipamento_devolucao"
+          ],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "equipamento_devolucao",
+            "acesso_revogacao",
+            "incidente_seguranca",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
+          }
+        },
+        {
+          "query_id": "test07",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_concessao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_concessao",
+            "fornecedor_acesso",
+            "visitante_fisico",
+            "retencao_logs",
+            "software_compra"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test08",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "acesso_revogacao"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_revogacao",
+            "acesso_concessao",
+            "software_renovacao",
+            "remoto_internet",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test09",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "mfa_recuperacao"
+          ],
+          "retrieved_doc_ids": [
+            "mfa_recuperacao",
+            "senha_redefinicao",
+            "fornecedor_acesso",
+            "incidente_seguranca",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test10",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "senha_redefinicao"
+          ],
+          "retrieved_doc_ids": [
+            "senha_redefinicao",
+            "mfa_recuperacao",
+            "incidente_seguranca",
+            "incidente_servico",
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test11",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_seguranca",
+            "acesso_revogacao",
+            "senha_redefinicao",
+            "incidente_servico",
+            "fornecedor_acesso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test12",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "incidente_servico"
+          ],
+          "retrieved_doc_ids": [
+            "incidente_servico",
+            "sla_critico",
+            "ferias",
+            "fornecedor_acesso",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test13",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "dados_ia"
+          ],
+          "retrieved_doc_ids": [
+            "acesso_concessao",
+            "exclusao_dados",
+            "incidente_seguranca",
+            "sla_normal",
+            "sla_critico"
+          ],
+          "metrics": {
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
+          }
+        },
+        {
+          "query_id": "test14",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "retencao_logs"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs",
+            "incidente_seguranca",
+            "retencao_contratos",
+            "exclusao_dados",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test15",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_contratos",
+            "fornecedor_acesso",
+            "software_renovacao",
+            "sla_critico",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test16",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "exclusao_dados"
+          ],
+          "retrieved_doc_ids": [
+            "exclusao_dados",
+            "ferias",
+            "software_compra",
+            "remoto_exterior",
+            "mfa_recuperacao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test17",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "fornecedor_acesso"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_acesso",
+            "retencao_logs",
+            "ferias",
+            "acesso_revogacao",
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test18",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico",
+            "acesso_concessao",
+            "sla_normal",
+            "fornecedor_pagamento",
+            "fornecedor_acesso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test19",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "fornecedor_pagamento"
+          ],
+          "retrieved_doc_ids": [
+            "fornecedor_pagamento",
+            "sla_normal",
+            "remoto_internet",
+            "cliente_reembolso",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test20",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_reembolso"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_reembolso",
+            "sla_normal",
+            "software_renovacao",
+            "fornecedor_acesso",
+            "cliente_credito"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test21",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "cliente_credito"
+          ],
+          "retrieved_doc_ids": [
+            "cliente_credito",
+            "fornecedor_acesso",
+            "software_renovacao",
+            "remoto_internet",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test22",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_critico"
+          ],
+          "retrieved_doc_ids": [
+            "sla_critico",
+            "sla_normal",
+            "acesso_concessao",
+            "visitante_fisico",
+            "incidente_servico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test23",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "sla_normal"
+          ],
+          "retrieved_doc_ids": [
+            "sla_normal",
+            "sla_critico",
+            "remoto_exterior",
+            "remoto_nacional",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test24",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "ferias",
+            "banco_horas",
+            "fornecedor_pagamento",
+            "sla_normal",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test25",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "banco_horas"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas",
+            "retencao_logs",
+            "incidente_servico",
+            "ferias",
+            "sla_normal"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test26",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "licenca_parental"
+          ],
+          "retrieved_doc_ids": [
+            "licenca_parental",
+            "incidente_seguranca",
+            "ferias",
+            "retencao_logs",
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test27",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_nacional"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional",
+            "ferias",
+            "licenca_parental",
+            "remoto_exterior",
+            "remoto_internet"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test28",
+          "category": "exception",
+          "relevant_doc_ids": [
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_exterior",
+            "remoto_nacional",
+            "sla_normal",
+            "remoto_internet",
+            "exclusao_dados"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test29",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_compra"
+          ],
+          "retrieved_doc_ids": [
+            "software_compra",
+            "exclusao_dados",
+            "fornecedor_pagamento",
+            "fornecedor_acesso",
+            "ferias"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test30",
+          "category": "paraphrase",
+          "relevant_doc_ids": [
+            "software_renovacao"
+          ],
+          "retrieved_doc_ids": [
+            "software_renovacao",
+            "sla_normal",
+            "remoto_internet",
+            "equipamento_devolucao",
+            "cliente_reembolso"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test31",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos"
+          ],
+          "retrieved_doc_ids": [
+            "retencao_logs",
+            "retencao_contratos",
+            "fornecedor_acesso",
+            "sla_critico",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test32",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior"
+          ],
+          "retrieved_doc_ids": [
+            "remoto_nacional",
+            "remoto_exterior",
+            "remoto_internet",
+            "ferias",
+            "viagem_refeicao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test33",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "banco_horas",
+            "ferias"
+          ],
+          "retrieved_doc_ids": [
+            "banco_horas",
+            "ferias",
+            "exclusao_dados",
+            "sla_normal",
+            "visitante_fisico"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test34",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "fornecedor_acesso",
+            "visitante_fisico"
+          ],
+          "retrieved_doc_ids": [
+            "visitante_fisico",
+            "fornecedor_acesso",
+            "acesso_concessao",
+            "exclusao_dados",
+            "fornecedor_pagamento"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test35",
+          "category": "multi_document",
+          "relevant_doc_ids": [
+            "dados_ia",
+            "incidente_seguranca"
+          ],
+          "retrieved_doc_ids": [
+            "dados_ia",
+            "incidente_seguranca",
+            "exclusao_dados",
+            "senha_redefinicao",
+            "acesso_concessao"
+          ],
+          "metrics": {
+            "recall": 1.0,
+            "precision": 0.4,
+            "mrr": 1.0,
+            "ndcg": 1.0
+          }
+        },
+        {
+          "query_id": "test36",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "viagem_refeicao",
+            "remoto_internet",
+            "viagem_hotel",
+            "ferias",
+            "banco_horas"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test37",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "equipamento_compra",
+            "equipamento_devolucao",
+            "fornecedor_acesso",
+            "retencao_logs",
+            "acesso_concessao"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test38",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "exclusao_dados",
+            "retencao_logs",
+            "ferias",
+            "sla_normal",
+            "acesso_concessao"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test39",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "viagem_refeicao",
+            "remoto_internet",
+            "ferias",
+            "retencao_contratos",
+            "cliente_reembolso"
+          ],
+          "metrics": null
+        },
+        {
+          "query_id": "test40",
+          "category": "unanswerable",
+          "relevant_doc_ids": [],
+          "retrieved_doc_ids": [
+            "sla_critico",
+            "sla_normal",
+            "acesso_concessao",
+            "fornecedor_pagamento",
+            "remoto_internet"
+          ],
+          "metrics": null
+        }
+      ]
+    }
+  ]
+}

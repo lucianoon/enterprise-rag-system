@@ -11,7 +11,7 @@ import hashlib
 import json
 import platform
 from datetime import UTC, datetime
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from math import ceil, log2
 from pathlib import Path
 from statistics import mean, median
@@ -20,7 +20,19 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from enterprise_rag_system.embeddings import HashingEmbedder, TfidfEmbedder
+from enterprise_rag_system.cross_encoder import (
+    DEFAULT_CE_MODEL,
+    DEFAULT_CE_REVISION,
+    CrossEncoderReranker,
+)
+from enterprise_rag_system.embeddings import (
+    DEFAULT_ST_MODEL,
+    DEFAULT_ST_REVISION,
+    Embedder,
+    HashingEmbedder,
+    SentenceTransformerEmbedder,
+    TfidfEmbedder,
+)
 from enterprise_rag_system.generation import DeterministicAnswerGenerator
 from enterprise_rag_system.ingestion import chunk_documents, load_jsonl
 from enterprise_rag_system.pipeline import RAGPipeline
@@ -29,16 +41,25 @@ from enterprise_rag_system.vector_store import InMemoryVectorStore
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATA = ROOT / "data" / "benchmarks" / "corporate_pt_v1"
-STRATEGIES: tuple[tuple[str, RetrievalMode, bool], ...] = (
+Backend = Literal["hashing", "tfidf", "sentence-transformer"]
+BACKENDS: tuple[str, ...] = ("hashing", "tfidf", "sentence-transformer")
+# Rerank: False, the legacy title bonus (True) or the optional cross-encoder.
+Rerank = bool | Literal["cross-encoder"]
+# First-stage candidates the cross-encoder reorders.
+CROSS_ENCODER_POOL = 20
+STRATEGIES: tuple[tuple[str, RetrievalMode, Rerank], ...] = (
     ("lexical", "lexical", False),
     ("vector", "vector", False),
     ("hybrid", "hybrid", False),
     ("hybrid-rerank", "hybrid", True),
 )
 DEFAULT_STRATEGIES = tuple(name for name, _, _ in STRATEGIES)
-EXPERIMENTAL_STRATEGIES: tuple[tuple[str, RetrievalMode, bool], ...] = (
+EXPERIMENTAL_STRATEGIES: tuple[tuple[str, RetrievalMode, Rerank], ...] = (
     ("bm25", "bm25", False),
     ("rrf", "rrf", False),
+    # Require the ``semantic`` extra (cross-encoder weights download once).
+    ("bm25-ce", "bm25", "cross-encoder"),
+    ("rrf-ce", "rrf", "cross-encoder"),
 )
 STRATEGY_OPTIONS = {name: (mode, rerank) for name, mode, rerank in (
     *STRATEGIES, *EXPERIMENTAL_STRATEGIES,
@@ -88,7 +109,7 @@ class BenchmarkReport(BaseModel):
     corpus_sha256: str
     queries_sha256: str
     split: Literal["dev", "test"]
-    embedding_backend: Literal["hashing", "tfidf"]
+    embedding_backend: Backend
     max_words: int
     repeats: int
     document_count: int
@@ -162,15 +183,38 @@ def _source_sha256() -> str:
     return digest.hexdigest()
 
 
+def _build_embedder(backend: Backend, st_model: str, st_revision: str | None) -> Embedder:
+    if backend == "hashing":
+        return HashingEmbedder()
+    if backend == "tfidf":
+        return TfidfEmbedder()
+    return SentenceTransformerEmbedder(st_model, st_revision)
+
+
+def _installed(package: str) -> str:
+    try:
+        return version(package)
+    except PackageNotFoundError:
+        return "not-installed"
+
+
 def run_benchmark(
     corpus: Path, queries: Path, *, split: Literal["dev", "test"] = "dev",
-    backend: Literal["hashing", "tfidf"] = "hashing", top_ks: tuple[int, ...] = (1, 3, 5),
+    backend: Backend = "hashing", top_ks: tuple[int, ...] = (1, 3, 5),
     repeats: int = 5, max_words: int = 80,
     strategies: tuple[str, ...] = DEFAULT_STRATEGIES,
+    st_model: str = DEFAULT_ST_MODEL, st_revision: str | None = DEFAULT_ST_REVISION,
+    ce_model: str = DEFAULT_CE_MODEL, ce_revision: str | None = DEFAULT_CE_REVISION,
+    embedder: Embedder | None = None, cross_encoder: CrossEncoderReranker | None = None,
 ) -> BenchmarkReport:
+    """Run the retrieval ablations.
+
+    ``embedder`` / ``cross_encoder`` inject prebuilt backends (tests, notebooks);
+    otherwise they are built from ``backend`` and the pinned model revisions.
+    """
     if repeats < 1 or max_words < 1 or not top_ks or any(k < 1 for k in top_ks):
         raise ValueError("repeats, max_words and top_ks must be positive")
-    if backend not in ("hashing", "tfidf"):
+    if backend not in BACKENDS:
         raise ValueError(f"Unknown embedding backend: {backend}")
     if (not strategies or len(set(strategies)) != len(strategies)
             or any(name not in STRATEGY_OPTIONS for name in strategies)):
@@ -184,9 +228,15 @@ def run_benchmark(
     cases = [case for case in load_cases(queries, document_ids) if case.split == split]
     if not cases:
         raise ValueError(f"No queries in split {split!r}")
+    uses_cross_encoder = any(
+        STRATEGY_OPTIONS[name][1] == "cross-encoder" for name in strategies
+    )
+    if uses_cross_encoder and cross_encoder is None:
+        cross_encoder = CrossEncoderReranker(ce_model, ce_revision)
     started = perf_counter()
     chunks = chunk_documents(documents, max_words=max_words)
-    embedder = HashingEmbedder() if backend == "hashing" else TfidfEmbedder()
+    if embedder is None:
+        embedder = _build_embedder(backend, st_model, st_revision)
     pipeline = RAGPipeline(
         chunks,
         answer_generator=DeterministicAnswerGenerator(),
@@ -194,6 +244,15 @@ def run_benchmark(
         vector_store=InMemoryVectorStore(),
     )
     index_ms = (perf_counter() - started) * 1000
+    def retrieve(question: str, top_k: int, mode: RetrievalMode, rerank: Rerank):
+        if rerank != "cross-encoder":
+            return pipeline.retrieve(question, top_k, mode=mode, rerank=bool(rerank))
+        assert cross_encoder is not None
+        pool = pipeline.retrieve(
+            question, max(top_k, CROSS_ENCODER_POOL), mode=mode, rerank=False
+        )
+        return cross_encoder.rerank(question, pool)[:top_k]
+
     rows = []
     for strategy in strategies:
         mode, rerank = STRATEGY_OPTIONS[strategy]
@@ -202,10 +261,10 @@ def run_benchmark(
             results = []
             for case in cases:
                 # One warmup per query/configuration, excluded from latency.
-                pipeline.retrieve(case.question, top_k, mode=mode, rerank=rerank)
+                retrieve(case.question, top_k, mode, rerank)
                 for repeat in range(repeats):
                     started = perf_counter()
-                    retrieved = pipeline.retrieve(case.question, top_k, mode=mode, rerank=rerank)
+                    retrieved = retrieve(case.question, top_k, mode, rerank)
                     durations.append((perf_counter() - started) * 1000)
                     if repeat == 0:
                         ids = [result.chunk.doc_id for result in retrieved]
@@ -239,10 +298,24 @@ def run_benchmark(
             "python": platform.python_version(), "platform": platform.platform(),
             "machine": platform.machine(), "source_sha256": _source_sha256(),
             "timestamp_utc": datetime.now(UTC).isoformat(),
-            "embedding_dimensions": str(embedder.dims),
+            "embedding_dimensions": str(getattr(embedder, "dims", "unknown")),
+            "embedding_model": getattr(embedder, "model_name", backend),
+            "embedding_revision": str(getattr(embedder, "revision", "not-applicable")),
+            "cross_encoder_model": cross_encoder.model_name if cross_encoder else "not-used",
+            "cross_encoder_revision": (
+                str(cross_encoder.revision) if cross_encoder else "not-used"
+            ),
             "pydantic": version("pydantic"),
             "scikit-learn": version("scikit-learn") if backend == "tfidf" else "not-used",
-            "numpy": version("numpy") if backend == "tfidf" else "not-used",
+            "numpy": _installed("numpy") if backend != "hashing" else "not-used",
+            "sentence-transformers": (
+                _installed("sentence-transformers")
+                if backend == "sentence-transformer" or cross_encoder else "not-used"
+            ),
+            "torch": (
+                _installed("torch")
+                if backend == "sentence-transformer" or cross_encoder else "not-used"
+            ),
         },
         rows=rows,
     )
@@ -260,6 +333,11 @@ def compare_reports(
     ):
         if getattr(current, field) != getattr(baseline, field):
             raise ValueError(f"Incomparable benchmark field: {field}")
+    # Different weights are a different system, even under the same backend name.
+    for env_key in ("embedding_model", "embedding_revision",
+                "cross_encoder_model", "cross_encoder_revision"):
+        if current.environment.get(env_key) != baseline.environment.get(env_key):
+            raise ValueError(f"Incomparable benchmark environment: {env_key}")
     expected = {(r.strategy, r.top_k): r for r in baseline.rows}
     actual = {(r.strategy, r.top_k): r for r in current.rows}
     if set(expected) != set(actual) or len(expected) != len(baseline.rows):
@@ -289,12 +367,18 @@ def main() -> None:
     parser.add_argument("--corpus", type=Path, default=DEFAULT_DATA / "corpus.jsonl")
     parser.add_argument("--queries", type=Path, default=DEFAULT_DATA / "queries.jsonl")
     parser.add_argument("--split", choices=("dev", "test"), default="dev")
-    parser.add_argument("--backend", choices=("hashing", "tfidf"), default="hashing")
+    parser.add_argument("--backend", choices=BACKENDS, default="hashing")
     parser.add_argument("--top-k", type=int, nargs="+", default=[1, 3, 5])
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument("--max-words", type=int, default=80)
     parser.add_argument("--strategies", nargs="+", choices=tuple(STRATEGY_OPTIONS),
                         default=list(DEFAULT_STRATEGIES))
+    parser.add_argument("--st-model", default=DEFAULT_ST_MODEL)
+    parser.add_argument("--st-revision", default=DEFAULT_ST_REVISION,
+                        help="Hugging Face commit; 'latest' disables pinning")
+    parser.add_argument("--ce-model", default=DEFAULT_CE_MODEL)
+    parser.add_argument("--ce-revision", default=DEFAULT_CE_REVISION,
+                        help="Hugging Face commit; 'latest' disables pinning")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--baseline", type=Path)
     parser.add_argument("--max-regression", type=float, default=0.0)
@@ -304,11 +388,16 @@ def main() -> None:
             args.corpus, args.queries, split=args.split, backend=args.backend,
             top_ks=tuple(args.top_k), repeats=args.repeats, max_words=args.max_words,
             strategies=tuple(args.strategies),
+            st_model=args.st_model,
+            st_revision=None if args.st_revision == "latest" else args.st_revision,
+            ce_model=args.ce_model,
+            ce_revision=None if args.ce_revision == "latest" else args.ce_revision,
         )
         output = report.model_dump_json(indent=2) + "\n"
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
-            args.output.write_text(output, encoding="utf-8")
+            # LF on every platform, so reports diff cleanly and match .gitattributes.
+            args.output.write_text(output, encoding="utf-8", newline="\n")
         else:
             print(output, end="")
         if args.baseline:
@@ -318,7 +407,7 @@ def main() -> None:
             failures = compare_reports(report, baseline, args.max_regression)
             if failures:
                 parser.exit(1, "Retrieval regression:\n" + "\n".join(failures) + "\n")
-    except (ValueError, OSError) as exc:
+    except (ValueError, OSError, RuntimeError) as exc:
         parser.exit(2, f"Benchmark error: {exc}\n")
 
 

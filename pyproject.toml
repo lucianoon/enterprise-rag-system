@@ -21,11 +21,26 @@ extras = [
     "scikit-learn>=1.4.0",
     "openai>=1.40.0",
 ]
+# Embeddings densos multilíngues e cross-encoder de reranking, em CPU. Opcional:
+# a CI padrão não instala este extra (baixa ~0,5 GB de modelos e torch).
+semantic = [
+    "sentence-transformers>=3.0.0",
+    "torch>=2.4.0",
+]
 dev = [
     "pytest>=8.0.0",
     "ruff>=0.6.0",
     "mypy>=1.11.0",
 ]
+
+# torch só pelo índice CPU oficial: evita baixar as rodas CUDA (vários GB) no Linux.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
 
 [build-system]
 requires = ["hatchling"]

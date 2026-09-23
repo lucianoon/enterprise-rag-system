@@ -95,7 +95,7 @@ O comando constrói um índice em memória e compara:
 
 | Estratégia | Componentes ativos |
 |---|---|
-| `lexical` | Score lexical existente: IDF e frequência logarítmica; não é BM25 completo |
+| `lexical` | Score lexical existente: IDF e frequência logarítmica; não é BM25 completo. Usa o mesmo analisador (`tokenization.py`) de todas as estratégias |
 | `vector` | Similaridade vetorial usando hashing ou TF-IDF |
 | `hybrid` | Fusão atual: 0,55 lexical + 0,45 vetorial |
 | `hybrid-rerank` | Fusão atual seguida pelo reranker heurístico da API |
@@ -174,8 +174,10 @@ baseline inicial, incluindo as configurações que tiveram desempenho pior.
 ## Estratégias adicionais: BM25 e RRF
 
 O argumento `--strategies` seleciona uma matriz explícita. Sem esse argumento,
-as quatro estratégias originais continuam sendo executadas; a referência
-`baseline-hashing-test.json` não foi alterada.
+as quatro estratégias originais continuam sendo executadas. As três
+referências foram recongeladas uma única vez, na unificação do analisador de
+texto; veja a justificativa e o antes/depois em
+[CORPORATE_BENCHMARK_RESULTS.md](CORPORATE_BENCHMARK_RESULTS.md#unificação-do-analisador-de-texto).
 
 ```bash
 uv run python -m enterprise_rag_system.benchmark --split test \
@@ -204,3 +206,40 @@ Na API, `RAG_RETRIEVAL_MODE=hybrid` continua incluindo o reranker legado.
 Os modos `lexical` e `vector` da API também mantêm esse reranker, enquanto suas
 ablações no benchmark usam `rerank=False`. Para comparar exatamente uma ablação
 legada pela interface Python, informe `rerank=False` explicitamente.
+
+## Backend semântico multilíngue e cross-encoder (opcional)
+
+Requer o extra `semantic` (sentence-transformers + torch CPU, índice oficial
+`download.pytorch.org/whl/cpu`). A CI padrão não o instala; os testes usam
+modelos falsos para cobrir a integração.
+
+```bash
+uv sync --extra dev --extra extras --extra semantic
+uv run python -m enterprise_rag_system.benchmark --split test \
+  --backend sentence-transformer \
+  --strategies lexical vector hybrid hybrid-rerank bm25 rrf \
+  --output benchmark-st-test.json
+# Cross-encoder sobre os 20 primeiros candidatos de BM25 ou RRF.
+uv run python -m enterprise_rag_system.benchmark --split test \
+  --backend sentence-transformer --strategies bm25-ce rrf-ce --repeats 1 \
+  --output benchmark-ce-test.json
+```
+
+- `--st-model` / `--st-revision` e `--ce-model` / `--ce-revision` escolhem os
+  modelos; os padrões são commits fixos do Hugging Face (`latest` desliga a
+  fixação e torna o resultado não reproduzível).
+- Modelos E5 recebem os prefixos `query: ` e `passage: ` com que foram treinados.
+- O relatório grava modelo, revisão, dimensões e versões de sentence-transformers
+  e torch. `compare_reports` recusa comparar relatórios com modelos ou revisões
+  diferentes, mesmo sob o mesmo nome de backend.
+- A latência do cross-encoder inclui a primeira etapa e a inferência em CPU de
+  até 20 pares; ela não bloqueia a CI e depende muito do hardware.
+
+Resultados medidos: [MULTILINGUAL_RETRIEVAL_RESULTS.md](MULTILINGUAL_RETRIEVAL_RESULTS.md).
+
+## Fins de linha e hashes
+
+O gate compara SHA-256 dos arquivos de corpus e consultas. `.gitattributes`
+fixa LF em `data/**/*.jsonl` e nas referências JSON, para que um checkout no
+Windows com `core.autocrlf=true` produza os mesmos bytes do Linux. Relatórios
+gerados pela CLI também são gravados com LF.
