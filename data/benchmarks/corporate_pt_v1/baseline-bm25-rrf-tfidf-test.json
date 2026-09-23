@@ -9,17 +9,23 @@
   "document_count": 30,
   "chunk_count": 30,
   "query_count": 40,
-  "index_ms": 1218.0042089894414,
+  "index_ms": 2364.3263000012666,
   "environment": {
     "python": "3.12.13",
-    "platform": "macOS-26.6.2-arm64-arm-64bit",
-    "machine": "arm64",
-    "source_sha256": "458fb9862cd4f775713635b72724adb126ba32e30bc23987cee462abd4f71b68",
-    "timestamp_utc": "2026-09-07T17:38:51.916284+00:00",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "source_sha256": "7406e45ca6fae5e5217771ee3bb778a94c3b3ed750d613c6bb1d049b479a21e8",
+    "timestamp_utc": "2026-09-23T02:31:16.466180+00:00",
     "embedding_dimensions": "2048",
+    "embedding_model": "tfidf",
+    "embedding_revision": "not-applicable",
+    "cross_encoder_model": "not-used",
+    "cross_encoder_revision": "not-used",
     "pydantic": "2.13.5",
     "scikit-learn": "1.9.0",
-    "numpy": "2.5.1"
+    "numpy": "2.5.1",
+    "sentence-transformers": "not-used",
+    "torch": "not-used"
   },
   "rows": [
     {
@@ -34,8 +40,8 @@
         "ndcg": 0.8
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 0.07174999336712062,
-      "latency_p95_ms": 0.08708302630111575,
+      "latency_median_ms": 0.10564999956841348,
+      "latency_p95_ms": 0.1250000004802132,
       "per_query": [
         {
           "query_id": "test01",
@@ -661,8 +667,8 @@
         "ndcg": 0.8480451513226029
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 0.07143747643567622,
-      "latency_p95_ms": 0.08533295476809144,
+      "latency_median_ms": 0.1052999996318249,
+      "latency_p95_ms": 0.12510000124166254,
       "per_query": [
         {
           "query_id": "test01",
@@ -1368,8 +1374,8 @@
         "ndcg": 0.8726552403553682
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 0.07029148400761187,
-      "latency_p95_ms": 0.0825420138426125,
+      "latency_median_ms": 0.10540000039327424,
+      "latency_p95_ms": 0.20419999964360613,
       "per_query": [
         {
           "query_id": "test01",
@@ -2155,8 +2161,8 @@
         "ndcg": 0.7714285714285715
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 3.1095005106180906,
-      "latency_p95_ms": 3.2051660236902535,
+      "latency_median_ms": 4.808149999007583,
+      "latency_p95_ms": 6.780599998819525,
       "per_query": [
         {
           "query_id": "test01",
@@ -2229,7 +2235,7 @@
             "equipamento_compra"
           ],
           "retrieved_doc_ids": [
-            "ferias"
+            "retencao_contratos"
           ],
           "metrics": {
             "recall": 0.0,
@@ -2357,7 +2363,7 @@
             "dados_ia"
           ],
           "retrieved_doc_ids": [
-            "cliente_reembolso"
+            "sla_critico"
           ],
           "metrics": {
             "recall": 0.0,
@@ -2421,13 +2427,13 @@
             "fornecedor_acesso"
           ],
           "retrieved_doc_ids": [
-            "remoto_internet"
+            "fornecedor_acesso"
           ],
           "metrics": {
-            "recall": 0.0,
-            "precision": 0.0,
-            "mrr": 0.0,
-            "ndcg": 0.0
+            "recall": 1.0,
+            "precision": 1.0,
+            "mrr": 1.0,
+            "ndcg": 1.0
           }
         },
         {
@@ -2613,13 +2619,13 @@
             "software_compra"
           ],
           "retrieved_doc_ids": [
-            "software_compra"
+            "remoto_exterior"
           ],
           "metrics": {
-            "recall": 1.0,
-            "precision": 1.0,
-            "mrr": 1.0,
-            "ndcg": 1.0
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
           }
         },
         {
@@ -2776,14 +2782,14 @@
       "answerable_count": 35,
       "unanswerable_count": 5,
       "mean_metrics": {
-        "recall": 0.8857142857142857,
-        "precision": 0.3333333333333333,
-        "mrr": 0.8285714285714285,
-        "ndcg": 0.8259392766234863
+        "recall": 0.9142857142857143,
+        "precision": 0.34285714285714286,
+        "mrr": 0.8428571428571429,
+        "ndcg": 0.8462595327498654
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 3.1264790159184486,
-      "latency_p95_ms": 4.00679197628051,
+      "latency_median_ms": 4.928999999719963,
+      "latency_p95_ms": 12.394100000165054,
       "per_query": [
         {
           "query_id": "test01",
@@ -2864,15 +2870,15 @@
             "equipamento_compra"
           ],
           "retrieved_doc_ids": [
-            "ferias",
             "retencao_contratos",
-            "equipamento_compra"
+            "equipamento_compra",
+            "ferias"
           ],
           "metrics": {
             "recall": 1.0,
             "precision": 0.3333333333333333,
-            "mrr": 0.3333333333333333,
-            "ndcg": 0.5
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
           }
         },
         {
@@ -2920,13 +2926,13 @@
           "retrieved_doc_ids": [
             "fornecedor_acesso",
             "cliente_reembolso",
-            "ferias"
+            "acesso_revogacao"
           ],
           "metrics": {
-            "recall": 0.0,
-            "precision": 0.0,
-            "mrr": 0.0,
-            "ndcg": 0.0
+            "recall": 1.0,
+            "precision": 0.3333333333333333,
+            "mrr": 0.3333333333333333,
+            "ndcg": 0.5
           }
         },
         {
@@ -2974,7 +2980,7 @@
           "retrieved_doc_ids": [
             "incidente_seguranca",
             "mfa_recuperacao",
-            "acesso_revogacao"
+            "ferias"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3008,8 +3014,8 @@
             "dados_ia"
           ],
           "retrieved_doc_ids": [
-            "cliente_reembolso",
             "sla_critico",
+            "cliente_reembolso",
             "fornecedor_acesso"
           ],
           "metrics": {
@@ -3046,7 +3052,7 @@
           "retrieved_doc_ids": [
             "retencao_contratos",
             "ferias",
-            "senha_redefinicao"
+            "cliente_credito"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3080,15 +3086,15 @@
             "fornecedor_acesso"
           ],
           "retrieved_doc_ids": [
-            "remoto_internet",
             "fornecedor_acesso",
-            "acesso_revogacao"
+            "acesso_revogacao",
+            "remoto_internet"
           ],
           "metrics": {
             "recall": 1.0,
             "precision": 0.3333333333333333,
-            "mrr": 0.5,
-            "ndcg": 0.6309297535714575
+            "mrr": 1.0,
+            "ndcg": 1.0
           }
         },
         {
@@ -3100,7 +3106,7 @@
           "retrieved_doc_ids": [
             "visitante_fisico",
             "mfa_recuperacao",
-            "banco_horas"
+            "retencao_logs"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3135,8 +3141,8 @@
           ],
           "retrieved_doc_ids": [
             "cliente_reembolso",
-            "software_compra",
-            "cliente_credito"
+            "fornecedor_acesso",
+            "software_compra"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3172,7 +3178,7 @@
           "retrieved_doc_ids": [
             "sla_critico",
             "sla_normal",
-            "cliente_credito"
+            "equipamento_devolucao"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3207,8 +3213,8 @@
           ],
           "retrieved_doc_ids": [
             "ferias",
-            "banco_horas",
-            "software_compra"
+            "software_compra",
+            "banco_horas"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3296,15 +3302,15 @@
             "software_compra"
           ],
           "retrieved_doc_ids": [
-            "software_compra",
             "remoto_exterior",
-            "exclusao_dados"
+            "software_compra",
+            "software_renovacao"
           ],
           "metrics": {
             "recall": 1.0,
             "precision": 0.3333333333333333,
-            "mrr": 1.0,
-            "ndcg": 1.0
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
           }
         },
         {
@@ -3372,14 +3378,14 @@
           ],
           "retrieved_doc_ids": [
             "banco_horas",
-            "sla_normal",
-            "ferias"
+            "ferias",
+            "sla_normal"
           ],
           "metrics": {
             "recall": 1.0,
             "precision": 0.6666666666666666,
             "mrr": 1.0,
-            "ndcg": 0.9197207891481876
+            "ndcg": 1.0
           }
         },
         {
@@ -3411,7 +3417,7 @@
           "retrieved_doc_ids": [
             "dados_ia",
             "senha_redefinicao",
-            "mfa_recuperacao"
+            "incidente_servico"
           ],
           "metrics": {
             "recall": 0.5,
@@ -3485,12 +3491,12 @@
       "mean_metrics": {
         "recall": 0.9428571428571428,
         "precision": 0.21142857142857144,
-        "mrr": 0.8414285714285714,
-        "ndcg": 0.8492972584894273
+        "mrr": 0.85,
+        "ndcg": 0.858564577266248
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 3.1155835022218525,
-      "latency_p95_ms": 3.212417010217905,
+      "latency_median_ms": 4.873700000644021,
+      "latency_p95_ms": 7.401499999104999,
       "per_query": [
         {
           "query_id": "test01",
@@ -3502,8 +3508,8 @@
             "viagem_transporte",
             "fornecedor_pagamento",
             "remoto_nacional",
-            "visitante_fisico",
-            "remoto_internet"
+            "banco_horas",
+            "visitante_fisico"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3579,17 +3585,17 @@
             "equipamento_compra"
           ],
           "retrieved_doc_ids": [
-            "ferias",
             "retencao_contratos",
             "equipamento_compra",
+            "ferias",
             "retencao_logs",
             "software_compra"
           ],
           "metrics": {
             "recall": 1.0,
             "precision": 0.2,
-            "mrr": 0.3333333333333333,
-            "ndcg": 0.5
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
           }
         },
         {
@@ -3622,8 +3628,8 @@
             "acesso_concessao",
             "fornecedor_acesso",
             "visitante_fisico",
-            "cliente_credito",
-            "senha_redefinicao"
+            "senha_redefinicao",
+            "mfa_recuperacao"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3641,15 +3647,15 @@
           "retrieved_doc_ids": [
             "fornecedor_acesso",
             "cliente_reembolso",
-            "ferias",
+            "acesso_revogacao",
             "incidente_servico",
-            "acesso_revogacao"
+            "ferias"
           ],
           "metrics": {
             "recall": 1.0,
             "precision": 0.2,
-            "mrr": 0.2,
-            "ndcg": 0.38685280723454163
+            "mrr": 0.3333333333333333,
+            "ndcg": 0.5
           }
         },
         {
@@ -3682,8 +3688,8 @@
             "senha_redefinicao",
             "incidente_seguranca",
             "mfa_recuperacao",
-            "remoto_internet",
-            "incidente_servico"
+            "visitante_fisico",
+            "remoto_internet"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3701,9 +3707,9 @@
           "retrieved_doc_ids": [
             "incidente_seguranca",
             "mfa_recuperacao",
-            "acesso_revogacao",
             "ferias",
-            "senha_redefinicao"
+            "acesso_revogacao",
+            "banco_horas"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3723,7 +3729,7 @@
             "software_renovacao",
             "retencao_logs",
             "sla_critico",
-            "incidente_seguranca"
+            "remoto_exterior"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3739,11 +3745,11 @@
             "dados_ia"
           ],
           "retrieved_doc_ids": [
-            "cliente_reembolso",
             "sla_critico",
+            "cliente_reembolso",
             "fornecedor_acesso",
             "exclusao_dados",
-            "remoto_internet"
+            "sla_normal"
           ],
           "metrics": {
             "recall": 0.0,
@@ -3781,8 +3787,8 @@
           "retrieved_doc_ids": [
             "retencao_contratos",
             "ferias",
-            "senha_redefinicao",
             "cliente_credito",
+            "senha_redefinicao",
             "mfa_recuperacao"
           ],
           "metrics": {
@@ -3819,17 +3825,17 @@
             "fornecedor_acesso"
           ],
           "retrieved_doc_ids": [
-            "remoto_internet",
             "fornecedor_acesso",
             "acesso_revogacao",
+            "remoto_internet",
             "retencao_contratos",
             "viagem_transporte"
           ],
           "metrics": {
             "recall": 1.0,
             "precision": 0.2,
-            "mrr": 0.5,
-            "ndcg": 0.6309297535714575
+            "mrr": 1.0,
+            "ndcg": 1.0
           }
         },
         {
@@ -3841,8 +3847,8 @@
           "retrieved_doc_ids": [
             "visitante_fisico",
             "mfa_recuperacao",
-            "banco_horas",
             "retencao_logs",
+            "banco_horas",
             "dados_ia"
           ],
           "metrics": {
@@ -3863,7 +3869,7 @@
             "viagem_refeicao",
             "remoto_internet",
             "visitante_fisico",
-            "acesso_revogacao"
+            "equipamento_compra"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3880,9 +3886,9 @@
           ],
           "retrieved_doc_ids": [
             "cliente_reembolso",
+            "fornecedor_acesso",
             "software_compra",
             "cliente_credito",
-            "fornecedor_acesso",
             "retencao_logs"
           ],
           "metrics": {
@@ -3921,9 +3927,9 @@
           "retrieved_doc_ids": [
             "sla_critico",
             "sla_normal",
-            "cliente_credito",
-            "cliente_reembolso",
-            "equipamento_devolucao"
+            "equipamento_devolucao",
+            "mfa_recuperacao",
+            "cliente_reembolso"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3942,8 +3948,8 @@
             "sla_normal",
             "fornecedor_acesso",
             "sla_critico",
-            "remoto_nacional",
-            "cliente_reembolso"
+            "cliente_reembolso",
+            "remoto_nacional"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3960,10 +3966,10 @@
           ],
           "retrieved_doc_ids": [
             "ferias",
-            "banco_horas",
             "software_compra",
+            "banco_horas",
             "fornecedor_acesso",
-            "retencao_contratos"
+            "acesso_concessao"
           ],
           "metrics": {
             "recall": 1.0,
@@ -4002,7 +4008,7 @@
             "incidente_seguranca",
             "equipamento_compra",
             "licenca_parental",
-            "equipamento_devolucao",
+            "exclusao_dados",
             "banco_horas"
           ],
           "metrics": {
@@ -4022,8 +4028,8 @@
             "remoto_nacional",
             "software_renovacao",
             "acesso_revogacao",
-            "visitante_fisico",
-            "equipamento_compra"
+            "remoto_exterior",
+            "visitante_fisico"
           ],
           "metrics": {
             "recall": 1.0,
@@ -4043,7 +4049,7 @@
             "remoto_nacional",
             "ferias",
             "remoto_exterior",
-            "sla_normal"
+            "fornecedor_acesso"
           ],
           "metrics": {
             "recall": 1.0,
@@ -4059,17 +4065,17 @@
             "software_compra"
           ],
           "retrieved_doc_ids": [
-            "software_compra",
             "remoto_exterior",
-            "exclusao_dados",
+            "software_compra",
             "software_renovacao",
-            "cliente_credito"
+            "cliente_credito",
+            "exclusao_dados"
           ],
           "metrics": {
             "recall": 1.0,
             "precision": 0.2,
-            "mrr": 1.0,
-            "ndcg": 1.0
+            "mrr": 0.5,
+            "ndcg": 0.6309297535714575
           }
         },
         {
@@ -4082,8 +4088,8 @@
             "incidente_servico",
             "software_renovacao",
             "software_compra",
-            "incidente_seguranca",
-            "exclusao_dados"
+            "exclusao_dados",
+            "mfa_recuperacao"
           ],
           "metrics": {
             "recall": 1.0,
@@ -4104,7 +4110,7 @@
             "retencao_contratos",
             "exclusao_dados",
             "software_renovacao",
-            "acesso_concessao"
+            "fornecedor_acesso"
           ],
           "metrics": {
             "recall": 1.0,
@@ -4143,8 +4149,8 @@
           ],
           "retrieved_doc_ids": [
             "banco_horas",
-            "sla_normal",
             "ferias",
+            "sla_normal",
             "viagem_hotel",
             "equipamento_compra"
           ],
@@ -4152,7 +4158,7 @@
             "recall": 1.0,
             "precision": 0.4,
             "mrr": 1.0,
-            "ndcg": 0.9197207891481876
+            "ndcg": 1.0
           }
         },
         {
@@ -4167,7 +4173,7 @@
             "acesso_revogacao",
             "cliente_credito",
             "viagem_transporte",
-            "fornecedor_pagamento"
+            "ferias"
           ],
           "metrics": {
             "recall": 0.5,
@@ -4186,9 +4192,9 @@
           "retrieved_doc_ids": [
             "dados_ia",
             "senha_redefinicao",
-            "mfa_recuperacao",
+            "incidente_servico",
             "software_renovacao",
-            "exclusao_dados"
+            "mfa_recuperacao"
           ],
           "metrics": {
             "recall": 0.5,
@@ -4206,7 +4212,7 @@
             "fornecedor_pagamento",
             "remoto_nacional",
             "cliente_reembolso",
-            "acesso_concessao"
+            "retencao_contratos"
           ],
           "metrics": null
         },
@@ -4258,7 +4264,7 @@
             "ferias",
             "fornecedor_acesso",
             "cliente_credito",
-            "remoto_exterior"
+            "software_compra"
           ],
           "metrics": null
         }

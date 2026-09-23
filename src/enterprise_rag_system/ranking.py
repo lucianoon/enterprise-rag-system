@@ -1,22 +1,13 @@
 """Offline BM25 and reciprocal rank fusion, independent of vector providers."""
 
-import re
-import unicodedata
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from math import log1p
 
+from enterprise_rag_system.tokenization import tokenize
 
-def normalize_tokens(text: str) -> list[str]:
-    """Fold accents without breaking words; retain Unicode letters and numbers.
-
-    This analyzer has no language-specific stop list or stemming. The same
-    transformation is applied to documents and queries, including decomposed
-    accents and uppercase text.
-    """
-    normalized = unicodedata.normalize("NFKD", text.casefold())
-    folded = "".join(c for c in normalized if not unicodedata.combining(c))
-    return re.findall(r"[^\W_]+", folded)
+# Backwards-compatible name; the analyzer lives in ``tokenization``.
+normalize_tokens = tokenize
 
 
 class BM25Index:
