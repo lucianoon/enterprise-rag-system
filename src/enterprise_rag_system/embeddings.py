@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
+from collections import Counter
 from collections.abc import Sequence
 from math import sqrt
 from typing import Protocol
@@ -88,11 +89,20 @@ class HashingEmbedder:
 
 
 class TfidfEmbedder:
-    """TF-IDF vectors fitted on the indexed corpus (requires scikit-learn)."""
+    """TF-IDF vectors fitted on the indexed corpus (requires scikit-learn).
+
+    The vocabulary keeps the ``max_features`` most frequent terms, like
+    scikit-learn's own ``max_features``, but ties are broken by the term itself.
+    scikit-learn ranks with an unstable ``argsort`` whose tie order depends on
+    NumPy's SIMD dispatch (AVX-512 or not), so the same corpus could keep a
+    different vocabulary, and rank differently, on another CPU.
+    """
 
     name = "tfidf"
 
     def __init__(self, max_features: int = 2048):
+        if max_features < 1:
+            raise ValueError("max_features must be positive")
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
         except ImportError as exc:  # pragma: no cover - exercised via build_embedder
@@ -100,16 +110,32 @@ class TfidfEmbedder:
                 "scikit-learn is required for the tfidf embedding backend. "
                 "Install it with `uv sync --extra extras`."
             ) from exc
-        self._vectorizer = TfidfVectorizer(
+        self.max_features = max_features
+        self._vectorizer_class = TfidfVectorizer
+        self._vectorizer = self._new_vectorizer()
+        self._fitted = False
+
+    def _new_vectorizer(self, vocabulary: Sequence[str] | None = None):
+        return self._vectorizer_class(
             # Same analyzer as BM25/lexical/hashing; n-grams are built on its tokens.
             tokenizer=tokenize,
             lowercase=False,
             token_pattern=None,
             stop_words="english",
-            max_features=max_features,
             ngram_range=(1, 2),
+            vocabulary=vocabulary,
         )
-        self._fitted = False
+
+    def _select_vocabulary(self, documents: Sequence[str]) -> list[str]:
+        """Top ``max_features`` terms by corpus frequency, ties broken by term."""
+        analyze = self._new_vectorizer().build_analyzer()
+        frequencies: Counter[str] = Counter()
+        for document in documents:
+            frequencies.update(analyze(document))
+        if not frequencies:
+            raise ValueError("TF-IDF vocabulary is empty (only stop words?)")
+        ranked = sorted(frequencies, key=lambda term: (-frequencies[term], term))
+        return sorted(ranked[:self.max_features])
 
     @property
     def dims(self) -> int:
@@ -121,6 +147,7 @@ class TfidfEmbedder:
         documents = [text for text in corpus if text.strip()]
         if not documents:
             return
+        self._vectorizer = self._new_vectorizer(self._select_vocabulary(documents))
         self._vectorizer.fit(documents)
         self._fitted = True
         logger.info("Fitted TF-IDF vectorizer: %d features.", self.dims)

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Make the TF-IDF vocabulary deterministic across machines. scikit-learn's
+  `max_features` picked the top terms with an unstable NumPy `argsort`, whose
+  tie order depends on the SIMD dispatch (AVX-512 or not); 1,854 terms tie at
+  frequency 1 for 1,670 slots in `corporate_pt_v1`, so CI runners on different
+  CPUs built different vocabularies and the BM25/RRF gate flaked on the same
+  commit. `TfidfEmbedder` now ranks terms by (frequency desc, term) itself.
+  Re-freeze `baseline-bm25-rrf-tfidf-test.json`: RRF + TF-IDF test
+  Recall@3 0.9143 -> 0.8857, MRR@5 0.8500 -> 0.8462, nDCG@5 0.8586 -> 0.8553
+  (the old values were the non-AVX-512 tie order). Add a test that runs the
+  gate configuration in subprocesses with different `PYTHONHASHSEED` values
+  and, on AVX-512 CPUs, with `NPY_DISABLE_CPU_FEATURES=X86_V4`, and requires
+  byte-identical rankings and metrics.
+
 - Compare `X-API-Key` against `RAG_API_KEY` with `secrets.compare_digest` over
   UTF-8 bytes instead of `!=`, closing the timing side channel. Missing, empty,
   wrong and non-ASCII keys return 401 without raising. Product credentials

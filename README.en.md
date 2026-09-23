@@ -35,7 +35,7 @@ Windows 11, Python 3.12).
 | Hybrid + reranker, hashing (API default) | 0.571 | 0.886 | 0.760 | 0.781 | < 1 ms |
 | Legacy lexical | 0.686 | 0.914 | 0.824 | 0.834 | < 1 ms |
 | BM25 | 0.743 | 0.943 | 0.867 | 0.873 | < 1 ms |
-| RRF: BM25 + TF-IDF | 0.700 | 0.943 | 0.850 | 0.859 | ~3 ms |
+| RRF: BM25 + TF-IDF | 0.700 | 0.943 | 0.846 | 0.855 | ~3 ms |
 | `multilingual-e5-small` vector | 0.757 | **0.971** | 0.891 | 0.911 | ~56 ms |
 | **RRF: BM25 + e5** | **0.843** | **0.971** | **0.943** | 0.945 | ~49 ms |
 | BM25 + mMiniLM cross-encoder | 0.843 | 0.971 | 0.943 | **0.950** | ~1.6 s |

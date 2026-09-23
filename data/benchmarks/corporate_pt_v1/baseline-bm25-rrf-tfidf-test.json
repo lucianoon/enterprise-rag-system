@@ -9,13 +9,13 @@
   "document_count": 30,
   "chunk_count": 30,
   "query_count": 40,
-  "index_ms": 2364.3263000012666,
+  "index_ms": 1776.5913999974146,
   "environment": {
     "python": "3.12.13",
     "platform": "Windows-11-10.0.26200-SP0",
     "machine": "AMD64",
-    "source_sha256": "7406e45ca6fae5e5217771ee3bb778a94c3b3ed750d613c6bb1d049b479a21e8",
-    "timestamp_utc": "2026-09-23T02:31:16.466180+00:00",
+    "source_sha256": "74d10dcaf39c024b43085f9363f8e4beda8d8bd11e9ace3a6f4851ca1f1e4009",
+    "timestamp_utc": "2026-09-23T14:56:25.252780+00:00",
     "embedding_dimensions": "2048",
     "embedding_model": "tfidf",
     "embedding_revision": "not-applicable",
@@ -40,8 +40,8 @@
         "ndcg": 0.8
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 0.10564999956841348,
-      "latency_p95_ms": 0.1250000004802132,
+      "latency_median_ms": 0.11154999810969457,
+      "latency_p95_ms": 0.18370000179857016,
       "per_query": [
         {
           "query_id": "test01",
@@ -667,8 +667,8 @@
         "ndcg": 0.8480451513226029
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 0.1052999996318249,
-      "latency_p95_ms": 0.12510000124166254,
+      "latency_median_ms": 0.1157000006060116,
+      "latency_p95_ms": 0.19669999892357737,
       "per_query": [
         {
           "query_id": "test01",
@@ -1374,8 +1374,8 @@
         "ndcg": 0.8726552403553682
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 0.10540000039327424,
-      "latency_p95_ms": 0.20419999964360613,
+      "latency_median_ms": 0.10235000081593171,
+      "latency_p95_ms": 0.12140000035287812,
       "per_query": [
         {
           "query_id": "test01",
@@ -2161,8 +2161,8 @@
         "ndcg": 0.7714285714285715
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 4.808149999007583,
-      "latency_p95_ms": 6.780599998819525,
+      "latency_median_ms": 4.382999999506865,
+      "latency_p95_ms": 4.699399993114639,
       "per_query": [
         {
           "query_id": "test01",
@@ -2782,14 +2782,14 @@
       "answerable_count": 35,
       "unanswerable_count": 5,
       "mean_metrics": {
-        "recall": 0.9142857142857143,
-        "precision": 0.34285714285714286,
-        "mrr": 0.8428571428571429,
-        "ndcg": 0.8462595327498654
+        "recall": 0.8857142857142857,
+        "precision": 0.3333333333333333,
+        "mrr": 0.8333333333333334,
+        "ndcg": 0.8319738184641511
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 4.928999999719963,
-      "latency_p95_ms": 12.394100000165054,
+      "latency_median_ms": 4.407600001286482,
+      "latency_p95_ms": 5.334499997843523,
       "per_query": [
         {
           "query_id": "test01",
@@ -2853,8 +2853,8 @@
           ],
           "retrieved_doc_ids": [
             "remoto_internet",
-            "fornecedor_pagamento",
-            "cliente_credito"
+            "cliente_credito",
+            "fornecedor_pagamento"
           ],
           "metrics": {
             "recall": 1.0,
@@ -2926,13 +2926,13 @@
           "retrieved_doc_ids": [
             "fornecedor_acesso",
             "cliente_reembolso",
-            "acesso_revogacao"
+            "incidente_servico"
           ],
           "metrics": {
-            "recall": 1.0,
-            "precision": 0.3333333333333333,
-            "mrr": 0.3333333333333333,
-            "ndcg": 0.5
+            "recall": 0.0,
+            "precision": 0.0,
+            "mrr": 0.0,
+            "ndcg": 0.0
           }
         },
         {
@@ -2961,8 +2961,8 @@
           ],
           "retrieved_doc_ids": [
             "senha_redefinicao",
-            "incidente_seguranca",
-            "mfa_recuperacao"
+            "mfa_recuperacao",
+            "incidente_seguranca"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3267,7 +3267,7 @@
           ],
           "retrieved_doc_ids": [
             "remoto_nacional",
-            "software_renovacao",
+            "visitante_fisico",
             "acesso_revogacao"
           ],
           "metrics": {
@@ -3341,7 +3341,7 @@
           "retrieved_doc_ids": [
             "retencao_logs",
             "retencao_contratos",
-            "exclusao_dados"
+            "software_renovacao"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3443,8 +3443,8 @@
           "relevant_doc_ids": [],
           "retrieved_doc_ids": [
             "equipamento_compra",
-            "retencao_logs",
-            "equipamento_devolucao"
+            "equipamento_devolucao",
+            "retencao_logs"
           ],
           "metrics": null
         },
@@ -3491,12 +3491,12 @@
       "mean_metrics": {
         "recall": 0.9428571428571428,
         "precision": 0.21142857142857144,
-        "mrr": 0.85,
-        "ndcg": 0.858564577266248
+        "mrr": 0.8461904761904762,
+        "ndcg": 0.8553318003300922
       },
       "unanswerable_return_rate": 1.0,
-      "latency_median_ms": 4.873700000644021,
-      "latency_p95_ms": 7.401499999104999,
+      "latency_median_ms": 4.408000000694301,
+      "latency_p95_ms": 5.464000001666136,
       "per_query": [
         {
           "query_id": "test01",
@@ -3566,8 +3566,8 @@
           ],
           "retrieved_doc_ids": [
             "remoto_internet",
-            "fornecedor_pagamento",
             "cliente_credito",
+            "fornecedor_pagamento",
             "acesso_concessao",
             "ferias"
           ],
@@ -3647,15 +3647,15 @@
           "retrieved_doc_ids": [
             "fornecedor_acesso",
             "cliente_reembolso",
-            "acesso_revogacao",
             "incidente_servico",
-            "ferias"
+            "ferias",
+            "acesso_revogacao"
           ],
           "metrics": {
             "recall": 1.0,
             "precision": 0.2,
-            "mrr": 0.3333333333333333,
-            "ndcg": 0.5
+            "mrr": 0.2,
+            "ndcg": 0.38685280723454163
           }
         },
         {
@@ -3686,8 +3686,8 @@
           ],
           "retrieved_doc_ids": [
             "senha_redefinicao",
-            "incidente_seguranca",
             "mfa_recuperacao",
+            "incidente_seguranca",
             "visitante_fisico",
             "remoto_internet"
           ],
@@ -3749,7 +3749,7 @@
             "cliente_reembolso",
             "fornecedor_acesso",
             "exclusao_dados",
-            "sla_normal"
+            "remoto_internet"
           ],
           "metrics": {
             "recall": 0.0,
@@ -3849,7 +3849,7 @@
             "mfa_recuperacao",
             "retencao_logs",
             "banco_horas",
-            "dados_ia"
+            "viagem_transporte"
           ],
           "metrics": {
             "recall": 1.0,
@@ -3869,7 +3869,7 @@
             "viagem_refeicao",
             "remoto_internet",
             "visitante_fisico",
-            "equipamento_compra"
+            "acesso_revogacao"
           ],
           "metrics": {
             "recall": 1.0,
@@ -4026,10 +4026,10 @@
           ],
           "retrieved_doc_ids": [
             "remoto_nacional",
-            "software_renovacao",
+            "visitante_fisico",
             "acesso_revogacao",
-            "remoto_exterior",
-            "visitante_fisico"
+            "software_renovacao",
+            "remoto_exterior"
           ],
           "metrics": {
             "recall": 1.0,
@@ -4108,8 +4108,8 @@
           "retrieved_doc_ids": [
             "retencao_logs",
             "retencao_contratos",
-            "exclusao_dados",
             "software_renovacao",
+            "exclusao_dados",
             "fornecedor_acesso"
           ],
           "metrics": {
@@ -4131,7 +4131,7 @@
             "remoto_exterior",
             "fornecedor_acesso",
             "incidente_servico",
-            "dados_ia"
+            "retencao_logs"
           ],
           "metrics": {
             "recall": 1.0,
@@ -4212,7 +4212,7 @@
             "fornecedor_pagamento",
             "remoto_nacional",
             "cliente_reembolso",
-            "retencao_contratos"
+            "mfa_recuperacao"
           ],
           "metrics": null
         },
@@ -4222,8 +4222,8 @@
           "relevant_doc_ids": [],
           "retrieved_doc_ids": [
             "equipamento_compra",
-            "retencao_logs",
             "equipamento_devolucao",
+            "retencao_logs",
             "acesso_revogacao",
             "senha_redefinicao"
           ],

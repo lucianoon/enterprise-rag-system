@@ -115,6 +115,15 @@ foram recongeladas com o código novo. O gate continua com tolerância zero; nen
 limiar foi relaxado. Qualquer regressão a partir destas referências volta a
 falhar a CI.
 
+**Correção posterior (vocabulário TF-IDF determinístico):** o `max_features=2048`
+do scikit-learn escolhia os termos com um `argsort` instável; neste corpus, 1.854
+termos empatam com frequência 1 para 1.670 vagas, e o desempate dependia do
+despacho SIMD do NumPy (AVX-512 ou não). Runners da CI com CPUs diferentes
+congelavam vocabulários diferentes, e o RRF + TF-IDF oscilava entre execuções do
+mesmo commit. O vocabulário agora desempata pelo próprio termo. Só o RRF + TF-IDF
+mudou nas tabelas acima (dev MRR@5 0,8390 → 0,8405; teste MRR@5 0,8500 → 0,8462,
+nDCG@5 0,8586 → 0,8553); os valores antigos eram os do desempate sem AVX-512.
+
 ### dev / hashing
 
 | Estratégia | R@1 antes | R@1 depois | R@5 antes | R@5 depois | MRR@5 antes | MRR@5 depois | nDCG@5 antes | nDCG@5 depois |
@@ -135,7 +144,7 @@ falhar a CI.
 | hybrid | 0.6857 | 0.7286 | 0.9143 | 0.9143 | 0.8043 | 0.8414 | 0.8273 | 0.8551 |
 | hybrid-rerank | 0.7286 | 0.7571 | 0.8571 | 0.8571 | 0.8010 | 0.8152 | 0.8148 | 0.8253 |
 | bm25 | 0.7000 | 0.7000 | 0.9429 | 0.9429 | 0.8405 | 0.8405 | 0.8664 | 0.8664 |
-| rrf | 0.6714 | 0.7000 | 0.9429 | 0.9429 | 0.8238 | 0.8390 | 0.8516 | 0.8628 |
+| rrf | 0.6714 | 0.7000 | 0.9429 | 0.9429 | 0.8238 | 0.8405 | 0.8516 | 0.8641 |
 
 ### test / hashing
 
@@ -157,7 +166,7 @@ falhar a CI.
 | hybrid | 0.5857 | 0.6857 | 0.9429 | 0.9143 | 0.7719 | 0.8238 | 0.7992 | 0.8335 |
 | hybrid-rerank | 0.6143 | 0.6714 | 0.9000 | 0.9143 | 0.7771 | 0.8452 | 0.7984 | 0.8480 |
 | bm25 | 0.7429 | 0.7429 | 0.9429 | 0.9429 | 0.8667 | 0.8667 | 0.8727 | 0.8727 |
-| rrf | 0.7286 | 0.7000 | 0.9429 | 0.9429 | 0.8557 | 0.8500 | 0.8598 | 0.8586 |
+| rrf | 0.7286 | 0.7000 | 0.9429 | 0.9429 | 0.8557 | 0.8462 | 0.8598 | 0.8553 |
 
 ## Limitações e próximos experimentos
 
