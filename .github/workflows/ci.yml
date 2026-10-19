@@ -142,3 +142,19 @@ jobs:
           --retry-delay 1 --max-time 3 --retry-max-time 45 http://localhost:6333/healthz
       - name: Verify generation contracts on legacy Compose server
         run: uv run pytest tests/test_qdrant_generations.py -q
+
+  import-macos:
+    # RLIMIT_AS is not supported by Darwin. Without this job the extraction tests
+    # only ever run on Linux, where the limit silently works.
+    runs-on: macos-latest
+    env:
+      RAG_LLM_MODE: deterministic
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --extra dev --extra extras --locked
+      - name: Verify isolated extraction on macOS
+        run: uv run pytest tests/test_file_import.py -q

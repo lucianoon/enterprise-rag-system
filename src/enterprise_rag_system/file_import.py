@@ -116,22 +116,39 @@ def parse(source: Path) -> dict:
 
 
 def limit_resources() -> bool:
-    """Apply POSIX rlimits to the extractor child; returns whether they were applied.
+    """Apply POSIX rlimits to the extractor child; returns whether any were applied.
 
     ``resource`` does not exist on Windows. There the child still runs isolated
     with a minimal environment and the parent's 90-second timeout, but without
     memory, file-size or CPU limits, so it is meant for local development only.
+
+    Limits are applied one by one because not every platform supports every
+    resource: macOS rejects ``RLIMIT_AS`` with ``ValueError``. A single rejected
+    limit must not abort the child, otherwise extraction fails before parsing —
+    the very thing the limits exist to protect.
     """
     if sys.platform == "win32":
         return False
     import resource
 
     memory = int(os.getenv("RAG_IMPORT_MEMORY_MB", "768")) * 1024**2
-    resource.setrlimit(resource.RLIMIT_AS, (memory, memory))
+    limits = [(resource.RLIMIT_AS, (memory, memory))]
     if os.getenv("RAG_LARGE_IMPORT") != "true":
-        resource.setrlimit(resource.RLIMIT_FSIZE, (8 * 1024**2, 8 * 1024**2))
-        resource.setrlimit(resource.RLIMIT_CPU, (60, 60))
-    return True
+        limits += [
+            (resource.RLIMIT_FSIZE, (8 * 1024**2, 8 * 1024**2)),
+            (resource.RLIMIT_CPU, (60, 60)),
+        ]
+
+    applied = False
+    for kind, value in limits:
+        try:
+            resource.setrlimit(kind, value)
+        except (ValueError, OSError):
+            # Unsupported on this platform (RLIMIT_AS on macOS). Keep going:
+            # the remaining limits still bound the child.
+            continue
+        applied = True
+    return applied
 
 
 if __name__ == "__main__":
