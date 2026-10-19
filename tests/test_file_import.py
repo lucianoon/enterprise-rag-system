@@ -98,6 +98,33 @@ def test_resource_limits_applied_on_posix(monkeypatch):
     }
 
 
+def test_unsupported_address_space_limit_does_not_abort(monkeypatch):
+    """macOS rejects RLIMIT_AS with ValueError; extraction must still work there."""
+    resource = pytest.importorskip("resource")
+    calls = []
+
+    def setrlimit(kind, value):
+        if kind == resource.RLIMIT_AS:
+            raise ValueError("current limit exceeds maximum limit")
+        calls.append((kind, value))
+
+    monkeypatch.setattr(resource, "setrlimit", setrlimit)
+    monkeypatch.delenv("RAG_LARGE_IMPORT", raising=False)
+
+    assert file_import.limit_resources() is True
+    assert {kind for kind, _ in calls} == {resource.RLIMIT_FSIZE, resource.RLIMIT_CPU}
+
+
+def test_no_supported_limit_reports_not_applied(monkeypatch):
+    resource = pytest.importorskip("resource")
+
+    def setrlimit(kind, value):
+        raise OSError("not supported")
+
+    monkeypatch.setattr(resource, "setrlimit", setrlimit)
+    assert file_import.limit_resources() is False
+
+
 def test_text_extraction_runs_in_isolated_child_on_every_platform():
     assert extract("Política de férias\n".encode(), "notas.txt") == {
         "text": "Política de férias", "ocr_pages": [],
