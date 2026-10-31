@@ -136,14 +136,26 @@ também fazem parte do contexto capturado: não inclua segredos ou dados privado
 
 ### 4. Publique para revisão
 
-O commit acima é local. Para enviar uma contribuição ao Entire, publique a branch:
+O commit acima é local. Para validar a branch no GitHub Actions e publicar no
+Entire somente o SHA aprovado, use Git e GitHub CLI (`gh`) autenticados:
 
 ```bash
-git push -u origin HEAD
+python3 scripts/publish_with_ci.py
 ```
 
-Abra um Trail explicando o problema, a solução, o impacto e a validação, com o
-contexto do checkpoint. Para criar o Trail pela CLI na branch da contribuição:
+O comando exige uma branch diferente de `main` e diretório limpo. Ele publica
+primeiro no remoto `github`, espera a CI daquele commit e verifica o sucesso dos
+jobs `test`, `qdrant-legacy` e `import-macos`. Falha, cancelamento, jobs ausentes,
+timeout ou mudança local durante a espera impedem a publicação no Entire. O
+upstream fica no `origin`. A espera padrão é de 30 minutos; use `--timeout` para
+ajustá-la em segundos.
+
+Essa verificação é local: um `git push` direto ou `entire trail create` usado
+isoladamente pode contorná-la. O bloqueio de merge no servidor depende de uma
+integração de CI nativa, ainda pendente; veja [opções e estado](docs/ENTIRE_CI_OPTIONS.md).
+
+Depois da publicação validada, abra um Trail explicando o problema, a solução,
+o impacto e a validação, com o contexto do checkpoint e o link da execução de CI:
 
 ```bash
 entire agent-help trail create
@@ -151,15 +163,14 @@ entire trail create --title "Atualizar fluxo de contribuição" \
   --body "Documenta o fluxo com Entire; incluir resultados da validação na revisão."
 ```
 
-`trail create` também publica a branch local; pode ser usado diretamente após o
-commit, sem um `git push` separado. Aguarde a revisão e os checks exigidos antes
-do merge.
+`trail create` também pode publicar a branch local; neste fluxo, execute-o depois
+do publicador de CI e aguarde a revisão antes do merge.
 
 **GitHub Actions:** um push apenas ao Entire não dispara os workflows em
 `.github/workflows/`. Quando a revisão depender da CI existente no GitHub, envie
 a mesma branch ao remoto `github` com `git push github HEAD` e abra um pull
-request lá, vinculando-o ao Trail. O workflow atual roda em pull requests e em
-pushes para `main`; enviar apenas uma branch de trabalho não dispara essa CI.
+request lá, vinculando-o ao Trail. O workflow roda em pushes para qualquer branch,
+pull requests e disparos manuais. O publicador já envia a branch ao GitHub.
 Esse comando preserva o upstream já configurado para o Entire.
 
 ## Critérios de aceitação
