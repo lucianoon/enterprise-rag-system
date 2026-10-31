@@ -1,5 +1,7 @@
 .git
 .github
+.codex
+.entire
 .venv
 __pycache__
 *.pyc

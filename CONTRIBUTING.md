@@ -21,6 +21,19 @@ uv sync --extra dev --extra extras --locked
 
 O núcleo e os testes padrão funcionam offline, sem chave de API.
 
+As configurações compartilhadas ficam em `.entire/settings.json` e
+`.codex/hooks.json`. Os hooks Git de `.git/hooks` e as aprovações do Codex são
+locais: cada clone precisa concluir a instalação. Para usar Codex, execute:
+
+```bash
+entire enable --agent codex
+entire status
+```
+
+No Codex, abra `/hooks`, revise e aprove os hooks do Entire; depois inicie uma
+nova sessão no repositório. Logs, metadados locais, arquivos temporários e
+`settings.local.json` ficam fora do versionamento pelo `.entire/.gitignore`.
+
 Em checkouts que também usam GitHub, o remoto `github` aponta para
 `https://github.com/lucianoon/enterprise-rag-system.git`. Confira os destinos com
 `git remote -v`; um clone novo do Entire cria apenas o `origin`. Para adicionar
@@ -144,9 +157,10 @@ do merge.
 
 **GitHub Actions:** um push apenas ao Entire não dispara os workflows em
 `.github/workflows/`. Quando a revisão depender da CI existente no GitHub, envie
-a mesma branch ao remoto `github` com `git push -u github HEAD` e abra um pull
+a mesma branch ao remoto `github` com `git push github HEAD` e abra um pull
 request lá, vinculando-o ao Trail. O workflow atual roda em pull requests e em
 pushes para `main`; enviar apenas uma branch de trabalho não dispara essa CI.
+Esse comando preserva o upstream já configurado para o Entire.
 
 ## Critérios de aceitação
 

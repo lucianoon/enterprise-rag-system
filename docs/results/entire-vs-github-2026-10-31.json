@@ -1,0 +1,366 @@
+{
+  "started_at_utc": "2026-10-31T13:01:53.159088+00:00",
+  "environment": {
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.8",
+    "git": "git version 2.54.0",
+    "entire": "Entire CLI 0.12.2\nGo version: go1.27.3\nOS/Arch: darwin/arm64"
+  },
+  "urls": {
+    "github": "https://github.com/lucianoon/enterprise-rag-system.git",
+    "entire": "entire://aws-sa-east-1.entire.io/et/enterprise-rag-system/enterprise-rag-system"
+  },
+  "refs": [
+    "08859953efdeae533ff8e3cc9e1e2634557bae57\trefs/tags/v0.1.0",
+    "186e6f1cabb4557a5165c1ae2c7066236cefcbb8\trefs/heads/agent/measure-test-coverage",
+    "23f9a8b745bfcf0aef1dc4a33fdf39a958187c04\trefs/heads/agent/improve-project-evidence",
+    "2c0582f23a50fef0b524428b67d2d5fa279d51db\trefs/heads/feat/qdrant-evidence-product",
+    "4272ced36bf7940e12507c030d5d9beedf230280\trefs/heads/feat/pastoral-profile",
+    "700c6c95f1c03ec4cfbc5d7447a5b0e1c03378a6\trefs/heads/fix/limits-portable-macos",
+    "86a279bef4f508d3a256c7e685b90a7848836614\trefs/heads/main",
+    "8a4ed529a4ea6d66a470e8274dd3caccdd6e6d7b\trefs/heads/fix/review-reliability",
+    "caf6d39baba85dd0b9136f90669b4b6da80b9f4f\trefs/heads/feat/safe-index-snapshots",
+    "cb9d76b148f6c908f5cec41454dcd794f9e40148\trefs/heads/agent/publish-benchmark-results",
+    "d46667bd9070dd3fd244666abf31d15dd8239802\trefs/heads/feat/retrieval-benchmark",
+    "f54978e76a2e8c6939acdcec19ef9e17418fdc74\trefs/heads/feat/evidence-quality-recovery",
+    "ff3d4eff059f717314b6f01d4115615a786ab6d3\trefs/heads/feat/bm25-rrf"
+  ],
+  "refs_sha256": "540b9c62f8dfa14eb84b4b44658ea3afbe85e295cad3ec7dc5fffe54948ed3ef",
+  "method": {
+    "order": "alternate github/entire then entire/github each round",
+    "warmup": "one discarded round per host for each operation",
+    "clone": "git clone --bare --quiet --no-local URL NEW_TEMP_DIRECTORY",
+    "fetch": "git -C BARE fetch --quiet --no-tags origin +refs/heads/*:refs/heads/*",
+    "scope": "end-to-end wall clock including process, network, transport and auth",
+    "cache": "fresh clone destinations; client/server caches are not flushed",
+    "excluded": "push, concurrent throughput, agent productivity, cost and availability"
+  },
+  "observations": [
+    {
+      "operation": "ls_remote",
+      "host": "entire",
+      "round": -1,
+      "warmup": true,
+      "seconds": 0.2872384170186706
+    },
+    {
+      "operation": "ls_remote",
+      "host": "github",
+      "round": -1,
+      "warmup": true,
+      "seconds": 0.5438438749988563
+    },
+    {
+      "operation": "ls_remote",
+      "host": "github",
+      "round": 0,
+      "warmup": false,
+      "seconds": 0.5925475410185754
+    },
+    {
+      "operation": "ls_remote",
+      "host": "entire",
+      "round": 0,
+      "warmup": false,
+      "seconds": 0.272879957978148
+    },
+    {
+      "operation": "ls_remote",
+      "host": "entire",
+      "round": 1,
+      "warmup": false,
+      "seconds": 0.3470201250165701
+    },
+    {
+      "operation": "ls_remote",
+      "host": "github",
+      "round": 1,
+      "warmup": false,
+      "seconds": 0.5737100000260398
+    },
+    {
+      "operation": "ls_remote",
+      "host": "github",
+      "round": 2,
+      "warmup": false,
+      "seconds": 0.5671091669937596
+    },
+    {
+      "operation": "ls_remote",
+      "host": "entire",
+      "round": 2,
+      "warmup": false,
+      "seconds": 0.2844653330394067
+    },
+    {
+      "operation": "ls_remote",
+      "host": "entire",
+      "round": 3,
+      "warmup": false,
+      "seconds": 0.3301337920129299
+    },
+    {
+      "operation": "ls_remote",
+      "host": "github",
+      "round": 3,
+      "warmup": false,
+      "seconds": 0.5590233330149204
+    },
+    {
+      "operation": "ls_remote",
+      "host": "github",
+      "round": 4,
+      "warmup": false,
+      "seconds": 0.5425978749990463
+    },
+    {
+      "operation": "ls_remote",
+      "host": "entire",
+      "round": 4,
+      "warmup": false,
+      "seconds": 0.3202502499916591
+    },
+    {
+      "operation": "ls_remote",
+      "host": "entire",
+      "round": 5,
+      "warmup": false,
+      "seconds": 0.2979973329929635
+    },
+    {
+      "operation": "ls_remote",
+      "host": "github",
+      "round": 5,
+      "warmup": false,
+      "seconds": 0.5281419160310179
+    },
+    {
+      "operation": "ls_remote",
+      "host": "github",
+      "round": 6,
+      "warmup": false,
+      "seconds": 0.5739603749825619
+    },
+    {
+      "operation": "ls_remote",
+      "host": "entire",
+      "round": 6,
+      "warmup": false,
+      "seconds": 0.28419199999189004
+    },
+    {
+      "operation": "clone_bare",
+      "host": "entire",
+      "round": -1,
+      "warmup": true,
+      "seconds": 0.599150916968938
+    },
+    {
+      "operation": "clone_bare",
+      "host": "github",
+      "round": -1,
+      "warmup": true,
+      "seconds": 0.9945963749778457
+    },
+    {
+      "operation": "clone_bare",
+      "host": "github",
+      "round": 0,
+      "warmup": false,
+      "seconds": 0.9356567090144381
+    },
+    {
+      "operation": "clone_bare",
+      "host": "entire",
+      "round": 0,
+      "warmup": false,
+      "seconds": 0.5709454999887384
+    },
+    {
+      "operation": "clone_bare",
+      "host": "entire",
+      "round": 1,
+      "warmup": false,
+      "seconds": 0.5318012500065379
+    },
+    {
+      "operation": "clone_bare",
+      "host": "github",
+      "round": 1,
+      "warmup": false,
+      "seconds": 0.9714253339916468
+    },
+    {
+      "operation": "clone_bare",
+      "host": "github",
+      "round": 2,
+      "warmup": false,
+      "seconds": 0.98815366596682
+    },
+    {
+      "operation": "clone_bare",
+      "host": "entire",
+      "round": 2,
+      "warmup": false,
+      "seconds": 0.838999750034418
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "entire",
+      "round": -1,
+      "warmup": true,
+      "seconds": 0.30174824997084215
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "github",
+      "round": -1,
+      "warmup": true,
+      "seconds": 0.5638286669855006
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "github",
+      "round": 0,
+      "warmup": false,
+      "seconds": 0.5526616249699146
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "entire",
+      "round": 0,
+      "warmup": false,
+      "seconds": 0.43431108398362994
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "entire",
+      "round": 1,
+      "warmup": false,
+      "seconds": 0.2815302080125548
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "github",
+      "round": 1,
+      "warmup": false,
+      "seconds": 0.5769546250230633
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "github",
+      "round": 2,
+      "warmup": false,
+      "seconds": 0.5464542080298997
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "entire",
+      "round": 2,
+      "warmup": false,
+      "seconds": 0.3028216250240803
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "entire",
+      "round": 3,
+      "warmup": false,
+      "seconds": 0.5512383339810185
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "github",
+      "round": 3,
+      "warmup": false,
+      "seconds": 0.5883892500423826
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "github",
+      "round": 4,
+      "warmup": false,
+      "seconds": 0.5738558330340311
+    },
+    {
+      "operation": "fetch_no_changes",
+      "host": "entire",
+      "round": 4,
+      "warmup": false,
+      "seconds": 0.33232799998950213
+    }
+  ],
+  "clone_inventory": {
+    "entire": {
+      "commits": 89,
+      "pack_bytes": 691933
+    },
+    "github": {
+      "commits": 89,
+      "pack_bytes": 692027
+    }
+  },
+  "refs_unchanged_after": true,
+  "summary": {
+    "github": {
+      "ls_remote": {
+        "n": 7,
+        "median_seconds": 0.5671091669937596,
+        "mean_seconds": 0.5624414581522744,
+        "min_seconds": 0.5281419160310179,
+        "max_seconds": 0.5925475410185754
+      },
+      "clone_bare": {
+        "n": 3,
+        "median_seconds": 0.9714253339916468,
+        "mean_seconds": 0.9650785696576349,
+        "min_seconds": 0.9356567090144381,
+        "max_seconds": 0.98815366596682
+      },
+      "fetch_no_changes": {
+        "n": 5,
+        "median_seconds": 0.5738558330340311,
+        "mean_seconds": 0.5676631082198582,
+        "min_seconds": 0.5464542080298997,
+        "max_seconds": 0.5883892500423826
+      }
+    },
+    "entire": {
+      "ls_remote": {
+        "n": 7,
+        "median_seconds": 0.2979973329929635,
+        "mean_seconds": 0.3052769701462239,
+        "min_seconds": 0.272879957978148,
+        "max_seconds": 0.3470201250165701
+      },
+      "clone_bare": {
+        "n": 3,
+        "median_seconds": 0.5709454999887384,
+        "mean_seconds": 0.6472488333432315,
+        "min_seconds": 0.5318012500065379,
+        "max_seconds": 0.838999750034418
+      },
+      "fetch_no_changes": {
+        "n": 5,
+        "median_seconds": 0.33232799998950213,
+        "mean_seconds": 0.38044585019815713,
+        "min_seconds": 0.2815302080125548,
+        "max_seconds": 0.5512383339810185
+      }
+    }
+  },
+  "comparison": {
+    "ls_remote": {
+      "github_over_entire_median": 1.90306792781649,
+      "entire_time_change_percent": -47.453268200081375
+    },
+    "clone_bare": {
+      "github_over_entire_median": 1.701432683173451,
+      "entire_time_change_percent": -41.226002657076265
+    },
+    "fetch_no_changes": {
+      "github_over_entire_median": 1.7267754539255151,
+      "entire_time_change_percent": -42.08859074718262
+    }
+  },
+  "finished_at_utc": "2026-10-31T13:02:13.370508+00:00"
+}
